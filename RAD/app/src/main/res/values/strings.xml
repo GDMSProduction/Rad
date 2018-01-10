@@ -3,4 +3,16 @@
 
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="string_name">Name</string>
+    <string name="edit_message">Enter a Message</string>
+    <string name="button_send">Send</string>
+    <string name="button_Play">Play</string>
+    <string name="button_Settings">Settings</string>
+    <string name="button_HighScores">View High Scores</string>
+    <string name="string_EnemiesAmount">Number of Enemies</string>
+    <string-array name="Enemies_array">
+        <item>Normal</item>
+        <item>More</item>
+        <item>Most</item>
+    </string-array>
 </resources>

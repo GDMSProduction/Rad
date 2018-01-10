@@ -1,5 +1,7 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
@@ -10,51 +12,73 @@
          TextureView, etc. -->
     <TextView
         android:id="@+id/fullscreen_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:gravity="center"
         android:keepScreenOn="true"
         android:textColor="#33b5e5"
         android:textSize="50sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.185" />
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
 
-        <LinearLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="?metaButtonBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/black_overlay"
-            android:orientation="horizontal"
-            tools:ignore="UselessParent">
 
-        </LinearLayout>
+    <LinearLayout
+        android:id="@+id/fullscreen_content_controls"
+        style="?metaButtonBarStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/black_overlay"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="UselessParent">
 
-        <Button
-            android:id="@+id/button_Play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Play" />
+    </LinearLayout>
 
-        <Button
-            android:id="@+id/button_Settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Settings" />
+    <Button
+        android:id="@+id/button_Play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="transitionToGame"
+        android:text="@string/button_Play"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.315" />
 
-        <Button
-            android:id="@+id/button_Scores"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="View High Scores" />
+    <Button
+        android:id="@+id/button_Settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="transitionToSettings"
+        android:text="@string/button_Settings"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_Play" />
 
-    </FrameLayout>
+    <Button
+        android:id="@+id/button_Scores"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="transitionToScores"
+        android:text="@string/button_HighScores"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_Settings" />
 
-</FrameLayout>
+
+</android.support.constraint.ConstraintLayout>

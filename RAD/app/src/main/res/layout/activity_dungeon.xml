@@ -4,7 +4,7 @@
     android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
+    android:background="#000000"
     tools:context="com.example.stephen.runattackdungeon.Dungeon">
 
     <!-- The primary full-screen view. This can be replaced with whatever view

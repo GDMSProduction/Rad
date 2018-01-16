@@ -9,8 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".Dungeon"
+        <activity android:name=".Dungeon"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:theme="@style/FullscreenTheme">
@@ -20,8 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SettingsActivity"
+        <activity android:name=".SettingsActivity"
             android:parentActivityName=".Dungeon">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
@@ -29,8 +27,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Dungeon" />
         </activity>
-        <activity
-            android:name=".GameActivity"
+        <activity android:name=".GameActivity"
+            android:screenOrientation="sensorLandscape"
             android:parentActivityName=".Dungeon">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->

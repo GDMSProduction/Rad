@@ -25,20 +25,20 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/textView_NumEnemies"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="19dp"
             android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:text="@string/string_EnemiesAmount"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
             app:layout_constraintBaseline_toBaselineOf="@+id/spinner"
             app:layout_constraintEnd_toStartOf="@+id/spinner"
             app:layout_constraintStart_toStartOf="parent" />
     </android.support.constraint.ConstraintLayout>
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/textView_MasterVolume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -47,45 +47,45 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/textView_SFX"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/Text_SFX"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/seekBar5" />
+        app:layout_constraintTop_toBottomOf="@+id/seekBar_MasterVolume" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/textView_Music"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/Text_Music"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/seekBar4" />
+        app:layout_constraintTop_toBottomOf="@+id/seekBar_SFX" />
 
     <SeekBar
-        android:id="@+id/seekBar3"
+        android:id="@+id/seekBar_Music"
         style="@style/Widget.AppCompat.SeekBar.Discrete"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_Music" />
 
     <SeekBar
-        android:id="@+id/seekBar4"
+        android:id="@+id/seekBar_SFX"
         style="@style/Widget.AppCompat.SeekBar.Discrete"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_SFX" />
 
     <SeekBar
-        android:id="@+id/seekBar5"
+        android:id="@+id/seekBar_MasterVolume"
         style="@style/Widget.AppCompat.SeekBar.Discrete"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -94,6 +94,6 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_MasterVolume" />
 
 </android.support.constraint.ConstraintLayout>

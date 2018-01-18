@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#000000"
     tools:context="com.example.stephen.runattackdungeon.SettingsActivity">
 
     <android.support.constraint.ConstraintLayout
@@ -20,6 +21,7 @@
             android:id="@+id/spinner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/white"
             android:entries="@array/Enemies_array"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -29,9 +31,8 @@
             android:layout_width="wrap_content"
             android:layout_height="19dp"
             android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
             android:text="@string/string_EnemiesAmount"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             app:layout_constraintBaseline_toBaselineOf="@+id/spinner"
             app:layout_constraintEnd_toStartOf="@+id/spinner"
             app:layout_constraintStart_toStartOf="parent" />
@@ -43,6 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/Text_MasterVolume"
+        android:textColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
@@ -52,6 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/Text_SFX"
+        android:textColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
         app:layout_constraintTop_toBottomOf="@+id/seekBar_MasterVolume" />
 
@@ -61,12 +64,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/Text_Music"
+        android:textColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout"
         app:layout_constraintTop_toBottomOf="@+id/seekBar_SFX" />
 
     <SeekBar
         android:id="@+id/seekBar_Music"
-        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        style="@android:style/Widget.SeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -76,7 +80,7 @@
 
     <SeekBar
         android:id="@+id/seekBar_SFX"
-        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        style="@android:style/Widget.SeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -86,10 +90,11 @@
 
     <SeekBar
         android:id="@+id/seekBar_MasterVolume"
-        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        style="@android:style/Widget.SeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:focusedByDefault="true"
         app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

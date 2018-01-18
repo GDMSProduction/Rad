@@ -13,26 +13,35 @@ import java.util.Random;
 
 public class Map
 {
-    //Picture floor1 = new Picture();
-    private Bitmap bm;
+    //array of available images for Spaces
     private Bitmap[] CellSpace;
+    //array of available images for walls
     private Bitmap[] CellWall;
-    private int WallPercent = 40;
-
+    //the percent of tiles that we want to be walls in the finalized map.
+    private int WallPercent = 20;
     private int mX;
     private int mY;
+    //the amount of tiles in each row
     private int mWidth;
+    //the amount of tiles in each column
     private int mHeight;
+    //the amount of desired rooms
+    private int roomNums = 3;
+    //random number, used for random number generation
     private Random rand = new Random();
-
+    //the current map tileset
     private Bitmap[][] mCellsCurr;
+    //the next generation of the map tileset.
     private Bitmap[][] mCellsNext;
-    private Dungeon mTheDungeon;
-    private Canvas backGround;
-    private Paint painter;
-
+    private Canvas canvas;
+    private Paint paint;
+    private GameView gameView;
+    //Given a group of tiles,
+        //if a pic is in the group, return true.
+        //if not, return false.
     private boolean FindInArray(Bitmap[] ImageArray, Bitmap pic){
-        for (int i = 0; i < ImageArray.length; i++)
+        int length = ImageArray.length;
+        for (int i = 0; i < length; i++)
         {
             if (pic == ImageArray[i])
             {
@@ -41,28 +50,32 @@ public class Map
         }
         return false;
     }
-    private void GenerateNewMap() {
+    //Creates a new map through random generation and two refinement process.
+    //Refinement one is to prevent large open areas.
+    //refinement two is to create paths between areas.
+    public void GenerateNewMap() {
         // randomly initialize the map
         RandomizeMap();
         Pause();
 
         // refine the map for some number of generations
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 1; i++)
         {
             RefineMap(true);
             Pause();
         }
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 1; i++)
         {
             RefineMap(false);
             Pause();
         }
     }
+    //fills the current map with randomized tiles
     private void RandomizeMap(){
         // innards of map
-        for (int row = 1; row < mHeight-1; row++)
+        for (int row = 0; row < mHeight; row++)
         {
-            for (int col = 1; col < mWidth-1; col++)
+            for (int col = 0; col < mWidth; col++)
             {
                 if (rand.nextLong() % 100 + 1 <= WallPercent)
                     mCellsCurr[row][col] = CellWall[rand.nextInt(CellWall.length)];
@@ -70,7 +83,26 @@ public class Map
                     mCellsCurr[row][col] = CellSpace[rand.nextInt(CellSpace.length)];
             }
         }
+        ClearMiddleRow();
+        //ClearRooms();
 
+
+//        // horizontal borders
+//        for (int i = 0; i < mWidth; i++)
+//        {
+//            mCellsCurr[0][i] = CellWall[rand.nextInt(CellWall.length)];
+//            mCellsCurr[mHeight-1][i] = CellWall[rand.nextInt(CellWall.length)];
+//        }
+//
+//        // vertical borders
+//        for (int i = 0; i < mHeight; i++)
+//        {
+//            mCellsCurr[i][0] = CellWall[rand.nextInt(CellWall.length)];
+//            mCellsCurr[i][mWidth-1] = CellWall[rand.nextInt(CellWall.length)];
+//        }
+    }
+
+    private void ClearMiddleRow() {
         // clear middle row
         int middle = mHeight / 2;
         for (int i = 1; i < mWidth-1; i++)
@@ -79,25 +111,20 @@ public class Map
             mCellsCurr[middle][i] = CellSpace[rand.nextInt(CellSpace.length)];
             mCellsCurr[middle+1][i] = CellSpace[rand.nextInt(CellSpace.length)];
         }
-
-        // horizontal borders
-        for (int i = 0; i < mWidth; i++)
-        {
-            mCellsCurr[0][i] = CellWall[rand.nextInt(CellWall.length)];
-            mCellsCurr[mHeight-1][i] = CellWall[rand.nextInt(CellWall.length)];
-        }
-
-        // vertical borders
-        for (int i = 0; i < mHeight; i++)
-        {
-            mCellsCurr[i][0] = CellWall[rand.nextInt(CellWall.length)];
-            mCellsCurr[i][mWidth-1] = CellWall[rand.nextInt(CellWall.length)];
-        }
     }
+//    private void ClearRooms(){
+//        for(int i = 0; i < roomNums; i++){
+//            int[] Point = GetRandCell();
+//        }
+//    }
+//    private Point GetRandCell(){
+//        int pointX = rand.nextInt();
+//        int pointY = rand.nextInt();
+//        return
+//    }
+
     private void Pause() {
         //Draw();
-        //Console.SetCursorPosition(0, 0);
-        //Console.ReadLine();
     }
     private void RefineMap(boolean preventLargeOpenAreas){
         for (int row = 0; row < mHeight; row++)
@@ -126,12 +153,13 @@ public class Map
             }
         }
 
-        CopyArray(mCellsNext, mCellsCurr, mWidth * mHeight);
+        CopyArray(mCellsNext, mCellsCurr, mWidth, mHeight);
     }
-    private void CopyArray(Bitmap[][] ImageArray1, Bitmap[][] ImageArray2, long length){
-        for (int i = 0; i < length; i++)
-        {
-            ImageArray2[i] = ImageArray1[i];
+    private void CopyArray(Bitmap[][] ImageArray1, Bitmap[][] ImageArray2, int width, int height){
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                ImageArray2[j][i] = ImageArray1[j][i];
+            }
         }
     }
     private int NeighboringWallCount(int cellx, int celly, int dist) {
@@ -159,21 +187,22 @@ public class Map
     public Map(Context context, int startX, int startY, int Width, int Height) {
         mX = startX;
         mY = startY;
-        mWidth = Width;
-        mHeight = Height;
+
         CellSpace = new Bitmap[5];
         CellWall = new Bitmap[2];
-        CellSpace[0] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.floor1);
-        CellSpace[1] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.floor2);
-        CellSpace[2] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.floor3);
-        CellSpace[3] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.floor4);
-        CellSpace[4] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.floor5);
-        CellWall[0] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.wall1);
-        CellWall[1] = BitmapFactory.decodeResource(context.getResources(), R.mipmap.wall2);
+        CellSpace[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor1);
+        CellSpace[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor2);
+        CellSpace[2] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor3);
+        CellSpace[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor4);
+        CellSpace[4] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor5);
+        CellWall[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall1);
+        CellWall[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall2);
+        //40 x 40 = properties of all map tiles.
+        mWidth = Width / CellSpace[0].getWidth();
+        mHeight = Height / CellSpace[0].getHeight();
 
-
-        mCellsCurr = new Bitmap[Height][Width];
-        mCellsNext = new Bitmap[Height][Width];
+        mCellsCurr = new Bitmap[mHeight][mWidth];
+        mCellsNext = new Bitmap[mHeight][mWidth];
 
         GenerateNewMap();
     }
@@ -182,17 +211,34 @@ public class Map
     public boolean IsCellOpen(int cellx, int celly) {
         return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
     }
+    public Bitmap[][] GetCurrentMap(){return mCellsCurr;}
+    public int GetHeight() {return mHeight;}
+    public int GetWidth() {return mWidth;}
+    public int GetBitMapWidth() {return CellSpace[0].getWidth();}
+    public int GetBitMapHeight() {return CellSpace[0].getHeight();}
+
     public void Draw() {
         for (int row = 0; row < mHeight; row++)
         {
             for (int col = 0; col < mWidth; col++)
             {
-                backGround.drawBitmap(mCellsCurr[row][col], col + CellSpace[0].getWidth(), row + CellSpace[0].getHeight(), null);
-
-                //Console.SetCursorPosition(col + mX, row + mY);
-                //Console.Write(mCellsCurr[row][col]);
+                canvas.drawBitmap(mCellsCurr[row][col],
+                        col * CellSpace[0].getWidth(),
+                        row * CellSpace[0].getHeight(),
+                        paint);
             }
         }
     }
-
 }
+//class Point{
+//    public int x;
+//    public int y;
+//
+//    public Point(){}
+//    public Point(int newX, int newY){
+//        x = newX;
+//        y = newY;
+//    }
+//    public int GetX(){return x;}
+//    public int GetY()
+//}

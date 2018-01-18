@@ -15,7 +15,6 @@ import android.widget.EditText;
  * status bar and navigation/system bar) with user interaction.
  */
 public class Dungeon extends AppCompatActivity {
-    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -115,14 +114,12 @@ public class Dungeon extends AppCompatActivity {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }
-    public void transitionToGame(View view)
-    {
+    public void transitionToGame(View view) {
         //Do something in response to button
         Intent intent = new Intent(this, GameActivity.class);
         startActivity(intent);
     }
-    public void transitionToScores(View view)
-    {
+    public void transitionToScores(View view) {
         //Do something in response to button
         Intent intent = new Intent(this, HighScoresActivity.class);
         startActivity(intent);

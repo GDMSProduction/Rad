@@ -42,6 +42,7 @@ public class GameView extends SurfaceView implements Runnable {
         paint = new Paint();
         //initializing map
         map = new Map(context,0, 0, screenX, screenY);
+
         mBitMapHeight = map.GetBitMapHeight();
         mBitMapWidth = map.GetBitMapWidth();
         mHeight = map.GetHeight();

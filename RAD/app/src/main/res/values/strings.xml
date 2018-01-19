@@ -13,6 +13,7 @@
     <string name="Text_MasterVolume">Master Volume</string>
     <string name="Text_SFX">Sound Effects Volume</string>
     <string name="Text_Music">Music</string>
+    <string name="Text_VersionNumber">RAD_20180118_P1</string>
     <string-array name="Enemies_array">
         <item>Normal</item>
         <item>More</item>

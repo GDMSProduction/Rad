@@ -91,32 +91,7 @@ public class Map {
                     mCellsCurr[row][col] = CellSpace[rand.nextInt(CellSpace.length)];
             }
         }
-        //ClearMiddleRow();
         MakeRooms();
-
-//        // horizontal borders
-//        for (int i = 0; i < mWidth; i++)
-//        {
-//            mCellsCurr[0][i] = CellWall[rand.nextInt(CellWall.length)];
-//            mCellsCurr[mHeight-1][i] = CellWall[rand.nextInt(CellWall.length)];
-//        }
-//
-//        // vertical borders
-//        for (int i = 0; i < mHeight; i++)
-//        {
-//            mCellsCurr[i][0] = CellWall[rand.nextInt(CellWall.length)];
-//            mCellsCurr[i][mWidth-1] = CellWall[rand.nextInt(CellWall.length)];
-//        }
-    }
-
-    private void ClearMiddleRow() {
-        // clear middle row
-        int middle = mHeight / 2;
-        for (int i = 1; i < mWidth - 1; i++) {
-            mCellsCurr[middle - 1][i] = CellSpace[rand.nextInt(CellSpace.length)];
-            mCellsCurr[middle][i] = CellSpace[rand.nextInt(CellSpace.length)];
-            mCellsCurr[middle + 1][i] = CellSpace[rand.nextInt(CellSpace.length)];
-        }
     }
 
     private void MakeRooms() {

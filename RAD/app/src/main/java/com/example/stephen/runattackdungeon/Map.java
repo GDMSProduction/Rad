@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.content.Context;
 import android.graphics.Point;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -32,6 +33,8 @@ public class Map {
     private int roomNums = 5;
     //the maximum size of rooms
     private int roomSize = 4;
+    //the number of floor tiles
+    private int numEmptyCells = 0;
     private int mX;
     private int mY;
     //the amount of tiles in each row
@@ -44,6 +47,8 @@ public class Map {
     private Bitmap[][] mCellsCurr;
     //the next generation of the map tileset.
     private Bitmap[][] mCellsNext;
+    //The points of every floor tile.
+    private ArrayList<Point> FloorTiles;
 
     //Given a group of tiles,
     //if a pic is in the group, return true.
@@ -65,19 +70,21 @@ public class Map {
         // randomly initialize the map
         RandomizeMap();
         Pause();
+        int refine = rand.nextInt(3) + 1;
 
         // refine the map for some number of generations
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < refine; i++)
         {
             RefineMap(true);
             Pause();
         }
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < refine + 1; i++)
         {
             RefineMap(false);
             Pause();
         }
 //        MakeCorridors();
+        GetEmptyFloorPoints();
     }
 
     //fills the current map with randomized tiles
@@ -173,6 +180,19 @@ public class Map {
         return walls;
     }
 
+    private void GetEmptyFloorPoints(){
+        numEmptyCells = 0;
+        FloorTiles = new ArrayList<Point>();
+        for (int row = 0; row < mHeight; row++) {
+            for (int col = 0; col < mWidth; col++) {
+                if (FindInArray(CellSpace, mCellsCurr[row][col])){
+                    Point temp = new Point(col, row);
+                    FloorTiles.add(temp);
+                    numEmptyCells++;
+                }
+            }
+        }
+    }
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -203,48 +223,23 @@ public class Map {
         GenerateNewMap();
     }
 
-    public int GetX() {
-        return mX;
-    }
+    public int GetX() {return mX;}
 
-    public int GetY() {
-        return mY;
-    }
+    public int GetY() {return mY;}
 
-    public boolean IsCellOpen(int cellx, int celly) {
-        return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
-    }
+    public boolean IsCellOpen(int cellx, int celly) {return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));}
 
-    public Bitmap[][] GetCurrentMap() {
-        return mCellsCurr;
-    }
+    public Bitmap[][] GetCurrentMap() {return mCellsCurr;}
 
-    public int GetHeight() {
-        return mHeight;
-    }
+    public int GetHeight() {return mHeight;}
 
-    public int GetWidth() {
-        return mWidth;
-    }
+    public int GetWidth() {return mWidth;}
 
-    public int GetBitMapWidth() {
-        return CellSpace[0].getWidth();
-    }
+    public int GetBitMapWidth() {return CellSpace[0].getWidth();}
 
-    public int GetBitMapHeight() {
-        return CellSpace[0].getHeight();
-    }
+    public int GetBitMapHeight() {return CellSpace[0].getHeight();}
 
-//    public void Draw() {
-//        for (int row = 0; row < mHeight; row++)
-//        {
-//            for (int col = 0; col < mWidth; col++)
-//            {
-//                canvas.drawBitmap(mCellsCurr[row][col],
-//                        col * CellSpace[0].getWidth(),
-//                        row * CellSpace[0].getHeight(),
-//                        paint);
-//            }
-//        }
-//    }
+    public ArrayList<Point> GetFloorPoints(){return FloorTiles;}
+    public int GetNumEmptyPoints() {return numEmptyCells;}
+
 }

@@ -1,14 +1,20 @@
 package com.example.stephen.runattackdungeon;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by Stephen on 2018-01-18.
@@ -22,32 +28,85 @@ public class GameView extends SurfaceView implements Runnable {
     //the player
     //private Player player;
     //These objects will be used for drawing
-    private Paint paint;
+    private final Paint paint;
     private Canvas canvas;
-    private SurfaceHolder surfaceHolder;
+    private final SurfaceHolder surfaceHolder;
     private Map map;
+    private int maxItems = 5;
+    private ArrayList<Item> items = new ArrayList<Item>(maxItems);
+    private Bitmap[] itemBitmaps;
+    private Random rand = new Random();
     private int mBitMapHeight;
     private int mBitMapWidth;
     private int mHeight;
     private int mWidth;
+
     //Class constructor
     public GameView(Context context, int screenX, int screenY) {
         super(context);
 
-        //initializing player object
+        //Create player object
         //player = new Player(context, screenX, screenY);
 
-        //initializing drawing objects
+        //Create drawing objects
         surfaceHolder = getHolder();
         paint = new Paint();
-        //initializing map
-        map = new Map(context,0, 0, screenX, screenY);
 
+        //Create map
+        map = new Map(context, 0, 0, screenX, screenY);
+        map.GenerateNewMap();
+
+        //Height and Width of one cell
         mBitMapHeight = map.GetBitMapHeight();
         mBitMapWidth = map.GetBitMapWidth();
+        //Playable spaces on the map, i.e., the number of spaces wide and long that the player can potentially use.
         mHeight = map.GetHeight();
         mWidth = map.GetWidth();
+
+        //Create Bitmaps
+        itemBitmaps = new Bitmap[3];
+        itemBitmaps[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel);
+        itemBitmaps[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.chest);
+        itemBitmaps[2] = BitmapFactory.decodeResource(context.getResources(), R.drawable.rock);
+
+        //Create Items
+        GetNewItems();
+
     }
+
+    private void GetNewItems() {
+        items.clear();
+        //items = new ArrayList<Item>(rand.nextInt(maxItems) + 1);
+        items = new ArrayList<Item>(maxItems);
+        for (int i = 0; i < maxItems; i++) {
+            int itemVal = 10;
+            Bitmap itemBitmap = itemBitmaps[0];
+            Point itemPoint = new Point(0, 0);
+
+            Item temp = new Item(itemVal, itemPoint, itemBitmap);
+            switch (rand.nextInt(3)) {
+                case 0:
+                    //barrel
+                    temp.SetBitMap(itemBitmaps[0]);
+                    temp.SetValue(10);
+                    break;
+                case 1:
+                    //chest
+                    temp.SetBitMap(itemBitmaps[1]);
+                    temp.SetValue(30);
+                    break;
+                default:
+                case 2:
+                    //rock
+                    temp.SetBitMap(itemBitmaps[2]);
+                    temp.SetValue(0);
+                    break;
+            }
+            temp.SetPoint(map.GetFloorPoints().get(rand.nextInt(map.GetNumEmptyPoints())));
+            items.add(temp);
+        }
+    }
+
     @Override
     public void run() {
         while (playing) {
@@ -59,6 +118,7 @@ public class GameView extends SurfaceView implements Runnable {
             control();
         }
     }
+
     private void update() {
 //        //updating player position
 //        player.update();
@@ -78,6 +138,7 @@ public class GameView extends SurfaceView implements Runnable {
 //            }
 //        }
     }
+
     private void draw() {
         //checking if surface is valid
         if (surfaceHolder.getSurface().isValid()) {
@@ -89,35 +150,28 @@ public class GameView extends SurfaceView implements Runnable {
             paint.setColor(Color.WHITE);
             //drawing the map
             drawingTheMap();
+            drawingTheItems();
 
-            //Drawing the player
-//            canvas.drawBitmap(
-//                    player.getBitmap(),
-//                    player.getX(),
-//                    player.getY(),
-//                    paint);
-
-            //drawing the enemies
-//            for (int i = 0; i < enemyCount; i++) {
-//                canvas.drawBitmap(
-//                        enemies[i].getBitmap(),
-//                        enemies[i].getX(),
-//                        enemies[i].getY(),
-//                        paint
-//                );
-//            }
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private void drawingTheItems() {
+        for (int j = 0; j < items.size(); ++j) {
+            canvas.drawBitmap(
+                    items.get(j).GetBitmap(),
+                    items.get(j).GetX() * mBitMapWidth,
+                    items.get(j).GetY() * mBitMapHeight,
+                    paint);
         }
     }
 
     public void drawingTheMap() {
         Bitmap[][] tempMap = map.GetCurrentMap();
 
-        for (int row = 0; row < mHeight; row++)
-        {
-            for (int col = 0; col < mWidth; col++)
-            {
+        for (int row = 0; row < mHeight; row++) {
+            for (int col = 0; col < mWidth; col++) {
                 canvas.drawBitmap(tempMap[row][col],
                         col * mBitMapWidth,
                         row * mBitMapHeight,
@@ -133,6 +187,7 @@ public class GameView extends SurfaceView implements Runnable {
             e.printStackTrace();
         }
     }
+
     public void pause() {
         //when the game is paused
         //setting the variable to false
@@ -143,6 +198,7 @@ public class GameView extends SurfaceView implements Runnable {
         } catch (InterruptedException e) {
         }
     }
+
     public void resume() {
         //when the game is resumed
         //starting the thread again
@@ -150,6 +206,7 @@ public class GameView extends SurfaceView implements Runnable {
         gameThread = new Thread(this);
         gameThread.start();
     }
+
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent) {
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
@@ -157,6 +214,8 @@ public class GameView extends SurfaceView implements Runnable {
                 //When the user presses on the screen
                 //we will do something here
                 map.GenerateNewMap();
+                GetNewItems();
+                int x = 9;
 //                player.stopBoosting();
                 break;
             case MotionEvent.ACTION_DOWN:

@@ -63,30 +63,6 @@ public class Map {
         return false;
     }
 
-    //Creates a new map through random generation and two refinement process.
-    //Refinement one is to prevent large open areas.
-    //refinement two is to create paths between areas.
-    public void GenerateNewMap() {
-        // randomly initialize the map
-        RandomizeMap();
-        Pause();
-        int refine = rand.nextInt(3) + 1;
-
-        // refine the map for some number of generations
-        for (int i = 0; i < refine; i++)
-        {
-            RefineMap(true);
-            Pause();
-        }
-        for (int i = 0; i < refine + 1; i++)
-        {
-            RefineMap(false);
-            Pause();
-        }
-//        MakeCorridors();
-        GetEmptyFloorPoints();
-    }
-
     //fills the current map with randomized tiles
     private void RandomizeMap() {
         // innards of map
@@ -223,6 +199,30 @@ public class Map {
         GenerateNewMap();
     }
 
+    //Creates a new map through random generation and two refinement process.
+    //Refinement one is to prevent large open areas.
+    //refinement two is to create paths between areas.
+    public void GenerateNewMap() {
+        // randomly initialize the map
+        RandomizeMap();
+        Pause();
+        int refine = rand.nextInt(3) + 1;
+
+        // refine the map for some number of generations
+        for (int i = 0; i < refine; i++)
+        {
+            RefineMap(true);
+            Pause();
+        }
+        for (int i = 0; i < refine + 1; i++)
+        {
+            RefineMap(false);
+            Pause();
+        }
+//        MakeCorridors();
+        GetEmptyFloorPoints();
+    }
+
     public int GetX() {return mX;}
 
     public int GetY() {return mY;}
@@ -240,6 +240,10 @@ public class Map {
     public int GetBitMapHeight() {return CellSpace[0].getHeight();}
 
     public ArrayList<Point> GetFloorPoints(){return FloorTiles;}
+    public void TakeAwayEmptyFloorTiles(int floorTile){
+        FloorTiles.remove(floorTile);
+        numEmptyCells--;
+    }
     public int GetNumEmptyPoints() {return numEmptyCells;}
 
 }

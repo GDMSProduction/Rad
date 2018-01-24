@@ -1,6 +1,5 @@
 package com.example.stephen.runattackdungeon;
 
-import android.content.ClipData;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,12 +9,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.ImageButton;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -56,6 +52,8 @@ public class GameView extends SurfaceView implements Runnable {
     private int dpadY = 0;
     private int dpadWidth = 0;
     private int dpadHeight = 0;
+    private int dPadOpacity = 100;
+    private int DPADbuffer = 8;
     private BaseObject dPadUp;
     private BaseObject dPadDown;
     private BaseObject dPadLeft;
@@ -101,28 +99,27 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void createDPAD(int screenY) {
-        dpadWidth = Bitmaps[4].getWidth() * 3;
-        dpadHeight = Bitmaps[4].getHeight() * 3;
+        dpadHeight = Bitmaps[4].getHeight() * 2 + Bitmaps[4].getWidth();
         dpadY = screenY - dpadHeight;
-        DPAD = new Rect(dpadX, dpadY, dpadWidth, dpadHeight);
+        DPAD = new Rect(dpadX + DPADbuffer, dpadY - DPADbuffer, dpadHeight, dpadHeight);
 
         Point dpadUpPoint = new Point(DPAD.left + (int)(DPAD.width()/2) - (int)(Bitmaps[4].getWidth()/2), DPAD.top);
         dPadUp = new BaseObject(dpadUpPoint, Bitmaps[4]);
 
         Matrix matrix = new Matrix();
-        matrix.postRotate(90);
+        matrix.postRotate(270);
         Bitmap rotatedBitmap = Bitmap.createBitmap(Bitmaps[4], 0, 0, Bitmaps[4].getWidth(), Bitmaps[4].getHeight(), matrix, true);
-        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int)(DPAD.height()/2) - (int)(rotatedBitmap.getHeight()/2));
+        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int)(DPAD.bottom/2) - (int)(rotatedBitmap.getHeight()/2));
         dPadLeft = new BaseObject(dpadLeftPoint, rotatedBitmap);
 
-        matrix.postRotate(90);
+        //matrix.postRotate(180);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadDownPoint = new Point(DPAD.left + (int)(DPAD.width()/2) - (int)(Bitmaps[4].getWidth()/2), DPAD.bottom - rotatedBitmap.getHeight());
+        Point dpadDownPoint = new Point(DPAD.left + (int)(DPAD.width()/2) - (int)(Bitmaps[4].getWidth()/2), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
         dPadDown = new BaseObject(dpadDownPoint, rotatedBitmap);
 
-        matrix.postRotate(90);
+        //matrix.postRotate(90);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int)(DPAD.height()/2) - (int)(rotatedBitmap.getHeight()/2));
+        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int)(DPAD.bottom/2) - (int)(rotatedBitmap.getHeight()/2));
         dPadRight = new BaseObject(dpadRightPoint, rotatedBitmap);
     }
 
@@ -238,40 +235,44 @@ public class GameView extends SurfaceView implements Runnable {
                     player.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (player.GetBitmap().getWidth() / 2),
                     player.GetY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (player.GetBitmap().getHeight() / 2),
                     paint);
+            drawingTheDPAD();
 
-            //DRAW THIS LAST.
-            //set Paint opacity for DPAD.
-            paint.setAlpha(100);
-
-            canvas.drawBitmap(
-                    dPadUp.GetBitmap(),
-                    dPadUp.GetX(),
-                    dPadUp.GetY(),
-                    paint
-            );
-            canvas.drawBitmap(
-                    dPadLeft.GetBitmap(),
-                    dPadLeft.GetX(),
-                    dPadLeft.GetY(),
-                    paint
-            );
-            canvas.drawBitmap(
-                    dPadDown.GetBitmap(),
-                    dPadDown.GetX(),
-                    dPadDown.GetY(),
-                    paint
-            );
-            canvas.drawBitmap(
-                    dPadRight.GetBitmap(),
-                    dPadRight.GetX(),
-                    dPadRight.GetY(),
-                    paint
-            );
-            //Reset Paint opacity.
-            paint.setAlpha(255);
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
+    }
+
+    private void drawingTheDPAD() {
+        //DRAW THIS LAST.
+        //set Paint opacity for DPAD.
+        paint.setAlpha(dPadOpacity);
+
+        canvas.drawBitmap(
+                dPadUp.GetBitmap(),
+                dPadUp.GetX(),
+                dPadUp.GetY(),
+                paint
+        );
+        canvas.drawBitmap(
+                dPadLeft.GetBitmap(),
+                dPadLeft.GetX(),
+                dPadLeft.GetY(),
+                paint
+        );
+        canvas.drawBitmap(
+                dPadDown.GetBitmap(),
+                dPadDown.GetX(),
+                dPadDown.GetY(),
+                paint
+        );
+        canvas.drawBitmap(
+                dPadRight.GetBitmap(),
+                dPadRight.GetX(),
+                dPadRight.GetY(),
+                paint
+        );
+        //Reset Paint opacity.
+        paint.setAlpha(255);
     }
 
     private void drawingTheItems() {
@@ -324,18 +325,36 @@ public class GameView extends SurfaceView implements Runnable {
         gameThread.start();
     }
 
+    private boolean DetectCollision(float x, float y, Rect rect){
+        if (x <= rect.left + rect.right &&
+                x >= rect.left &&
+                y <= rect.top + rect.bottom &&
+                y >= rect.top){
+            return true;
+        }
+        return false;
+    }
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent) {
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_UP:
                 //When the user presses on the screen
                 //we will do something here
-                if (motionEvent.getX() <= dPadUp.GetDetectCollision().right &&
-                        motionEvent.getX() > dPadUp.GetDetectCollision().left &&
-                        motionEvent.getY() <= dPadUp.GetDetectCollision().bottom &&
-                        motionEvent.getY() > dPadUp.GetDetectCollision().top &&
+                if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadUp.GetDetectCollision()) &&
                         map.IsCellOpen(player.GetX(), player.GetY() - 1)){
                     player.SetY(player.GetY() - 1);
+                }
+                else if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadDown.GetDetectCollision()) &&
+                        map.IsCellOpen(player.GetX(), player.GetY() + 1)){
+                    player.SetY(player.GetY() + 1);
+                }
+                if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadLeft.GetDetectCollision()) &&
+                        map.IsCellOpen(player.GetX() - 1, player.GetY())){
+                    player.SetX(player.GetX() - 1);
+                }
+                else if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadRight.GetDetectCollision()) &&
+                        map.IsCellOpen(player.GetX() + 1, player.GetY())){
+                    player.SetX(player.GetX() + 1);
                 }
                 //GetNewLevel();
                 break;

@@ -30,13 +30,15 @@ public class GameView extends SurfaceView implements Runnable {
     private Paint paint;
     private Canvas canvas;
     private SurfaceHolder surfaceHolder;
+    //Screensize
+    private int screenWidth = 0;
+    private int screenHeight = 0;
     private Random rand = new Random();
     //Holder of images.
     private Bitmap[] Bitmaps;
-    private Bitmap heroLeft;
-    private Bitmap heroRight;
-    private Bitmap heroUp;
-    private Bitmap heroDown;
+    private Bitmap[] spaces;
+    private Bitmap[] walls;
+    private Bitmap[] levelImages;
 
     //Create dPad
     private Rect DPAD;
@@ -52,173 +54,102 @@ public class GameView extends SurfaceView implements Runnable {
 
     //the Levels
     private int numLevels = 2;
-    private ArrayList<Map> Levels = new ArrayList<Map>(numLevels);
-    private Map currentLevel;
+    private ArrayList<Level> Levels = new ArrayList<Level>(numLevels);
+    private Level currentLevel;
     private int currentLevelIndex = 0;
+
     private int mBitMapHeight;
     private int mBitMapWidth;
     private int mHeight;
     private int mWidth;
 
-    //The Clutter
-    private int maxClutter = 5;
-    private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
-    //The Stairs
-    private BaseObject stairsUp;
-    private BaseObject stairsDown;
-
     //the player
+    private Bitmap heroLeft;
+    private Bitmap heroRight;
+    private Bitmap heroUp;
+    private Bitmap heroDown;
     private Player player;
-
-    //the enemies
-    private int maxEnemies = 5;
-    private ArrayList<Creature> enemies = new ArrayList<>(maxEnemies);
 
     //Class constructor
     public GameView(Context context, int screenX, int screenY) {
         super(context);
 
+        screenWidth = screenX;
+        screenHeight = screenY;
+
         //Create drawing objects
         surfaceHolder = getHolder();
         paint = new Paint();
+        createImages(context);
 
         //Create currentLevel
-        currentLevel = new Map(context, 0, 0, screenX, screenY);
+        currentLevel = new Level(levelImages, spaces, walls, 0, 0, screenWidth, screenHeight);
         Levels.add(currentLevel);
         currentLevelIndex = 0;
         //currentLevel.GenerateNewMap();
 
-        //Height and Width of one cell
-        mBitMapHeight = currentLevel.GetBitMapHeight();
-        mBitMapWidth = currentLevel.GetBitMapWidth();
         //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
         mHeight = currentLevel.GetHeight();
         mWidth = currentLevel.GetWidth();
 
-        createImages(context);
         createDPAD(screenY);
 
         //Create Core GamePlay Elements
         createPlayer();
-        createStairs();
-        createEnemies();
-        GetNewClutter();
-    }
-
-    private void createStairs() {
-        int newPoint = getNewEmptyPoint();
-        stairsUp = new BaseObject(currentLevel.GetFloorPoints().get(newPoint),
-                Bitmaps[6]);
-        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
-        newPoint = getNewEmptyPoint();
-        stairsDown = new BaseObject(currentLevel.GetFloorPoints().get(newPoint),
-                Bitmaps[5]);
-        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
-    }
-
-    private void createEnemies() {
-        //Create Enemies
-        enemies.clear();
-        int newSize = rand.nextInt(maxEnemies) + 1;
-        enemies = new ArrayList<Creature>(newSize);
-        for (int i = 0; i < newSize; i++) {
-            int hPMax = 3;
-            float defMax = 0.3f;
-            Bitmap enemyBitmap = Bitmaps[7];
-            Point enemyPoint = new Point(0, 0);
-
-            Creature temp;
-            switch (rand.nextInt(4)) {
-                default:
-                case 0:
-                    temp = new Creature(enemyPoint, enemyBitmap, hPMax, defMax);
-                    break;
-                case 1:
-                    hPMax = 5;
-                    defMax = 0.5f;
-                    enemyBitmap = Bitmaps[8];
-                    temp = new Creature(enemyPoint, enemyBitmap, hPMax, defMax);
-                    break;
-            }
-
-            int newPoint = getNewEmptyPoint();
-            temp.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
-            currentLevel.TakeAwayEmptyFloorTiles(newPoint);
-
-            enemies.add(temp);
-        }
     }
 
     private void createPlayer() {
         //Create player object
-        heroLeft = Bitmap.createBitmap(Bitmaps[3], 0, 0, Bitmaps[3].getWidth() / 3, Bitmaps[3].getHeight() / 4);
+        heroLeft = Bitmap.createBitmap(Bitmaps[0], 0, 0, Bitmaps[0].getWidth() / 3, Bitmaps[0].getHeight() / 4);
         heroLeft = getResizedBitmap(heroLeft, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         Matrix flip = new Matrix();
         flip.postScale(-1, 1, heroLeft.getWidth() / 2f, heroLeft.getHeight() / 2f);
         heroRight = Bitmap.createBitmap(heroLeft, 0, 0, heroLeft.getWidth(), heroLeft.getHeight(), flip, true);
         heroRight = getResizedBitmap(heroRight, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        heroUp = Bitmap.createBitmap(Bitmaps[3], Bitmaps[3].getWidth() / 3, Bitmaps[3].getHeight() / 4, Bitmaps[3].getWidth() / 3, Bitmaps[3].getHeight() / 4);
+        heroUp = Bitmap.createBitmap(Bitmaps[0], Bitmaps[0].getWidth() / 3, Bitmaps[0].getHeight() / 4, Bitmaps[0].getWidth() / 3, Bitmaps[0].getHeight() / 4);
         heroUp = getResizedBitmap(heroUp, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        heroDown = Bitmap.createBitmap(Bitmaps[3], Bitmaps[3].getWidth() / 3, Bitmaps[3].getHeight() / 2, Bitmaps[3].getWidth() / 3, Bitmaps[3].getHeight() / 4);
+        heroDown = Bitmap.createBitmap(Bitmaps[0], Bitmaps[0].getWidth() / 3, Bitmaps[0].getHeight() / 2, Bitmaps[0].getWidth() / 3, Bitmaps[0].getHeight() / 4);
         heroDown = getResizedBitmap(heroDown, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        int newPoint = getNewEmptyPoint();
+        int newPoint = currentLevel.getNewEmptyPoint();
         player = new Player(currentLevel.GetFloorPoints().get(newPoint),
                 heroDown);
         currentLevel.TakeAwayEmptyFloorTiles(newPoint);
     }
 
     private void createImages(Context context) {
+
+        spaces = new Bitmap[5];
+        spaces[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor1);
+        spaces[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor2);
+        spaces[2] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor3);
+        spaces[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor4);
+        spaces[4] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor5);
+
+        //Height and Width of one cell
+        mBitMapHeight = spaces[0].getHeight();
+        mBitMapWidth = spaces[0].getWidth();
+
+        walls = new Bitmap[2];
+        walls[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall1);
+        walls[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall2);
+
         //Get Images
-        Bitmaps = new Bitmap[9];
-        //Clutter
-        Bitmaps[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        Bitmaps[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        //PLAYER
-        Bitmaps[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
+        Bitmaps = new Bitmap[2];//PLAYER
+        Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
         //Directional Button
-        Bitmaps[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+
+        levelImages = new Bitmap[7];
+        //Clutter
+        levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         //STAIRS
-        Bitmaps[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
-        Bitmaps[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
+        levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
+        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
         //ENEMIES
-        Bitmaps[7] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
-        Bitmaps[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
-    }
-
-    private void createDPAD(int screenY) {
-        dpadHeight = Bitmaps[4].getHeight() * 2 + Bitmaps[4].getWidth();
-        dpadY = screenY - dpadHeight;
-        DPAD = new Rect(dpadX + DPADbuffer, dpadY - DPADbuffer, dpadHeight, dpadHeight);
-
-        Point dpadUpPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[4].getWidth() / 2), DPAD.top);
-        dPadUp = new BaseObject(dpadUpPoint, Bitmaps[4]);
-
-        Matrix matrix = new Matrix();
-        matrix.postRotate(270);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(Bitmaps[4], 0, 0, Bitmaps[4].getWidth(), Bitmaps[4].getHeight(), matrix, true);
-        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
-        dPadLeft = new BaseObject(dpadLeftPoint, rotatedBitmap);
-
-        //matrix.postRotate(180);
-        rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadDownPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[4].getWidth() / 2), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
-        dPadDown = new BaseObject(dpadDownPoint, rotatedBitmap);
-
-        //matrix.postRotate(90);
-        rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
-        dPadRight = new BaseObject(dpadRightPoint, rotatedBitmap);
-    }
-
-    private void SetNewPlayerPoint() {
-        int newPoint = getNewEmptyPoint();
-        player.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
-        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
-    }
-
-    private int getNewEmptyPoint() {
-        return rand.nextInt(currentLevel.GetNumEmptyPoints());
+        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
+        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -238,39 +169,35 @@ public class GameView extends SurfaceView implements Runnable {
         return resizedBitmap;
     }
 
-    private void GetNewClutter() {
-        clutter.clear();
-        int newSize = rand.nextInt(maxClutter) + 1;
-        clutter = new ArrayList<Clutter>(newSize);
-        for (int i = 0; i < newSize; i++) {
-            int clutterVal = 10;
-            Bitmap clutterBitmap = Bitmaps[0];
-            Point clutterPoint = new Point(0, 0);
+    private void createDPAD(int screenY) {
+        dpadHeight = Bitmaps[1].getHeight() * 2 + Bitmaps[1].getWidth();
+        dpadY = screenY - dpadHeight;
+        DPAD = new Rect(dpadX + DPADbuffer, dpadY - DPADbuffer, dpadHeight, dpadHeight);
 
-            Clutter temp = new Clutter(clutterVal, clutterPoint, clutterBitmap);
-            switch (rand.nextInt(3)) {
-                case 0:
-                    //barrel
-                    temp.SetBitMap(Bitmaps[0]);
-                    temp.SetValue(10);
-                    break;
-                case 1:
-                    //chest
-                    temp.SetBitMap(Bitmaps[1]);
-                    temp.SetValue(30);
-                    break;
-                default:
-                case 2:
-                    //rock
-                    temp.SetBitMap(Bitmaps[2]);
-                    temp.SetValue(0);
-                    break;
-            }
-            int newPoint = getNewEmptyPoint();
-            temp.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
-            currentLevel.TakeAwayEmptyFloorTiles(newPoint);
-            clutter.add(temp);
-        }
+        Point dpadUpPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[1].getWidth() / 2), DPAD.top);
+        dPadUp = new BaseObject(dpadUpPoint, Bitmaps[1]);
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(270);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(Bitmaps[1], 0, 0, Bitmaps[1].getWidth(), Bitmaps[1].getHeight(), matrix, true);
+        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
+        dPadLeft = new BaseObject(dpadLeftPoint, rotatedBitmap);
+
+        //matrix.postRotate(180);
+        rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
+        Point dpadDownPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[1].getWidth() / 2), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
+        dPadDown = new BaseObject(dpadDownPoint, rotatedBitmap);
+
+        //matrix.postRotate(90);
+        rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
+        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
+        dPadRight = new BaseObject(dpadRightPoint, rotatedBitmap);
+    }
+
+    private void SetNewPlayerPoint() {
+        int newPoint = currentLevel.getNewEmptyPoint();
+        player.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
+        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
     }
 
     @Override
@@ -339,8 +266,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheStairs() {
-        drawLevelObject(stairsUp);
-        drawLevelObject(stairsDown);
+        drawLevelObject(currentLevel.getStairsUp());
+        drawLevelObject(currentLevel.getStairsDown());
     }
 
     private void drawingTheDPAD() {
@@ -377,14 +304,14 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheClutter() {
-        for (int j = 0; j < clutter.size(); ++j) {
-            drawLevelObject(clutter.get(j));
+        for (int j = 0; j < currentLevel.getClutter().size(); ++j) {
+            drawLevelObject(currentLevel.getClutter().get(j));
         }
     }
 
     private void drawingTheEnemies() {
-        for (int i = 0; i < enemies.size(); i++) {
-            drawLevelObject(enemies.get(i));
+        for (int i = 0; i < currentLevel.getEnemies().size(); i++) {
+            drawLevelObject(currentLevel.getEnemies().get(i));
         }
     }
 
@@ -477,8 +404,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void CheckStairs() {
-        if (player.GetPoint().x == stairsDown.GetPoint().x &&
-                player.GetPoint().y == stairsDown.GetPoint().y) {
+        if (player.GetPoint().x == currentLevel.getStairsDown().GetPoint().x &&
+                player.GetPoint().y == currentLevel.getStairsDown().GetPoint().y) {
             if (currentLevel == Levels.get(Levels.size() - 1)) {
                 AddNewLevel();
             }
@@ -486,18 +413,18 @@ public class GameView extends SurfaceView implements Runnable {
                 currentLevel = Levels.get(currentLevelIndex + 1);
                 currentLevelIndex++;
             }
-            player.SetX(stairsUp.GetX());
-            player.SetY(stairsUp.GetY());
+            player.SetX(currentLevel.getStairsUp().GetX());
+            player.SetY(currentLevel.getStairsUp().GetY());
         }
 
-        else if (player.GetPoint().x == stairsUp.GetPoint().x &&
-                player.GetPoint().y == stairsUp.GetPoint().y) {
+        else if (player.GetPoint().x == currentLevel.getStairsUp().GetPoint().x &&
+                player.GetPoint().y == currentLevel.getStairsUp().GetPoint().y) {
             if (currentLevelIndex == 0) {}
             else{
                 currentLevel = Levels.get(currentLevelIndex - 1);
                 currentLevelIndex--;
-                player.SetX(stairsDown.GetX());
-                player.SetY(stairsDown.GetY());
+                player.SetX(currentLevel.getStairsDown().GetX());
+                player.SetY(currentLevel.getStairsDown().GetY());
             }
         }
     }
@@ -509,12 +436,10 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void AddNewLevel() {
-        Levels.add(currentLevel.GenerateNewMap());
+        Level temp = new Level(levelImages, spaces, walls, 0,0, screenWidth, screenHeight);
+        Levels.add(temp);
         currentLevel = Levels.get(Levels.size() - 1);
         currentLevelIndex++;
         SetNewPlayerPoint();
-        createStairs();
-        createEnemies();
-        GetNewClutter();
     }
 }

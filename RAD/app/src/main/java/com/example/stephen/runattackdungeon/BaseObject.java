@@ -1,6 +1,7 @@
 package com.example.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 
@@ -69,4 +70,7 @@ public class BaseObject {
     public void SetDetectCollision(Rect newRect) {
         detectCollision = newRect;
     }
+
+    //Helper Functions
+
 }

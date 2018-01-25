@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.content.Context;
 import android.graphics.Point;
 
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ public class Map {
     //the amount of tiles in each column
     private int mHeight;
     //random number, used for random number generation
-    private Random rand = new Random();
+    protected Random rand = new Random();
     //the current map tileset
     private Bitmap[][] mCellsCurr;
     //the next generation of the map tileset.
@@ -172,19 +171,21 @@ public class Map {
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-    public Map(Context context, int startX, int startY, int Width, int Height) {
+    public Map(Bitmap[] spaces, Bitmap[] walls, int startX, int startY, int Width, int Height) {
         mX = startX;
         mY = startY;
 
         CellSpace = new Bitmap[5];
+        CellSpace = spaces;
         CellWall = new Bitmap[2];
-        CellSpace[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor1);
-        CellSpace[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor2);
-        CellSpace[2] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor3);
-        CellSpace[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor4);
-        CellSpace[4] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor5);
-        CellWall[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall1);
-        CellWall[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall2);
+        CellWall = walls;
+//        CellSpace[0] = spaces[0];
+//        CellSpace[1] = spaces[1];
+//        CellSpace[2] = spaces[2];
+//        CellSpace[3] = spaces[3];
+//        CellSpace[4] = spaces[4];
+//        CellWall[0] = walls[0];
+//        CellWall[1] = walls[1];
         //40 x 40 = properties of all map tiles.
         mWidth = Width / CellSpace[0].getWidth();
         mHeight = Height / CellSpace[0].getHeight();
@@ -240,10 +241,6 @@ public class Map {
     public int GetHeight() {return mHeight;}
 
     public int GetWidth() {return mWidth;}
-
-    public int GetBitMapWidth() {return CellSpace[0].getWidth();}
-
-    public int GetBitMapHeight() {return CellSpace[0].getHeight();}
 
     public ArrayList<Point> GetFloorPoints(){return FloorTiles;}
     public void TakeAwayEmptyFloorTiles(int floorTile){

@@ -83,6 +83,7 @@ public class GameView extends SurfaceView implements Runnable {
 
         //Create currentLevel
         currentLevel = new Map(context, 0, 0, screenX, screenY);
+        Levels.add(currentLevel);
         //currentLevel.GenerateNewMap();
 
         //Height and Width of one cell
@@ -282,6 +283,12 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
+        if (player.GetPoint().x == stairsDown.GetPoint().x &&
+                player.GetPoint().y == stairsDown.GetPoint().y){
+            GetNewLevel();
+            player.SetX(stairsUp.GetX());
+            player.SetY(stairsUp.GetY());
+        }
 //        //updating player position
 //        player.update();
 //        //setting boom outside the screen
@@ -476,8 +483,10 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void GetNewLevel() {
-        currentLevel.GenerateNewMap();
+        Levels.add(currentLevel.GenerateNewMap());
+        currentLevel = Levels.get(Levels.size() - 1);
         SetNewPlayerPoint();
+        createStairs();
         createEnemies();
         GetNewClutter();
     }

@@ -202,7 +202,7 @@ public class Map {
     //Creates a new map through random generation and two refinement process.
     //Refinement one is to prevent large open areas.
     //refinement two is to create paths between areas.
-    public void GenerateNewMap() {
+    public Map GenerateNewMap() {
         // randomly initialize the map
         RandomizeMap();
         Pause();
@@ -221,6 +221,7 @@ public class Map {
         }
 //        MakeCorridors();
         GetEmptyFloorPoints();
+        return this;
     }
 
     public int GetX() {return mX;}

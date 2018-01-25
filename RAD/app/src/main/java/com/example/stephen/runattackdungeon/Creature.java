@@ -18,6 +18,17 @@ public class Creature extends BaseObject {
         super(newPoint, newBitmap);
     }
 
+    Creature(Point newPoint, Bitmap newBitmap, int HPMax) {
+        super(newPoint, newBitmap);
+        hitPoints = hitPointsMax = HPMax;
+    }
+
+    Creature(Point newPoint, Bitmap newBitmap, int HPMax, float DefMax) {
+        super(newPoint, newBitmap);
+        hitPoints = hitPointsMax = HPMax;
+        defense = defenseMax = DefMax;
+    }
+
     //getters
     public int GetHP() {
         return hitPoints;
@@ -42,6 +53,10 @@ public class Creature extends BaseObject {
     * Hurt: parameters:
     * int damage = how much to hurt the creature.
      */
+    public void SetMaxHP(int newMax) {
+        hitPointsMax = newMax;
+    }
+
     public void Hurt(int damage) {
         hitPoints -= damage;
     }
@@ -50,8 +65,7 @@ public class Creature extends BaseObject {
         if (newDef > defenseMax) {
             defense = defenseMax;
             return;
-        }
-        else{
+        } else {
             defense = newDef;
         }
     }

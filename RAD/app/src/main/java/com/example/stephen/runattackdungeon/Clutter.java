@@ -7,10 +7,10 @@ import android.graphics.Point;
  * Created by Stephen on 2018-01-18.
  */
 
-public class Item extends BaseObject {
+public class Clutter extends BaseObject {
     private int value = 0;
 
-    Item(int newValue, Point mPoint, Bitmap newImage) {
+    Clutter(int newValue, Point mPoint, Bitmap newImage) {
         super(mPoint, newImage);
         value = newValue;
     }

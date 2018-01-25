@@ -8,11 +8,13 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -25,39 +27,48 @@ public class GameView extends SurfaceView implements Runnable {
     volatile boolean playing;
     //the game thread
     private Thread gameThread = null;
-    //the player
-    private Creature player;
     //These objects will be used for drawing
     private Paint paint;
     private Canvas canvas;
     private SurfaceHolder surfaceHolder;
     private Random rand = new Random();
-
-    private Map map;
-    private int mBitMapHeight;
-    private int mBitMapWidth;
-    private int mHeight;
-    private int mWidth;
-
-    private int maxItems = 5;
-    private ArrayList<Item> items = new ArrayList<Item>(maxItems);
+    //Holder of images.
     private Bitmap[] Bitmaps;
-
-//    private LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//    private View view = inflater.inflate(R.layout.dpad, null);
+    private Bitmap heroLeft;
+    private Bitmap heroRight;
+    private Bitmap heroUp;
+    private Bitmap heroDown;
 
     //Create dPad
     private Rect DPAD;
     private int dpadX = 0;
     private int dpadY = 0;
-    private int dpadWidth = 0;
     private int dpadHeight = 0;
     private int dPadOpacity = 100;
-    private int DPADbuffer = 8;
+    private int DPADbuffer = 80;
     private BaseObject dPadUp;
     private BaseObject dPadDown;
     private BaseObject dPadLeft;
     private BaseObject dPadRight;
+
+    //the Levels
+    private int numLevels = 2;
+    private ArrayList<Map> Levels = new ArrayList<Map>(numLevels);
+    private Map currentLevel;
+    private int mBitMapHeight;
+    private int mBitMapWidth;
+    private int mHeight;
+    private int mWidth;
+
+    //The Clutter
+    private int maxClutter = 5;
+    private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
+
+    //the player
+    private Player player;
+    //the enemies
+    private int maxEnemies = 5;
+    private ArrayList<Creature> enemies = new ArrayList<>(maxEnemies);
 
     //Class constructor
     public GameView(Context context, int screenX, int screenY) {
@@ -66,36 +77,57 @@ public class GameView extends SurfaceView implements Runnable {
         //Create drawing objects
         surfaceHolder = getHolder();
         paint = new Paint();
-        //Create map
-        map = new Map(context, 0, 0, screenX, screenY);
-        map.GenerateNewMap();
+
+        //Create currentLevel
+        currentLevel = new Map(context, 0, 0, screenX, screenY);
+        currentLevel.GenerateNewMap();
 
         //Height and Width of one cell
-        mBitMapHeight = map.GetBitMapHeight();
-        mBitMapWidth = map.GetBitMapWidth();
-        //Playable spaces on the map, i.e., the number of spaces wide and long that the player can potentially use.
-        mHeight = map.GetHeight();
-        mWidth = map.GetWidth();
+        mBitMapHeight = currentLevel.GetBitMapHeight();
+        mBitMapWidth = currentLevel.GetBitMapWidth();
+        //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
+        mHeight = currentLevel.GetHeight();
+        mWidth = currentLevel.GetWidth();
 
-        //Create Bitmaps
-        Bitmaps = new Bitmap[5];
+        //Get Images
+        Bitmaps = new Bitmap[9];
+        //Clutter
         Bitmaps[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         Bitmaps[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        //PLAYER
         Bitmaps[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
+        //Directional Button
         Bitmaps[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+        //STAIRS
+        Bitmaps[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
+        Bitmaps[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
+        //ENEMIES
+        Bitmaps[7] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
+        Bitmaps[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
 
         //Create player object
-        Bitmap heroLeft = Bitmap.createBitmap(Bitmaps[3], 0, 0, 48, 64);
+        heroLeft = Bitmap.createBitmap(Bitmaps[3], 0, 0, Bitmaps[3].getWidth()/3, Bitmaps[3].getHeight()/4);
+        heroLeft = getResizedBitmap(heroLeft, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        Matrix flip = new Matrix();
+        flip.postScale(-1, 1, heroLeft.getWidth()/2f, heroLeft.getHeight()/2f);
+        heroRight = Bitmap.createBitmap(heroLeft, 0, 0, heroLeft.getWidth(), heroLeft.getHeight(), flip, true);
+        heroRight = getResizedBitmap(heroRight, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        heroUp = Bitmap.createBitmap(Bitmaps[3], Bitmaps[3].getWidth()/3, Bitmaps[3].getHeight()/4, Bitmaps[3].getWidth()/3, Bitmaps[3].getHeight()/4);
+        heroUp = getResizedBitmap(heroUp, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        heroDown = Bitmap.createBitmap(Bitmaps[3], Bitmaps[3].getWidth()/3, Bitmaps[3].getHeight()/2, Bitmaps[3].getWidth()/3, Bitmaps[3].getHeight()/4);
+        heroDown = getResizedBitmap(heroDown, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         int newPoint = getNewEmptyPoint();
-        player = new Creature(map.GetFloorPoints().get(newPoint),
-                getResizedBitmap(heroLeft, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75)));
-        map.TakeAwayEmptyFloorTiles(newPoint);
+        player = new Player(currentLevel.GetFloorPoints().get(newPoint),
+                heroDown);
+        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
+        //Create Enemies
+
 
         //Create DPAD
         createDPAD(screenY);
-        //Create Items
-        GetNewItems();
+        //Create Clutter
+        GetNewClutter();
     }
 
     private void createDPAD(int screenY) {
@@ -125,12 +157,12 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void SetNewPlayerPoint() {
         int newPoint = getNewEmptyPoint();
-        player.SetPoint(map.GetFloorPoints().get(newPoint));
-        map.TakeAwayEmptyFloorTiles(newPoint);
+        player.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
+        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
     }
 
     private int getNewEmptyPoint() {
-        return rand.nextInt(map.GetNumEmptyPoints());
+        return rand.nextInt(currentLevel.GetNumEmptyPoints());
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -150,16 +182,16 @@ public class GameView extends SurfaceView implements Runnable {
         return resizedBitmap;
     }
 
-    private void GetNewItems() {
-        items.clear();
-        int newSize = rand.nextInt(maxItems) + 1;
-        items = new ArrayList<Item>(newSize);
+    private void GetNewClutter() {
+        clutter.clear();
+        int newSize = rand.nextInt(maxClutter) + 1;
+        clutter = new ArrayList<Clutter>(newSize);
         for (int i = 0; i < newSize; i++) {
-            int itemVal = 10;
-            Bitmap itemBitmap = Bitmaps[0];
-            Point itemPoint = new Point(0, 0);
+            int clutterVal = 10;
+            Bitmap clutterBitmap = Bitmaps[0];
+            Point clutterPoint = new Point(0, 0);
 
-            Item temp = new Item(itemVal, itemPoint, itemBitmap);
+            Clutter temp = new Clutter(clutterVal, clutterPoint, clutterBitmap);
             switch (rand.nextInt(3)) {
                 case 0:
                     //barrel
@@ -179,9 +211,9 @@ public class GameView extends SurfaceView implements Runnable {
                     break;
             }
             int newPoint = getNewEmptyPoint();
-            temp.SetPoint(map.GetFloorPoints().get(newPoint));
-            map.TakeAwayEmptyFloorTiles(newPoint);
-            items.add(temp);
+            temp.SetPoint(currentLevel.GetFloorPoints().get(newPoint));
+            currentLevel.TakeAwayEmptyFloorTiles(newPoint);
+            clutter.add(temp);
         }
     }
 
@@ -226,9 +258,9 @@ public class GameView extends SurfaceView implements Runnable {
             canvas.drawColor(Color.BLACK);
             //setting the paint color to white to draw the stars
             paint.setColor(Color.WHITE);
-            //drawing the map
+            //drawing the currentLevel
             drawingTheMap();
-            drawingTheItems();
+            drawingTheClutter();
             //drawing the player
             canvas.drawBitmap(
                     player.GetBitmap(),
@@ -275,18 +307,18 @@ public class GameView extends SurfaceView implements Runnable {
         paint.setAlpha(255);
     }
 
-    private void drawingTheItems() {
-        for (int j = 0; j < items.size(); ++j) {
+    private void drawingTheClutter() {
+        for (int j = 0; j < clutter.size(); ++j) {
             canvas.drawBitmap(
-                    items.get(j).GetBitmap(),
-                    items.get(j).GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (items.get(j).GetBitmap().getWidth() / 2),
-                    items.get(j).GetY() * mBitMapHeight,
+                    clutter.get(j).GetBitmap(),
+                    clutter.get(j).GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (clutter.get(j).GetBitmap().getWidth() / 2),
+                    clutter.get(j).GetY() * mBitMapHeight,
                     paint);
         }
     }
 
     private void drawingTheMap() {
-        Bitmap[][] tempMap = map.GetCurrentMap();
+        Bitmap[][] tempMap = currentLevel.GetCurrentMap();
 
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
@@ -325,11 +357,11 @@ public class GameView extends SurfaceView implements Runnable {
         gameThread.start();
     }
 
-    private boolean DetectCollision(float x, float y, Rect rect){
-        if (x <= rect.left + rect.right &&
-                x >= rect.left &&
-                y <= rect.top + rect.bottom &&
-                y >= rect.top){
+    private boolean DetectButtonPress(PointF pressPoint, Rect rect){
+        if (pressPoint.x <= rect.left + rect.right &&
+                pressPoint.x >= rect.left &&
+                pressPoint.y <= rect.top + rect.bottom &&
+                pressPoint.y >= rect.top){
             return true;
         }
         return false;
@@ -340,21 +372,34 @@ public class GameView extends SurfaceView implements Runnable {
             case MotionEvent.ACTION_UP:
                 //When the user presses on the screen
                 //we will do something here
-                if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadUp.GetDetectCollision()) &&
-                        map.IsCellOpen(player.GetX(), player.GetY() - 1)){
+                PointF pressPoint = new PointF(motionEvent.getX(), motionEvent.getY());
+                if (DetectButtonPress(pressPoint, dPadUp.GetCollideRect()) &&
+                        currentLevel.IsCellOpen(player.GetX(), player.GetY() - 1)){
                     player.SetY(player.GetY() - 1);
+                    if (player.GetBitmap() != heroUp){
+                        player.SetBitMap(heroUp);
+                    }
                 }
-                else if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadDown.GetDetectCollision()) &&
-                        map.IsCellOpen(player.GetX(), player.GetY() + 1)){
+                else if (DetectButtonPress(pressPoint, dPadDown.GetCollideRect()) &&
+                        currentLevel.IsCellOpen(player.GetX(), player.GetY() + 1)){
                     player.SetY(player.GetY() + 1);
+                    if (player.GetBitmap() != heroDown){
+                        player.SetBitMap(heroDown);
+                    }
                 }
-                if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadLeft.GetDetectCollision()) &&
-                        map.IsCellOpen(player.GetX() - 1, player.GetY())){
+                if (DetectButtonPress(pressPoint, dPadLeft.GetCollideRect()) &&
+                        currentLevel.IsCellOpen(player.GetX() - 1, player.GetY())){
                     player.SetX(player.GetX() - 1);
+                    if (player.GetBitmap() != heroLeft){
+                        player.SetBitMap(heroLeft);
+                    }
                 }
-                else if (DetectCollision(motionEvent.getX(), motionEvent.getY(), dPadRight.GetDetectCollision()) &&
-                        map.IsCellOpen(player.GetX() + 1, player.GetY())){
+                else if (DetectButtonPress(pressPoint, dPadRight.GetCollideRect()) &&
+                        currentLevel.IsCellOpen(player.GetX() + 1, player.GetY())){
                     player.SetX(player.GetX() + 1);
+                    if (player.GetBitmap() != heroRight){
+                        player.SetBitMap(heroRight);
+                    }
                 }
                 //GetNewLevel();
                 break;
@@ -367,8 +412,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void GetNewLevel() {
-        map.GenerateNewMap();
+        currentLevel.GenerateNewMap();
         SetNewPlayerPoint();
-        GetNewItems();
+        GetNewClutter();
     }
 }

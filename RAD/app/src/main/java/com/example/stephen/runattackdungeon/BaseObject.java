@@ -45,7 +45,7 @@ public class BaseObject {
         return image.getHeight();
     }
 
-    public Rect GetDetectCollision() {
+    public Rect GetCollideRect() {
         return detectCollision;
     }
 

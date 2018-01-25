@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -63,9 +62,13 @@ public class GameView extends SurfaceView implements Runnable {
     //The Clutter
     private int maxClutter = 5;
     private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
+    //The Stairs
+    private BaseObject stairsUp;
+    private BaseObject stairsDown;
 
     //the player
     private Player player;
+
     //the enemies
     private int maxEnemies = 5;
     private ArrayList<Creature> enemies = new ArrayList<>(maxEnemies);
@@ -80,7 +83,7 @@ public class GameView extends SurfaceView implements Runnable {
 
         //Create currentLevel
         currentLevel = new Map(context, 0, 0, screenX, screenY);
-        currentLevel.GenerateNewMap();
+        //currentLevel.GenerateNewMap();
 
         //Height and Width of one cell
         mBitMapHeight = currentLevel.GetBitMapHeight();
@@ -90,12 +93,25 @@ public class GameView extends SurfaceView implements Runnable {
         mWidth = currentLevel.GetWidth();
 
         createImages(context);
-        createPlayer();
-        createEnemies();
         createDPAD(screenY);
+
+        //Create Core GamePlay Elements
+        createPlayer();
+        createStairs();
+        createEnemies();
         GetNewClutter();
     }
 
+    private void createStairs() {
+        int newPoint = getNewEmptyPoint();
+        stairsUp = new BaseObject(currentLevel.GetFloorPoints().get(newPoint),
+                Bitmaps[6]);
+        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
+        newPoint = getNewEmptyPoint();
+        stairsDown = new BaseObject(currentLevel.GetFloorPoints().get(newPoint),
+                Bitmaps[5]);
+        currentLevel.TakeAwayEmptyFloorTiles(newPoint);
+    }
     private void createEnemies() {
         //Create Enemies
         enemies.clear();
@@ -296,19 +312,31 @@ public class GameView extends SurfaceView implements Runnable {
             paint.setColor(Color.WHITE);
             //drawing the currentLevel
             drawingTheMap();
+            drawingTheStairs();
             drawingTheClutter();
             drawingTheEnemies();
             //drawing the player
-            canvas.drawBitmap(
-                    player.GetBitmap(),
-                    player.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (player.GetBitmap().getWidth() / 2),
-                    player.GetY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (player.GetBitmap().getHeight() / 2),
-                    paint);
-            drawingTheDPAD();
+            drawLevelObject(player);
 
+            //THIS NEEDS TO BE LAST.
+            drawingTheDPAD();
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
+    }
+
+    private void drawLevelObject(BaseObject object){
+        canvas.drawBitmap(
+                object.GetBitmap(),
+                object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
+                object.GetY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (object.GetBitmap().getHeight() / 2),
+                paint
+        );
+    }
+
+    private void drawingTheStairs(){
+        drawLevelObject(stairsUp);
+        drawLevelObject(stairsDown);
     }
 
     private void drawingTheDPAD() {
@@ -346,22 +374,13 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawingTheClutter() {
         for (int j = 0; j < clutter.size(); ++j) {
-            canvas.drawBitmap(
-                    clutter.get(j).GetBitmap(),
-                    clutter.get(j).GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (clutter.get(j).GetBitmap().getWidth() / 2),
-                    clutter.get(j).GetY() * mBitMapHeight,
-                    paint);
+            drawLevelObject(clutter.get(j));
         }
     }
 
     private void drawingTheEnemies(){
         for (int i = 0; i < enemies.size(); i++){
-            canvas.drawBitmap(
-                    enemies.get(i).GetBitmap(),
-                    enemies.get(i).GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (enemies.get(i).GetBitmap().getWidth() / 2),
-                    enemies.get(i).GetY() * mBitMapHeight,
-                    paint
-            );
+            drawLevelObject(enemies.get(i));
         }
     }
 
@@ -459,6 +478,7 @@ public class GameView extends SurfaceView implements Runnable {
     private void GetNewLevel() {
         currentLevel.GenerateNewMap();
         SetNewPlayerPoint();
+        createEnemies();
         GetNewClutter();
     }
 }

@@ -228,7 +228,7 @@ public class Map {
     public int GetY() {return mY;}
 
     public boolean IsCellOpen(int cellx, int celly) {
-        if (cellx > mWidth || cellx < 0 || celly >= mHeight || celly < 0){
+        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0){
             return false;
         }
         return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));

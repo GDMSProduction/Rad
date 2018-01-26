@@ -1,4 +1,4 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -13,6 +13,7 @@ public class Creature extends BaseObject {
     private int hitPointsMax = 10;
     private float defense = 0.0f;
     private float defenseMax = 0.8f;
+    private boolean following = false;
 
     Creature(Point newPoint, Bitmap newBitmap) {
         super(newPoint, newBitmap);
@@ -49,10 +50,13 @@ public class Creature extends BaseObject {
         return defenseMax;
     }
 
+    public boolean isFollowing(){return following;}
     /*
     * Hurt: parameters:
     * int damage = how much to hurt the creature.
      */
+    public void setFollowing(boolean follow){following = follow;}
+
     public void SetMaxHP(int newMax) {
         hitPointsMax = newMax;
     }

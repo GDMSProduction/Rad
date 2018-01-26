@@ -5,6 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    tools:context="com.example.stephen.runattackdungeon.HighScoresActivity">
+    tools:context="my.application.stephen.runattackdungeon.HighScoresActivity">
 
 </android.support.constraint.ConstraintLayout>

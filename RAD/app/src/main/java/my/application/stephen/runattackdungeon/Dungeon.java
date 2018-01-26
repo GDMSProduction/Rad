@@ -1,4 +1,4 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
+
+import my.application.stephen.runattackdungeon.R;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -92,8 +93,8 @@ public class Dungeon extends AppCompatActivity {
         setContentView(R.layout.activity_dungeon);
 
         mVisible = true;
-        mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = findViewById(R.id.fullscreen_content);
+        mControlsView = findViewById(my.application.stephen.runattackdungeon.R.id.fullscreen_content_controls);
+        mContentView = findViewById(my.application.stephen.runattackdungeon.R.id.fullscreen_content);
 
 
         // Set up the user interaction to manually show or hide the system UI.

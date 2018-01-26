@@ -1,9 +1,6 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Point;
 
 import java.util.ArrayList;
@@ -16,12 +13,6 @@ import java.util.Random;
 public class Map {
     //array of available images for Spaces
     private Bitmap[] CellSpace;
-    //Items to be placed on the map.
-    private BaseObject[] Items;
-    //Number of items in the current level;
-    private int itemCount = 3;
-    //MAX Number of items per level;
-    private int maxItems = 5;
     //array of available images for walls
     private Bitmap[] CellWall;
     //the Array of Rooms
@@ -98,7 +89,9 @@ public class Map {
     }
 
     private void MakeCorridors() {
+        for (int i = 0; i < Rooms.length; i++) {
 
+        }
     }
 
     private void Pause() {
@@ -155,12 +148,12 @@ public class Map {
         return walls;
     }
 
-    private void GetEmptyFloorPoints(){
+    private void GetEmptyFloorPoints() {
         numEmptyCells = 0;
         FloorTiles = new ArrayList<Point>();
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
-                if (FindInArray(CellSpace, mCellsCurr[row][col])){
+                if (FindInArray(CellSpace, mCellsCurr[row][col])) {
                     Point temp = new Point(col, row);
                     FloorTiles.add(temp);
                     numEmptyCells++;
@@ -168,6 +161,7 @@ public class Map {
             }
         }
     }
+
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -179,19 +173,10 @@ public class Map {
         CellSpace = spaces;
         CellWall = new Bitmap[2];
         CellWall = walls;
-//        CellSpace[0] = spaces[0];
-//        CellSpace[1] = spaces[1];
-//        CellSpace[2] = spaces[2];
-//        CellSpace[3] = spaces[3];
-//        CellSpace[4] = spaces[4];
-//        CellWall[0] = walls[0];
-//        CellWall[1] = walls[1];
         //40 x 40 = properties of all map tiles.
-        mWidth = Width / CellSpace[0].getWidth();
-        mHeight = Height / CellSpace[0].getHeight();
+        mWidth = (Width / CellSpace[0].getWidth());
+        mHeight = (Height / CellSpace[0].getHeight());
 
-        itemCount = rand.nextInt(maxItems) + 1;
-        Items = new BaseObject[itemCount];
         Rooms = new Point[roomNums];
 
         mCellsCurr = new Bitmap[mHeight][mWidth];
@@ -210,13 +195,11 @@ public class Map {
         int refine = rand.nextInt(3) + 1;
 
         // refine the map for some number of generations
-        for (int i = 0; i < refine; i++)
-        {
+        for (int i = 0; i < refine; i++) {
             RefineMap(true);
             Pause();
         }
-        for (int i = 0; i < refine + 1; i++)
-        {
+        for (int i = 0; i < refine + 1; i++) {
             RefineMap(false);
             Pause();
         }
@@ -225,28 +208,54 @@ public class Map {
         return this;
     }
 
-    public int GetX() {return mX;}
+    public int GetX() {
+        return mX;
+    }
 
-    public int GetY() {return mY;}
+    public int GetY() {
+        return mY;
+    }
 
     public boolean IsCellOpen(int cellx, int celly) {
-        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0){
+        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
             return false;
         }
         return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
     }
 
-    public Bitmap[][] GetCurrentMap() {return mCellsCurr;}
+    public Bitmap[][] GetCurrentMap() {
+        return mCellsCurr;
+    }
 
-    public int GetHeight() {return mHeight;}
+    public Bitmap[][] GetSubMap(int offsetX, int offsetY, int width, int height) {
+        Bitmap[][] temp = new Bitmap[height][width];
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                temp[row][col] = mCellsCurr[row + offsetY][col + offsetX];
+            }
+        }
+        return temp;
+    }
 
-    public int GetWidth() {return mWidth;}
+    public int GetHeight() {
+        return mHeight;
+    }
 
-    public ArrayList<Point> GetFloorPoints(){return FloorTiles;}
-    public void TakeAwayEmptyFloorTiles(int floorTile){
+    public int GetWidth() {
+        return mWidth;
+    }
+
+    public ArrayList<Point> GetFloorPoints() {
+        return FloorTiles;
+    }
+
+    public void TakeAwayEmptyFloorTiles(int floorTile) {
         FloorTiles.remove(floorTile);
         numEmptyCells--;
     }
-    public int GetNumEmptyPoints() {return numEmptyCells;}
+
+    public int GetNumEmptyPoints() {
+        return numEmptyCells;
+    }
 
 }

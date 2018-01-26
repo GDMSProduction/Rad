@@ -1,4 +1,4 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import org.junit.Test;
 

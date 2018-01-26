@@ -1,4 +1,4 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -40,7 +40,8 @@ public class GameView extends SurfaceView implements Runnable {
     private Bitmap[] walls;
     private Bitmap[] levelImages;
 
-    //Create dPad
+    //User Interface.
+    //dPad
     private Rect DPAD;
     private int dpadX = 0;
     private int dpadY = 0;
@@ -51,6 +52,8 @@ public class GameView extends SurfaceView implements Runnable {
     private BaseObject dPadDown;
     private BaseObject dPadLeft;
     private BaseObject dPadRight;
+    //Level info
+    private int depthTextSize = 64;
 
     //the Levels
     private int numLevels = 2;
@@ -60,8 +63,10 @@ public class GameView extends SurfaceView implements Runnable {
 
     private int mBitMapHeight;
     private int mBitMapWidth;
-    private int mHeight;
-    private int mWidth;
+    private int camOffsetX = 0;
+    private int camOffsetY = 0;
+    private int camHeight;
+    private int camWidth;
 
     //the player
     private Bitmap heroLeft;
@@ -89,13 +94,31 @@ public class GameView extends SurfaceView implements Runnable {
         //currentLevel.GenerateNewMap();
 
         //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
-        mHeight = currentLevel.GetHeight();
-        mWidth = currentLevel.GetWidth();
+        camHeight = screenY / spaces[0].getHeight();
+        camWidth = screenX / spaces[0].getWidth();
 
         createDPAD(screenY);
 
         //Create Core GamePlay Elements
         createPlayer();
+        //offsetTheCamera();
+    }
+
+    private void offsetTheCamera() {
+        camOffsetY = player.GetY() - camHeight/2;
+        camOffsetX = player.GetX() - camWidth/2;
+        if (camOffsetY < 0){
+            camOffsetY = 0;
+        }
+        if (camOffsetY >= currentLevel.GetHeight() - camHeight){
+            camOffsetY = currentLevel.GetHeight() - camHeight;
+        }
+        if (camOffsetX < 0){
+            camOffsetX = 0;
+        }
+        if (camOffsetX >= currentLevel.GetWidth() - camWidth){
+            camOffsetX = currentLevel.GetWidth() - camWidth;
+        }
     }
 
     private void createPlayer() {
@@ -119,37 +142,37 @@ public class GameView extends SurfaceView implements Runnable {
     private void createImages(Context context) {
 
         spaces = new Bitmap[5];
-        spaces[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor1);
-        spaces[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor2);
-        spaces[2] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor3);
-        spaces[3] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor4);
-        spaces[4] = BitmapFactory.decodeResource(context.getResources(), R.drawable.floor5);
+        spaces[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor1);
+        spaces[1] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor2);
+        spaces[2] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor3);
+        spaces[3] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor4);
+        spaces[4] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor5);
 
         //Height and Width of one cell
         mBitMapHeight = spaces[0].getHeight();
         mBitMapWidth = spaces[0].getWidth();
 
         walls = new Bitmap[2];
-        walls[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall1);
-        walls[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall2);
+        walls[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.wall1);
+        walls[1] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.wall2);
 
         //Get Images
         Bitmaps = new Bitmap[2];//PLAYER
-        Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
+        Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.hero);
         //Directional Button
-        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
 
         levelImages = new Bitmap[7];
         //Clutter
-        levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         //STAIRS
-        levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
-        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
+        levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
+        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
         //ENEMIES
-        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
-        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
+        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
+        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -249,14 +272,37 @@ public class GameView extends SurfaceView implements Runnable {
             //drawing the player
             drawLevelObject(player);
 
-            //THIS NEEDS TO BE LAST.
+            //User Interface
+            //THESE NEED TO BE LAST.
             drawingTheDPAD();
+            drawingCurrentDepth();
+            drawingScore();
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
+    private void drawingCurrentDepth(){
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(depthTextSize);
+        String depth = "Depth: " + currentLevelIndex*10 + " feet";
+        canvas.drawText(depth, screenWidth - (depth.length()* depthTextSize/2), depthTextSize, paint);
+    }
+    private void drawingScore(){
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(depthTextSize);
+        String score = "Gold: " + player.getScore();
+        canvas.drawText(score, screenWidth - (score.length()* depthTextSize/2), depthTextSize * 2, paint);
+    }
 
     private void drawLevelObject(BaseObject object) {
+        canvas.drawBitmap(
+                object.GetBitmap(),
+                object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
+                object.GetY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (object.GetBitmap().getHeight() / 2),
+                paint
+        );
+    }
+    private void animateLevelObject(BaseObject object, int offsetX, int offsetY) {
         canvas.drawBitmap(
                 object.GetBitmap(),
                 object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
@@ -318,8 +364,8 @@ public class GameView extends SurfaceView implements Runnable {
     private void drawingTheMap() {
         Bitmap[][] tempMap = currentLevel.GetCurrentMap();
 
-        for (int row = 0; row < mHeight; row++) {
-            for (int col = 0; col < mWidth; col++) {
+        for (int row = 0; row < camHeight; row++) {
+            for (int col = 0; col < camWidth; col++) {
                 canvas.drawBitmap(tempMap[row][col],
                         col * mBitMapWidth,
                         row * mBitMapHeight,
@@ -394,6 +440,7 @@ public class GameView extends SurfaceView implements Runnable {
                     checkPlayerImage(heroRight);
                     CheckStairs();
                 }
+                //AddNewLevel();
                 break;
             case MotionEvent.ACTION_DOWN:
                 //When the user releases the screen

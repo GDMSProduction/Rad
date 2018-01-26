@@ -1,4 +1,4 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;

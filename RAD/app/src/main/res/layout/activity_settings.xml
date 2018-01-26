@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    tools:context="com.example.stephen.runattackdungeon.SettingsActivity">
+    tools:context="my.application.stephen.runattackdungeon.SettingsActivity">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"

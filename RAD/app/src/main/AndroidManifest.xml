@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.stephen.runattackdungeon">
+    package="my.application.stephen.runattackdungeon">
 
     <application
         android:hardwareAccelerated="true"
@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Dungeon"
+        <activity android:name="my.application.stephen.runattackdungeon.Dungeon"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:screenOrientation="sensorLandscape"
@@ -21,33 +21,33 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"
+        <activity android:name="my.application.stephen.runattackdungeon.SettingsActivity"
             android:label="Settings"
-            android:parentActivityName=".Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.Dungeon" />
         </activity>
-        <activity android:name=".GameActivity"
+        <activity android:name="my.application.stephen.runattackdungeon.GameActivity"
             android:label="RUN! Attack Dungeon"
             android:screenOrientation="sensorLandscape"
-            android:parentActivityName=".Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.Dungeon" />
         </activity>
-        <activity android:name=".HighScoresActivity"
+        <activity android:name="my.application.stephen.runattackdungeon.HighScoresActivity"
             android:label="High Scores"
-            android:parentActivityName=".Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.Dungeon" />
         </activity>
     </application>
 

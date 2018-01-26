@@ -13,7 +13,7 @@
     <string name="Text_MasterVolume">Master Volume</string>
     <string name="Text_SFX">Sound Effects Volume</string>
     <string name="Text_Music">Music</string>
-    <string name="Text_VersionNumber">RAD_20180123_P1</string>
+    <string name="Text_VersionNumber">RAD_20180125_P1</string>
     <string name="Text_ButtonUP">Up Button</string>
     <string name="Text_ButtonDOWN">Down Button</string>
     <string name="Text_ButtonLEFT">Left Button</string>

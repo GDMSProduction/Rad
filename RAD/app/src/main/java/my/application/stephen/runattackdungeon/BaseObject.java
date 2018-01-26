@@ -1,7 +1,6 @@
-package com.example.stephen.runattackdungeon;
+package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 

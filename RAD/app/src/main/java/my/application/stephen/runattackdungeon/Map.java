@@ -20,7 +20,7 @@ public class Map {
     //the percent of tiles that we want to be walls in the finalized map.
     private int WallPercent = 10;
     //the amount of desired rooms
-    private int roomNums = 5;
+    private int roomNums = 2;
     //the maximum size of rooms
     private int roomSize = 4;
     //the number of floor tiles
@@ -65,6 +65,19 @@ public class Map {
             }
         }
         MakeRooms();
+
+        // horizontal borders
+        for (int i = 0; i < mWidth; i++) {
+            mCellsCurr[0][i] = CellWall[rand.nextInt(CellWall.length)];
+            mCellsCurr[mHeight - 1][i] = CellWall[rand.nextInt(CellWall.length)];
+        }
+
+        // vertical borders
+        for (int i = 0; i < mHeight; i++) {
+            mCellsCurr[i][0] = CellWall[rand.nextInt(CellWall.length)];
+            mCellsCurr[i][mWidth - 1] = CellWall[rand.nextInt(CellWall.length)];
+        }
+
     }
 
     private void MakeRooms() {
@@ -89,13 +102,76 @@ public class Map {
     }
 
     private void MakeCorridors() {
-        for (int i = 0; i < Rooms.length; i++) {
+        double high = 0;
+        //find the two points farthest apart.
+        for (int i = 0; i < Rooms.length - 1; i++) {
+            int lesserX = Rooms[i].x;
+            int greaterX = Rooms[i + 1].x;
+            if (Rooms[i].x > Rooms[i + 1].x) {
+                lesserX = Rooms[i + 1].x;
+                greaterX = Rooms[i].x;
+            }
+            int lesserY = Rooms[i].y;
+            int greaterY = Rooms[i + 1].y;
+            if (Rooms[i].y > Rooms[i + 1].y) {
+                lesserY = Rooms[i + 1].y;
+                greaterY = Rooms[i].y;
+            }
 
+            Point thingy = Rooms[i];
+            Point thingy2 = Rooms[i + 1];
+            int corridorWidth = Math.abs(Rooms[i].x - Rooms[i + 1].x);
+            int corridorHeight = Math.abs(Rooms[i].y - Rooms[i + 1].y);
+
+            if (Rooms[i].x >= Rooms[i + 1].x && Rooms[i].y <= Rooms[i + 1].y ||
+                    Rooms[i].x <= Rooms[i + 1].x && Rooms[i].y >= Rooms[i + 1].y) {
+
+                switch (rand.nextInt(2)) {
+                    default:
+                    case 0:
+                        for (int j = 0; j <= corridorWidth; j++) {
+                            mCellsCurr[lesserY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        for (int k = 0; k <= corridorHeight; k++) {
+                            mCellsCurr[lesserY + k][lesserX] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        break;
+                    case 1:
+                        for (int j = 0; j <= corridorWidth; j++) {
+                            mCellsCurr[greaterY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        for (int k = 0; k <= corridorHeight; k++) {
+                            mCellsCurr[lesserY + k][greaterX] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        break;
+                }
+            } else if (Rooms[i].x > Rooms[i + 1].x && Rooms[i].y > Rooms[i + 1].y ||
+                    Rooms[i].x < Rooms[i + 1].x && Rooms[i].y < Rooms[i + 1].y) {
+                switch(rand.nextInt(2)){
+                    default:
+                    case 0:
+                        for (int j = 0; j <= corridorWidth; j++) {
+                            mCellsCurr[lesserY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        for (int k = 0; k <= corridorHeight; k++) {
+                            mCellsCurr[lesserY + k][greaterX] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        break;
+                    case 1:
+                        for (int j = 0; j <= corridorWidth; j++) {
+                            mCellsCurr[greaterY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        for (int k = 0; k <= corridorHeight; k++) {
+                            mCellsCurr[lesserY + k][lesserX] = CellSpace[rand.nextInt(CellSpace.length)];
+                        }
+                        break;
+                }
+            }
         }
     }
 
-    private void Pause() {
-        //Draw();
+    private double distance(Point start, Point end) {
+        return Math.sqrt(Math.pow((start.x - end.x), 2) + Math.pow((start.y - end.y), 2));
     }
 
     private void RefineMap(boolean preventLargeOpenAreas) {
@@ -191,20 +267,17 @@ public class Map {
     public Map GenerateNewMap() {
         // randomly initialize the map
         RandomizeMap();
-        Pause();
         int refine = rand.nextInt(3) + 1;
 
         // refine the map for some number of generations
         for (int i = 0; i < refine; i++) {
             RefineMap(true);
-            Pause();
         }
         for (int i = 0; i < refine + 1; i++) {
             RefineMap(false);
-            Pause();
         }
-//        MakeCorridors();
         GetEmptyFloorPoints();
+        MakeCorridors();
         return this;
     }
 

@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1047252625050",
+    "firebase_url": "https://run-attack-dungeon.firebaseio.com",
+    "project_id": "run-attack-dungeon",
+    "storage_bucket": "run-attack-dungeon.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047252625050:android:c02244224bd75e11",
+        "android_client_info": {
+          "package_name": "com.example.stephen.runattackdungeon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1047252625050-dvaperttihmbupaf1jjkqiloskbast8e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDi3nT0Us9kk3S2x06pV2FgrxEVgenLNrA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -440,7 +440,7 @@ public class GameView extends SurfaceView implements Runnable {
                     checkPlayerImage(heroRight);
                     CheckStairs();
                 }
-                //AddNewLevel();
+                AddNewLevel();
                 break;
             case MotionEvent.ACTION_DOWN:
                 //When the user releases the screen

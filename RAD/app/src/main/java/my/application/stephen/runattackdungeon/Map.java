@@ -65,6 +65,7 @@ public class Map {
             }
         }
         MakeRooms();
+        MakeCorridors();
 
         // horizontal borders
         for (int i = 0; i < mWidth; i++) {
@@ -261,39 +262,12 @@ public class Map {
         GenerateNewMap();
     }
 
-    //Creates a new map through random generation and two refinement process.
-    //Refinement one is to prevent large open areas.
-    //refinement two is to create paths between areas.
-    public Map GenerateNewMap() {
-        // randomly initialize the map
-        RandomizeMap();
-        int refine = rand.nextInt(3) + 1;
-
-        // refine the map for some number of generations
-        for (int i = 0; i < refine; i++) {
-            RefineMap(true);
-        }
-        for (int i = 0; i < refine + 1; i++) {
-            RefineMap(false);
-        }
-        GetEmptyFloorPoints();
-        MakeCorridors();
-        return this;
-    }
-
     public int GetX() {
         return mX;
     }
 
     public int GetY() {
         return mY;
-    }
-
-    public boolean IsCellOpen(int cellx, int celly) {
-        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
-            return false;
-        }
-        return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
     }
 
     public Bitmap[][] GetCurrentMap() {
@@ -322,13 +296,45 @@ public class Map {
         return FloorTiles;
     }
 
+    public int GetNumEmptyPoints() {
+        return numEmptyCells;
+    }
+
+    //Creates a new map through random generation and two refinement process.
+    //Refinement one is to prevent large open areas.
+    //refinement two is to create paths between areas.
+    public Map GenerateNewMap() {
+        // randomly initialize the map
+        RandomizeMap();
+        MakeCorridors();
+        int refine = rand.nextInt(3) + 1;
+
+        // refine the map for some number of generations
+        for (int i = 0; i < refine; i++) {
+            RefineMap(true);
+        }
+        for (int i = 0; i < refine + 1; i++) {
+            RefineMap(false);
+        }
+        GetEmptyFloorPoints();
+        return this;
+    }
+
+    public boolean IsCellOpen(int cellx, int celly) {
+        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
+            return false;
+        }
+        return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
+    }
     public void TakeAwayEmptyFloorTiles(int floorTile) {
         FloorTiles.remove(floorTile);
         numEmptyCells--;
     }
 
-    public int GetNumEmptyPoints() {
-        return numEmptyCells;
+    public void destroyWall(int cellx, int celly){
+        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {return;}
+        mCellsCurr[celly][cellx] = CellSpace[rand.nextInt(CellSpace.length)];
+        numEmptyCells++;
     }
 
 }

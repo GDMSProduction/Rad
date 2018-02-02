@@ -13,6 +13,10 @@ public class Creature extends BaseObject {
     private int hitPointsMax = 10;
     private float defense = 0.0f;
     private float defenseMax = 0.8f;
+    private int attack = 0;
+    private int attackMax = 10;
+    private int mine = 0;
+    private int mineMax = 10;
     private boolean following = false;
 
     Creature(Point newPoint, Bitmap newBitmap) {

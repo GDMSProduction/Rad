@@ -105,18 +105,18 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void offsetTheCamera() {
-        camOffsetY = player.GetY() - camHeight/2;
-        camOffsetX = player.GetX() - camWidth/2;
-        if (camOffsetY < 0){
+        camOffsetY = player.GetY() - camHeight / 2;
+        camOffsetX = player.GetX() - camWidth / 2;
+        if (camOffsetY < 0) {
             camOffsetY = 0;
         }
-        if (camOffsetY >= currentLevel.GetHeight() - camHeight){
+        if (camOffsetY >= currentLevel.GetHeight() - camHeight) {
             camOffsetY = currentLevel.GetHeight() - camHeight;
         }
-        if (camOffsetX < 0){
+        if (camOffsetX < 0) {
             camOffsetX = 0;
         }
-        if (camOffsetX >= currentLevel.GetWidth() - camWidth){
+        if (camOffsetX >= currentLevel.GetWidth() - camWidth) {
             camOffsetX = currentLevel.GetWidth() - camWidth;
         }
     }
@@ -281,17 +281,19 @@ public class GameView extends SurfaceView implements Runnable {
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
-    private void drawingCurrentDepth(){
+
+    private void drawingCurrentDepth() {
         paint.setColor(Color.BLACK);
         paint.setTextSize(depthTextSize);
-        String depth = "Depth: " + currentLevelIndex*10 + " feet";
-        canvas.drawText(depth, screenWidth - (depth.length()* depthTextSize/2), depthTextSize, paint);
+        String depth = "Depth: " + currentLevelIndex * 10 + " feet";
+        canvas.drawText(depth, screenWidth - (depth.length() * depthTextSize / 2), depthTextSize, paint);
     }
-    private void drawingScore(){
+
+    private void drawingScore() {
         paint.setColor(Color.BLACK);
         paint.setTextSize(depthTextSize);
         String score = "Gold: " + player.getScore();
-        canvas.drawText(score, screenWidth - (score.length()* depthTextSize/2), depthTextSize * 2, paint);
+        canvas.drawText(score, screenWidth - (score.length() * depthTextSize / 2), depthTextSize * 2, paint);
     }
 
     private void drawLevelObject(BaseObject object) {
@@ -302,6 +304,7 @@ public class GameView extends SurfaceView implements Runnable {
                 paint
         );
     }
+
     private void animateLevelObject(BaseObject object, int offsetX, int offsetY) {
         canvas.drawBitmap(
                 object.GetBitmap(),
@@ -418,29 +421,42 @@ public class GameView extends SurfaceView implements Runnable {
                 //When the user presses on the screen
                 //we will do something here
                 PointF pressPoint = new PointF(motionEvent.getX(), motionEvent.getY());
-                if (DetectButtonPress(pressPoint, dPadUp.GetCollideRect()) &&
-                        currentLevel.IsCellOpen(player.GetX(), player.GetY() - 1)) {
-                    player.SetY(player.GetY() - 1);
+                if (DetectButtonPress(pressPoint, dPadUp.GetCollideRect())) {
+                    if (currentLevel.IsCellOpen(player.GetX(), player.GetY() - 1)) {
+                        player.SetY(player.GetY() - 1);
+                        CheckStairs();
+                    } else {
+                        currentLevel.destroyWall(player.GetX(), player.GetY() - 1);
+                    }
                     checkPlayerImage(heroUp);
-                    CheckStairs();
-                } else if (DetectButtonPress(pressPoint, dPadDown.GetCollideRect()) &&
-                        currentLevel.IsCellOpen(player.GetX(), player.GetY() + 1)) {
-                    player.SetY(player.GetY() + 1);
+                } else if (DetectButtonPress(pressPoint, dPadDown.GetCollideRect())) {
+                    if (currentLevel.IsCellOpen(player.GetX(), player.GetY() + 1)) {
+                        player.SetY(player.GetY() + 1);
+                        CheckStairs();
+                    } else {
+                        currentLevel.destroyWall(player.GetX(), player.GetY() + 1);
+                    }
                     checkPlayerImage(heroDown);
-                    CheckStairs();
                 }
-                if (DetectButtonPress(pressPoint, dPadLeft.GetCollideRect()) &&
-                        currentLevel.IsCellOpen(player.GetX() - 1, player.GetY())) {
-                    player.SetX(player.GetX() - 1);
+                if (DetectButtonPress(pressPoint, dPadLeft.GetCollideRect())) {
+                    if (currentLevel.IsCellOpen(player.GetX() - 1, player.GetY())) {
+                        player.SetX(player.GetX() - 1);
+                        CheckStairs();
+                    } else {
+                        currentLevel.destroyWall(player.GetX() - 1, player.GetY());
+                    }
                     checkPlayerImage(heroLeft);
-                    CheckStairs();
-                } else if (DetectButtonPress(pressPoint, dPadRight.GetCollideRect()) &&
-                        currentLevel.IsCellOpen(player.GetX() + 1, player.GetY())) {
-                    player.SetX(player.GetX() + 1);
+
+                } else if (DetectButtonPress(pressPoint, dPadRight.GetCollideRect())) {
+                    if (currentLevel.IsCellOpen(player.GetX() + 1, player.GetY())) {
+                        player.SetX(player.GetX() + 1);
+                        CheckStairs();
+                    }else {
+                        currentLevel.destroyWall(player.GetX() + 1, player.GetY());
+                    }
                     checkPlayerImage(heroRight);
-                    CheckStairs();
                 }
-                AddNewLevel();
+                //AddNewLevel();
                 break;
             case MotionEvent.ACTION_DOWN:
                 //When the user releases the screen
@@ -455,19 +471,16 @@ public class GameView extends SurfaceView implements Runnable {
                 player.GetPoint().y == currentLevel.getStairsDown().GetPoint().y) {
             if (currentLevel == Levels.get(Levels.size() - 1)) {
                 AddNewLevel();
-            }
-            else{
+            } else {
                 currentLevel = Levels.get(currentLevelIndex + 1);
                 currentLevelIndex++;
             }
             player.SetX(currentLevel.getStairsUp().GetX());
             player.SetY(currentLevel.getStairsUp().GetY());
-        }
-
-        else if (player.GetPoint().x == currentLevel.getStairsUp().GetPoint().x &&
+        } else if (player.GetPoint().x == currentLevel.getStairsUp().GetPoint().x &&
                 player.GetPoint().y == currentLevel.getStairsUp().GetPoint().y) {
-            if (currentLevelIndex == 0) {}
-            else{
+            if (currentLevelIndex == 0) {
+            } else {
                 currentLevel = Levels.get(currentLevelIndex - 1);
                 currentLevelIndex--;
                 player.SetX(currentLevel.getStairsDown().GetX());
@@ -483,7 +496,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void AddNewLevel() {
-        Level temp = new Level(levelImages, spaces, walls, 0,0, screenWidth, screenHeight);
+        Level temp = new Level(levelImages, spaces, walls, 0, 0, screenWidth, screenHeight);
         Levels.add(temp);
         currentLevel = Levels.get(Levels.size() - 1);
         currentLevelIndex++;

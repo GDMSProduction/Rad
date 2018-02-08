@@ -15,18 +15,16 @@ public class Map {
     private Bitmap[] CellSpace;
     //array of available images for walls
     private Bitmap[] CellWall;
-    //the Array of Rooms
-    private Point[] Rooms;
+    //the Array of the center points of Rooms
+    private Point[] RoomCenters;
     //the percent of tiles that we want to be walls in the finalized map.
     private int WallPercent = 10;
     //the amount of desired rooms
     private int roomNums = 2;
-    //the maximum size of rooms
-    private int roomSize = 4;
+    //the maximum radius of rooms
+    private int roomRadiusMax = 4;
     //the number of floor tiles
     private int numEmptyCells = 0;
-    private int mX;
-    private int mY;
     //the amount of tiles in each row
     private int mWidth;
     //the amount of tiles in each column
@@ -34,9 +32,9 @@ public class Map {
     //random number, used for random number generation
     protected Random rand = new Random();
     //the current map tileset
-    private Bitmap[][] mCellsCurr;
+    private DestructableObject[][] mCellsCurr;
     //the next generation of the map tileset.
-    private Bitmap[][] mCellsNext;
+    private DestructableObject[][] mCellsNext;
     //The points of every floor tile.
     private ArrayList<Point> FloorTiles;
 
@@ -58,46 +56,44 @@ public class Map {
         // innards of map
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
-                if (rand.nextLong() % 100 + 1 <= WallPercent)
-                    mCellsCurr[row][col] = CellWall[rand.nextInt(CellWall.length)];
-                else
-                    mCellsCurr[row][col] = CellSpace[rand.nextInt(CellSpace.length)];
+                Point tempPoint = new Point(0, 0);
+                DestructableObject temp = new DestructableObject(tempPoint, CellWall[0], 5);
+                temp.SetPoint(col, row);
+                mCellsCurr[row][col] = temp;
+                if (rand.nextLong() % 100 + 1 <= WallPercent) {
+                    SetWall(row, col);
+                } else
+                    mCellsCurr[row][col].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
             }
         }
-        MakeRooms();
-        MakeCorridors();
+        int debugbreakpoint = 0;
+    }
 
-        // horizontal borders
-        for (int i = 0; i < mWidth; i++) {
-            mCellsCurr[0][i] = CellWall[rand.nextInt(CellWall.length)];
-            mCellsCurr[mHeight - 1][i] = CellWall[rand.nextInt(CellWall.length)];
-        }
-
-        // vertical borders
-        for (int i = 0; i < mHeight; i++) {
-            mCellsCurr[i][0] = CellWall[rand.nextInt(CellWall.length)];
-            mCellsCurr[i][mWidth - 1] = CellWall[rand.nextInt(CellWall.length)];
-        }
-
+    private void SetWall(int row, int col) {
+        mCellsCurr[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+        if (mCellsCurr[row][col].GetBitmap() == CellWall[0])
+            mCellsCurr[row][col].SetMaxHP(5);
+        else
+            mCellsCurr[row][col].SetMaxHP(10);
     }
 
     private void MakeRooms() {
-        for (int i = 0; i < Rooms.length; i++) {
-            Rooms[i] = GetRandCell();
-            int distributionX = rand.nextInt(roomSize) + 1;
-            int distributionY = rand.nextInt(roomSize) + 1;
-            for (int j = Rooms[i].x - distributionX; j < Rooms[i].x + distributionX; j++) {
-                for (int k = Rooms[i].y - distributionY; k < Rooms[i].y + distributionY; k++) {
-                    mCellsCurr[k][j] = CellSpace[rand.nextInt(CellSpace.length)];
+        for (int i = 0; i < RoomCenters.length; i++) {
+            RoomCenters[i] = GetRandRoomCell();
+            int distributionX = rand.nextInt(roomRadiusMax) + 1;
+            int distributionY = rand.nextInt(roomRadiusMax) + 1;
+            for (int j = RoomCenters[i].x - distributionX; j < RoomCenters[i].x + distributionX; j++) {
+                for (int k = RoomCenters[i].y - distributionY; k < RoomCenters[i].y + distributionY; k++) {
+                    mCellsCurr[k][j].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                 }
             }
         }
     }
 
-    private Point GetRandCell() {
+    private Point GetRandRoomCell() {
         Point thisPoint = new Point(
-                rand.nextInt(mWidth - 2 * roomSize) + roomSize,
-                rand.nextInt(mHeight - 2 * roomSize) + roomSize
+                rand.nextInt(mWidth - 2 * roomRadiusMax) + roomRadiusMax,
+                rand.nextInt(mHeight - 2 * roomRadiusMax) + roomRadiusMax
         );
         return thisPoint;
     }
@@ -105,69 +101,83 @@ public class Map {
     private void MakeCorridors() {
         double high = 0;
         //find the two points farthest apart.
-        for (int i = 0; i < Rooms.length - 1; i++) {
-            int lesserX = Rooms[i].x;
-            int greaterX = Rooms[i + 1].x;
-            if (Rooms[i].x > Rooms[i + 1].x) {
-                lesserX = Rooms[i + 1].x;
-                greaterX = Rooms[i].x;
+        for (int i = 0; i < RoomCenters.length - 1; i++) {
+            int lesserX = RoomCenters[i].x;
+            int greaterX = RoomCenters[i + 1].x;
+            if (RoomCenters[i].x > RoomCenters[i + 1].x) {
+                lesserX = RoomCenters[i + 1].x;
+                greaterX = RoomCenters[i].x;
             }
-            int lesserY = Rooms[i].y;
-            int greaterY = Rooms[i + 1].y;
-            if (Rooms[i].y > Rooms[i + 1].y) {
-                lesserY = Rooms[i + 1].y;
-                greaterY = Rooms[i].y;
+            int lesserY = RoomCenters[i].y;
+            int greaterY = RoomCenters[i + 1].y;
+            if (RoomCenters[i].y > RoomCenters[i + 1].y) {
+                lesserY = RoomCenters[i + 1].y;
+                greaterY = RoomCenters[i].y;
             }
 
-            Point thingy = Rooms[i];
-            Point thingy2 = Rooms[i + 1];
-            int corridorWidth = Math.abs(Rooms[i].x - Rooms[i + 1].x);
-            int corridorHeight = Math.abs(Rooms[i].y - Rooms[i + 1].y);
+            Point thingy = RoomCenters[i];
+            Point thingy2 = RoomCenters[i + 1];
+            int corridorWidth = Math.abs(RoomCenters[i].x - RoomCenters[i + 1].x);
+            int corridorHeight = Math.abs(RoomCenters[i].y - RoomCenters[i + 1].y);
 
-            if (Rooms[i].x >= Rooms[i + 1].x && Rooms[i].y <= Rooms[i + 1].y ||
-                    Rooms[i].x <= Rooms[i + 1].x && Rooms[i].y >= Rooms[i + 1].y) {
+            if (RoomCenters[i].x >= RoomCenters[i + 1].x && RoomCenters[i].y <= RoomCenters[i + 1].y ||
+                    RoomCenters[i].x <= RoomCenters[i + 1].x && RoomCenters[i].y >= RoomCenters[i + 1].y) {
 
                 switch (rand.nextInt(2)) {
                     default:
                     case 0:
                         for (int j = 0; j <= corridorWidth; j++) {
-                            mCellsCurr[lesserY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY][lesserX + j].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         for (int k = 0; k <= corridorHeight; k++) {
-                            mCellsCurr[lesserY + k][lesserX] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY + k][lesserX].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         break;
                     case 1:
                         for (int j = 0; j <= corridorWidth; j++) {
-                            mCellsCurr[greaterY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[greaterY][lesserX + j].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         for (int k = 0; k <= corridorHeight; k++) {
-                            mCellsCurr[lesserY + k][greaterX] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY + k][greaterX].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         break;
                 }
-            } else if (Rooms[i].x > Rooms[i + 1].x && Rooms[i].y > Rooms[i + 1].y ||
-                    Rooms[i].x < Rooms[i + 1].x && Rooms[i].y < Rooms[i + 1].y) {
-                switch(rand.nextInt(2)){
+            } else if (RoomCenters[i].x > RoomCenters[i + 1].x && RoomCenters[i].y > RoomCenters[i + 1].y ||
+                    RoomCenters[i].x < RoomCenters[i + 1].x && RoomCenters[i].y < RoomCenters[i + 1].y) {
+                switch (rand.nextInt(2)) {
                     default:
                     case 0:
                         for (int j = 0; j <= corridorWidth; j++) {
-                            mCellsCurr[lesserY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY][lesserX + j].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         for (int k = 0; k <= corridorHeight; k++) {
-                            mCellsCurr[lesserY + k][greaterX] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY + k][greaterX].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         break;
                     case 1:
                         for (int j = 0; j <= corridorWidth; j++) {
-                            mCellsCurr[greaterY][lesserX + j] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[greaterY][lesserX + j].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         for (int k = 0; k <= corridorHeight; k++) {
-                            mCellsCurr[lesserY + k][lesserX] = CellSpace[rand.nextInt(CellSpace.length)];
+                            mCellsCurr[lesserY + k][lesserX].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                         }
                         break;
                 }
             }
+        }
+    }
+
+    private void MakeBorders() {
+        // horizontal borders
+        for (int i = 0; i < mWidth; i++) {
+            mCellsCurr[0][i].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+            mCellsCurr[mHeight - 1][i].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+        }
+
+        // vertical borders
+        for (int i = 0; i < mHeight; i++) {
+            mCellsCurr[i][0].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+            mCellsCurr[i][mWidth - 1].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
         }
     }
 
@@ -178,29 +188,31 @@ public class Map {
     private void RefineMap(boolean preventLargeOpenAreas) {
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
+                mCellsNext[row][col] = mCellsCurr[row][col];
                 int A1Walls = NeighboringWallCount(col, row, 1);
                 int A2Walls = NeighboringWallCount(col, row, 2);
 
-                if (FindInArray(CellWall, mCellsCurr[row][col])) {
+                if (FindInArray(CellWall, mCellsCurr[row][col].GetBitmap())) {
                     if (A1Walls >= 4)
-                        mCellsNext[row][col] = CellWall[rand.nextInt(CellWall.length)];
+                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
                     else
-                        mCellsNext[row][col] = CellSpace[rand.nextInt(CellSpace.length)];
-                } else if (FindInArray(CellSpace, mCellsCurr[row][col])) {
+                        mCellsNext[row][col].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
+                } else if (FindInArray(CellSpace, mCellsCurr[row][col].GetBitmap())) {
                     if (A1Walls >= 5)
-                        mCellsNext[row][col] = CellWall[rand.nextInt(CellWall.length)];
+                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
                     else if (preventLargeOpenAreas && A2Walls <= 1)
-                        mCellsNext[row][col] = CellWall[rand.nextInt(CellWall.length)];
+                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
                     else
-                        mCellsNext[row][col] = CellSpace[rand.nextInt(CellSpace.length)];
+                        mCellsNext[row][col].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                 }
             }
         }
+        MakeCorridors();
 
         CopyArray(mCellsNext, mCellsCurr, mWidth, mHeight);
     }
 
-    private void CopyArray(Bitmap[][] ImageArray1, Bitmap[][] ImageArray2, int width, int height) {
+    private void CopyArray(DestructableObject[][] ImageArray1, DestructableObject[][] ImageArray2, int width, int height) {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 ImageArray2[j][i] = ImageArray1[j][i];
@@ -217,7 +229,7 @@ public class Map {
                     continue;
                 else if (row < 0 || col < 0 || row >= mHeight || col >= mWidth)
                     walls++;
-                else if (FindInArray(CellWall, mCellsCurr[row][col]))
+                else if (FindInArray(CellWall, mCellsCurr[row][col].GetBitmap()))
                     walls++;
             }
         }
@@ -230,7 +242,7 @@ public class Map {
         FloorTiles = new ArrayList<Point>();
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
-                if (FindInArray(CellSpace, mCellsCurr[row][col])) {
+                if (FindInArray(CellSpace, mCellsCurr[row][col].GetBitmap())) {
                     Point temp = new Point(col, row);
                     FloorTiles.add(temp);
                     numEmptyCells++;
@@ -242,11 +254,9 @@ public class Map {
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-    public Map(Bitmap[] spaces, Bitmap[] walls, int startX, int startY, int Width, int Height) {
-        mX = startX;
-        mY = startY;
+    public Map(Bitmap[] spaces, Bitmap[] walls, int Width, int Height) {
 
-        CellSpace = new Bitmap[5];
+        CellSpace = new Bitmap[6];
         CellSpace = spaces;
         CellWall = new Bitmap[2];
         CellWall = walls;
@@ -254,28 +264,20 @@ public class Map {
         mWidth = (Width / CellSpace[0].getWidth());
         mHeight = (Height / CellSpace[0].getHeight());
 
-        Rooms = new Point[roomNums];
+        RoomCenters = new Point[roomNums];
 
-        mCellsCurr = new Bitmap[mHeight][mWidth];
-        mCellsNext = new Bitmap[mHeight][mWidth];
+        mCellsCurr = new DestructableObject[mHeight][mWidth];
+        mCellsNext = new DestructableObject[mHeight][mWidth];
 
         GenerateNewMap();
     }
 
-    public int GetX() {
-        return mX;
-    }
-
-    public int GetY() {
-        return mY;
-    }
-
-    public Bitmap[][] GetCurrentMap() {
+    public DestructableObject[][] GetCurrentMap() {
         return mCellsCurr;
     }
 
-    public Bitmap[][] GetSubMap(int offsetX, int offsetY, int width, int height) {
-        Bitmap[][] temp = new Bitmap[height][width];
+    public DestructableObject[][] GetSubMap(int offsetX, int offsetY, int width, int height) {
+        DestructableObject[][] temp = new DestructableObject[height][width];
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                 temp[row][col] = mCellsCurr[row + offsetY][col + offsetX];
@@ -306,7 +308,11 @@ public class Map {
     public Map GenerateNewMap() {
         // randomly initialize the map
         RandomizeMap();
+        MakeRooms();
         MakeCorridors();
+        MakeBorders();
+
+
         int refine = rand.nextInt(3) + 1;
 
         // refine the map for some number of generations
@@ -320,21 +326,29 @@ public class Map {
         return this;
     }
 
+
     public boolean IsCellOpen(int cellx, int celly) {
         if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
             return false;
         }
-        return (FindInArray(CellSpace, mCellsCurr[celly][cellx]));
+        return (FindInArray(CellSpace, mCellsCurr[celly][cellx].GetBitmap()));
     }
+
     public void TakeAwayEmptyFloorTiles(int floorTile) {
         FloorTiles.remove(floorTile);
         numEmptyCells--;
     }
 
-    public void destroyWall(int cellx, int celly){
-        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {return;}
-        mCellsCurr[celly][cellx] = CellSpace[rand.nextInt(CellSpace.length)];
-        numEmptyCells++;
+    public void harmWall(int cellx, int celly, int mining) {
+        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
+            return;
+        }
+
+        mCellsCurr[celly][cellx].Hurt(mining);
+        if (mCellsCurr[celly][cellx].GetHP() <= 0) {
+            mCellsCurr[celly][cellx].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 2)]);
+            numEmptyCells++;
+        }
     }
 
 }

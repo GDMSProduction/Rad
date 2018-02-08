@@ -49,6 +49,7 @@ public class BaseObject {
         return detectCollision;
     }
 
+
     //Setters
     public void SetBitMap(Bitmap newBitMap) {
         image = newBitMap;
@@ -56,6 +57,10 @@ public class BaseObject {
 
     public void SetPoint(Point newPoint) {
         mPoint = newPoint;
+    }
+    public void SetPoint(int x, int y) {
+        Point temp = new Point (x, y);
+        mPoint = temp;
     }
 
     public void SetX(int newX) {

@@ -10,13 +10,19 @@ import android.graphics.Point;
 public class Player extends Creature {
     private String name = "";
     private int score = 0;
-    Player(Point newPoint, Bitmap newBitmap){
-        super(newPoint, newBitmap);
+    private int level = 0;
+    Player(Point newPoint, Bitmap newBitmap, int HPMax){
+        super(newPoint, newBitmap, HPMax);
     }
     //Getters
     public String getName(){return name;}
     public int getScore(){return score;}
+    public int getLevel(){return level;}
     //Setters
     public void setName(String newName){name = newName;}
     public void incrementScore(int points){ score+=points;}
+    public void levelUP(){
+        level++;
+        SetMaxHP((int)(GetMaxpHP()*1.2));
+    }
 }

@@ -74,6 +74,7 @@ public class GameView extends SurfaceView implements Runnable {
     private Bitmap heroUp;
     private Bitmap heroDown;
     private Player player;
+    private int startingHealth = 10;
 
     //Class constructor
     public GameView(Context context, int screenX, int screenY) {
@@ -88,7 +89,7 @@ public class GameView extends SurfaceView implements Runnable {
         createImages(context);
 
         //Create currentLevel
-        currentLevel = new Level(levelImages, spaces, walls, 0, 0, screenWidth, screenHeight);
+        currentLevel = new Level(levelImages, spaces, walls, screenWidth, screenHeight);
         Levels.add(currentLevel);
         currentLevelIndex = 0;
         //currentLevel.GenerateNewMap();
@@ -135,18 +136,21 @@ public class GameView extends SurfaceView implements Runnable {
         heroDown = getResizedBitmap(heroDown, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         int newPoint = currentLevel.getNewEmptyPoint();
         player = new Player(currentLevel.GetFloorPoints().get(newPoint),
-                heroDown);
+                heroDown, startingHealth);
         currentLevel.TakeAwayEmptyFloorTiles(newPoint);
+        player.SetDig(5);
+        player.SetAttack(5);
     }
 
     private void createImages(Context context) {
 
-        spaces = new Bitmap[5];
+        spaces = new Bitmap[6];
         spaces[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor1);
         spaces[1] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor2);
         spaces[2] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor3);
         spaces[3] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor4);
         spaces[4] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor5);
+        spaces[5] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.floor6);
 
         //Height and Width of one cell
         mBitMapHeight = spaces[0].getHeight();
@@ -157,22 +161,44 @@ public class GameView extends SurfaceView implements Runnable {
         walls[1] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.wall2);
 
         //Get Images
-        Bitmaps = new Bitmap[2];//PLAYER
+        Bitmaps = new Bitmap[3];//PLAYER
         Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.hero);
         //Directional Button
         Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+        Bitmaps[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.heart_3d), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
 
-        levelImages = new Bitmap[7];
+        levelImages = new Bitmap[23];
         //Clutter
         levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.coins), mBitMapWidth, mBitMapHeight);
         //STAIRS
-        levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
-        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
+        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
+        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
         //ENEMIES
-        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
-        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
+        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
+        levelImages[7] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
+        //Consumable
+        levelImages[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.apple), mBitMapWidth, mBitMapHeight);
+        levelImages[9] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bottles), mBitMapWidth, mBitMapHeight);
+        levelImages[10] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diploma), mBitMapWidth, mBitMapHeight);
+        levelImages[11] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.drumstick), mBitMapWidth, mBitMapHeight);
+        //Weapons
+        levelImages[12] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.axe), mBitMapWidth, mBitMapHeight);
+        levelImages[13] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bow_and_arrow), mBitMapWidth, mBitMapHeight);
+        levelImages[14] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
+        levelImages[15] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
+        //Light
+        levelImages[16] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.torch), mBitMapWidth, mBitMapHeight);
+        levelImages[17] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.lantern), mBitMapWidth, mBitMapHeight);
+        //Mining
+        levelImages[18] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shovel), mBitMapWidth, mBitMapHeight);
+        levelImages[19] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.pickaxe), mBitMapWidth, mBitMapHeight);
+        //Wearables
+        levelImages[20] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_gold), mBitMapWidth, mBitMapHeight);
+        levelImages[21] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
+        levelImages[22] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -365,11 +391,11 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheMap() {
-        Bitmap[][] tempMap = currentLevel.GetCurrentMap();
+        DestructableObject[][] tempMap = currentLevel.GetCurrentMap();
 
         for (int row = 0; row < camHeight; row++) {
             for (int col = 0; col < camWidth; col++) {
-                canvas.drawBitmap(tempMap[row][col],
+                canvas.drawBitmap(tempMap[row][col].GetBitmap(),
                         col * mBitMapWidth,
                         row * mBitMapHeight,
                         paint);
@@ -422,37 +448,37 @@ public class GameView extends SurfaceView implements Runnable {
                 //we will do something here
                 PointF pressPoint = new PointF(motionEvent.getX(), motionEvent.getY());
                 if (DetectButtonPress(pressPoint, dPadUp.GetCollideRect())) {
-                    if (currentLevel.IsCellOpen(player.GetX(), player.GetY() - 1)) {
+                    if (currentLevel.getCellType(player.GetX(), player.GetY() - 1) == Level.CellType.Space) {
                         player.SetY(player.GetY() - 1);
                         CheckStairs();
                     } else {
-                        currentLevel.destroyWall(player.GetX(), player.GetY() - 1);
+                        currentLevel.harmObject(player.GetX(), player.GetY() - 1, player.GetAttack(), player.GetDig(), player);
                     }
                     checkPlayerImage(heroUp);
                 } else if (DetectButtonPress(pressPoint, dPadDown.GetCollideRect())) {
-                    if (currentLevel.IsCellOpen(player.GetX(), player.GetY() + 1)) {
+                    if (currentLevel.getCellType(player.GetX(), player.GetY() + 1) == Level.CellType.Space) {
                         player.SetY(player.GetY() + 1);
                         CheckStairs();
                     } else {
-                        currentLevel.destroyWall(player.GetX(), player.GetY() + 1);
+                        currentLevel.harmObject(player.GetX(), player.GetY() + 1, player.GetAttack(), player.GetDig(), player);
                     }
                     checkPlayerImage(heroDown);
                 }
                 if (DetectButtonPress(pressPoint, dPadLeft.GetCollideRect())) {
-                    if (currentLevel.IsCellOpen(player.GetX() - 1, player.GetY())) {
+                    if (currentLevel.getCellType(player.GetX() - 1, player.GetY()) == Level.CellType.Space) {
                         player.SetX(player.GetX() - 1);
                         CheckStairs();
                     } else {
-                        currentLevel.destroyWall(player.GetX() - 1, player.GetY());
+                        currentLevel.harmObject(player.GetX() - 1, player.GetY(), player.GetAttack(), player.GetDig(), player);
                     }
                     checkPlayerImage(heroLeft);
 
                 } else if (DetectButtonPress(pressPoint, dPadRight.GetCollideRect())) {
-                    if (currentLevel.IsCellOpen(player.GetX() + 1, player.GetY())) {
+                    if (currentLevel.getCellType(player.GetX() + 1, player.GetY()) == Level.CellType.Space) {
                         player.SetX(player.GetX() + 1);
                         CheckStairs();
                     }else {
-                        currentLevel.destroyWall(player.GetX() + 1, player.GetY());
+                        currentLevel.harmObject(player.GetX() + 1, player.GetY(), player.GetAttack(), player.GetDig(), player);
                     }
                     checkPlayerImage(heroRight);
                 }
@@ -496,7 +522,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void AddNewLevel() {
-        Level temp = new Level(levelImages, spaces, walls, 0, 0, screenWidth, screenHeight);
+        Level temp = new Level(levelImages, spaces, walls, screenWidth, screenHeight);
         Levels.add(temp);
         currentLevel = Levels.get(Levels.size() - 1);
         currentLevelIndex++;

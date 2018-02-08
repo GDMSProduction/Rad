@@ -7,11 +7,11 @@ import android.graphics.Point;
  * Created by Stephen on 2018-01-18.
  */
 
-public class Clutter extends BaseObject {
+public class Clutter extends DestructableObject {
     private int value = 0;
 
-    Clutter(int newValue, Point mPoint, Bitmap newImage) {
-        super(mPoint, newImage);
+    Clutter(int newValue, Point mPoint, Bitmap newImage, int HPMax) {
+        super(mPoint, newImage, HPMax);
         value = newValue;
     }
     //setters

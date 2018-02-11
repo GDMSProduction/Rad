@@ -141,7 +141,6 @@ public class GameView extends SurfaceView implements Runnable {
         player.SetDig(5);
         player.SetAttack(5);
     }
-
     private void createImages(Context context) {
 
         spaces = new Bitmap[6];
@@ -157,48 +156,50 @@ public class GameView extends SurfaceView implements Runnable {
         mBitMapWidth = spaces[0].getWidth();
 
         walls = new Bitmap[2];
-        walls[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.wall1);
-        walls[1] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.wall2);
+        walls[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall1);
+        walls[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.wall2);
 
         //Get Images
         Bitmaps = new Bitmap[3];//PLAYER
-        Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.hero);
+        Bitmaps[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
         //Directional Button
-        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
+        Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
         Bitmaps[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.heart_3d), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
 
-        levelImages = new Bitmap[23];
+        levelImages = new Bitmap[25];
         //Clutter
-        levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
-        levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
+        levelImages[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.rock), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         levelImages[3] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.coins), mBitMapWidth, mBitMapHeight);
+        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diamond), mBitMapWidth, mBitMapHeight);
+        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diamond_red), mBitMapWidth, mBitMapHeight);
         //STAIRS
-        levelImages[4] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
-        levelImages[5] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
+        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsdown), mBitMapWidth, mBitMapHeight);
+        levelImages[7] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.stairsup), mBitMapWidth, mBitMapHeight);
         //ENEMIES
-        levelImages[6] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
-        levelImages[7] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), my.application.stephen.runattackdungeon.R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
+        levelImages[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
+        levelImages[9] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
         //Consumable
-        levelImages[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.apple), mBitMapWidth, mBitMapHeight);
-        levelImages[9] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bottles), mBitMapWidth, mBitMapHeight);
-        levelImages[10] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diploma), mBitMapWidth, mBitMapHeight);
-        levelImages[11] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.drumstick), mBitMapWidth, mBitMapHeight);
+        levelImages[10] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.apple), mBitMapWidth, mBitMapHeight);
+        levelImages[11] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bottles), mBitMapWidth, mBitMapHeight);
+        levelImages[12] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diploma), mBitMapWidth, mBitMapHeight);
+        levelImages[13] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.drumstick), mBitMapWidth, mBitMapHeight);
         //Weapons
-        levelImages[12] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.axe), mBitMapWidth, mBitMapHeight);
-        levelImages[13] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bow_and_arrow), mBitMapWidth, mBitMapHeight);
-        levelImages[14] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
-        levelImages[15] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
+        levelImages[14] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.axe), mBitMapWidth, mBitMapHeight);
+        levelImages[15] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bow_and_arrow), mBitMapWidth, mBitMapHeight);
+        levelImages[16] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
+        levelImages[17] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
         //Light
-        levelImages[16] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.torch), mBitMapWidth, mBitMapHeight);
-        levelImages[17] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.lantern), mBitMapWidth, mBitMapHeight);
+        levelImages[18] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.torch), mBitMapWidth, mBitMapHeight);
+        levelImages[19] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.lantern), mBitMapWidth, mBitMapHeight);
         //Mining
-        levelImages[18] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shovel), mBitMapWidth, mBitMapHeight);
-        levelImages[19] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.pickaxe), mBitMapWidth, mBitMapHeight);
+        levelImages[20] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shovel), mBitMapWidth, mBitMapHeight);
+        levelImages[21] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.pickaxe), mBitMapWidth, mBitMapHeight);
         //Wearables
-        levelImages[20] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_gold), mBitMapWidth, mBitMapHeight);
-        levelImages[21] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
-        levelImages[22] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
+        levelImages[22] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_gold), mBitMapWidth, mBitMapHeight);
+        levelImages[23] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
+        levelImages[24] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -262,6 +263,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
+        currentLevel.UpdateEnemies(player);
 //        //updating player position
 //        player.update();
 //        //setting boom outside the screen
@@ -312,14 +314,14 @@ public class GameView extends SurfaceView implements Runnable {
         paint.setColor(Color.BLACK);
         paint.setTextSize(depthTextSize);
         String depth = "Depth: " + currentLevelIndex * 10 + " feet";
-        canvas.drawText(depth, screenWidth - (depth.length() * depthTextSize / 2), depthTextSize, paint);
+        canvas.drawText(depth, 0, depthTextSize, paint);
     }
 
     private void drawingScore() {
         paint.setColor(Color.BLACK);
         paint.setTextSize(depthTextSize);
         String score = "Gold: " + player.getScore();
-        canvas.drawText(score, screenWidth - (score.length() * depthTextSize / 2), depthTextSize * 2, paint);
+        canvas.drawText(score, 0, depthTextSize * 2, paint);
     }
 
     private void drawLevelObject(BaseObject object) {

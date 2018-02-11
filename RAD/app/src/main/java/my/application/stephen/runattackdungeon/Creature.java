@@ -16,6 +16,7 @@ public class Creature extends DestructableObject {
     private int dig = 0;
     private int digMax = 10;
     private boolean following = false;
+    private DestructableObject weapon;
 
     Creature(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap, HPMax);

@@ -19,6 +19,7 @@ public class Level extends Map {
     //The Clutter
     private int maxClutter = 5;
     private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
+    private int diamondPercent = 50;
     //The Stairs
     private BaseObject stairsUp;
     private BaseObject stairsDown;
@@ -74,7 +75,7 @@ public class Level extends Map {
         for (int i = 0; i < newSize; i++) {
             int hPMax = 3;
             float defMax = 0.3f;
-            Bitmap enemyBitmap = Bitmaps[6];
+            Bitmap enemyBitmap = Bitmaps[8];
             Point enemyPoint = new Point(0, 0);
 
             Creature temp;
@@ -86,7 +87,7 @@ public class Level extends Map {
                 case 1:
                     hPMax = 5;
                     defMax = 0.5f;
-                    enemyBitmap = Bitmaps[7];
+                    enemyBitmap = Bitmaps[9];
                     temp = new Creature(enemyPoint, enemyBitmap, hPMax, defMax);
                     break;
             }
@@ -102,60 +103,36 @@ public class Level extends Map {
     private void createStairs() {
         int newPoint = getNewEmptyPoint();
         stairsDown = new BaseObject(GetFloorPoints().get(newPoint),
-                Bitmaps[4]);
+                Bitmaps[6]);
         TakeAwayEmptyFloorTiles(newPoint);
         newPoint = getNewEmptyPoint();
         stairsUp = new BaseObject(GetFloorPoints().get(newPoint),
-                Bitmaps[5]);
+                Bitmaps[7]);
         TakeAwayEmptyFloorTiles(newPoint);
     }
 
-    private void createImages(Bitmap[] images) {
-        //Get Images
-        Bitmaps = new Bitmap[23];
-        //CLUTTER
-        Bitmaps[0] = images[0];
-        Bitmaps[1] = images[1];
-        Bitmaps[2] = images[2];
-        Bitmaps[3] = images[3];
-        //STAIRS
-        Bitmaps[4] = images[4];
-        Bitmaps[5] = images[5];
-        //ENEMIES
-        Bitmaps[6] = images[6];
-        Bitmaps[7] = images[7];
-        //CONSUMABLES
-        Bitmaps[8] = images[8];
-        Bitmaps[9] = images[9];
-        Bitmaps[10] = images[10];
-        Bitmaps[11] = images[11];
-        //WEAPONS
-        Bitmaps[12] = images[12];
-        Bitmaps[13] = images[13];
-        Bitmaps[14] = images[14];
-        Bitmaps[15] = images[15];
-        //LIGHT
-        Bitmaps[16] = images[16];
-        Bitmaps[17] = images[17];
-        //MINING
-        Bitmaps[18] = images[18];
-        Bitmaps[19] = images[19];
-        //WEARABLES
-        Bitmaps[20] = images[20];
-        Bitmaps[21] = images[21];
-        Bitmaps[22] = images[22];
+    private void CreateRandomDrop(int i){
+        switch(0){
+            case 0:
+                Clutter coins = new Clutter(clutter.get(i).GetValue(), clutter.get(i).GetPoint(), Bitmaps[3], 0);
+                clutter.add(coins);
+                break;
+            case 1:
+                //Clutter dagger = new Clutter(3, clutter.get(i).GetPoint(), Bitmaps[0], 3);
+                break;
+            case 2:
+                break;
+        }
     }
-
     public enum CellType {Wall, Space, Clutter, Weapon, Shield, Potion, Enemy}
 
     Level(Bitmap[] images, Bitmap[] spaces, Bitmap[] walls, int Width, int Height) {
         super(spaces, walls, Width, Height);
 
-        GenerateNewMap();
         //Height and Width of one cell
         mBitMapHeight = spaces[0].getHeight();
         mBitMapWidth = spaces[0].getWidth();
-        createImages(images);
+        Bitmaps = images;
         createStairs();
         createEnemies();
         GetNewClutter();
@@ -188,6 +165,13 @@ public class Level extends Map {
         return this;
     }
 
+    public void UpdateEnemies(Player player){
+        for (int i = 0; i < enemies.size(); i++){
+            if (enemies.get(i).GetBitmap() == Bitmaps[7]){
+
+            }
+        }
+    }
 //    @Override
 //    public boolean IsCellOpen(int cellx, int celly) {
 //        boolean ret = super.IsCellOpen(cellx, celly);
@@ -227,6 +211,20 @@ public class Level extends Map {
             default:
             case Wall:
                 harmWall(cellx, celly, mining);
+                if (GetCurrentMap()[celly][cellx].GetHP() <= 0 && rand.nextInt(100) <= diamondPercent){
+                    Point tempPoint = new Point(cellx, celly);
+                    switch(rand.nextInt(2)){
+                        default:
+                        case 0:
+                            Clutter diamond = new Clutter(200, tempPoint, Bitmaps[4], 0);
+                            clutter.add(diamond);
+                            break;
+                        case 1:
+                            Clutter diamondRed = new Clutter(200, tempPoint, Bitmaps[5], 0);
+                            clutter.add(diamondRed);
+                            break;
+                    }
+                }
                 break;
             case Space:
                 break;
@@ -234,16 +232,23 @@ public class Level extends Map {
                 for (int i = 0; i < clutter.size(); i++) {
                     if (clutter.get(i).GetPoint().x == cellx && clutter.get(i).GetPoint().y == celly) {
                         clutter.get(i).Hurt(damage);
-                        if (clutter.get(i).GetBitmap() == Bitmaps[3])
+                        if (clutter.get(i).GetBitmap() == Bitmaps[3] ||
+                                clutter.get(i).GetBitmap() == Bitmaps[4] ||
+                                clutter.get(i).GetBitmap() == Bitmaps[5] )
                         {
                             player.SetPoint(cellx, celly);
-                            player.incrementScore(clutter.get(i).GetValue());
+                            if (clutter.get(i).GetBitmap() != Bitmaps[5]) {
+                                player.incrementScore(clutter.get(i).GetValue());
+                            } else {
+                                player.SetMaxHP(player.GetMaxpHP() + 1);
+                            }
                             clutter.remove(i);
                         }
                         else if (clutter.get(i).GetHP() <= 0)
                         {
-                            Clutter coins = new Clutter(clutter.get(i).GetMaxpHP(), clutter.get(i).GetPoint(), Bitmaps[3], 0);
-                            clutter.add(coins);
+                            if (clutter.get(i).GetBitmap() != Bitmaps[2]) {
+                                CreateRandomDrop(i);
+                            }
                             clutter.remove(i);
                             break;
                         }

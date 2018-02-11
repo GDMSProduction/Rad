@@ -15,6 +15,8 @@ public class Map {
     private Bitmap[] CellSpace;
     //array of available images for walls
     private Bitmap[] CellWall;
+    private int sturdywallHealth = 15;
+    private int breakingwallHealth = 5;
     //the Array of the center points of Rooms
     private Point[] RoomCenters;
     //the percent of tiles that we want to be walls in the finalized map.
@@ -71,10 +73,13 @@ public class Map {
 
     private void SetWall(int row, int col) {
         mCellsCurr[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
-        if (mCellsCurr[row][col].GetBitmap() == CellWall[0])
-            mCellsCurr[row][col].SetMaxHP(5);
-        else
-            mCellsCurr[row][col].SetMaxHP(10);
+    }
+
+    private void SetWallHealth(DestructableObject destructableObject) {
+        if (destructableObject.GetBitmap() == CellWall[1])
+            destructableObject.SetMaxHP(sturdywallHealth);
+        else if (destructableObject.GetBitmap() == CellWall[0])
+            destructableObject.SetMaxHP(breakingwallHealth);
     }
 
     private void MakeRooms() {
@@ -170,14 +175,14 @@ public class Map {
     private void MakeBorders() {
         // horizontal borders
         for (int i = 0; i < mWidth; i++) {
-            mCellsCurr[0][i].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
-            mCellsCurr[mHeight - 1][i].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+            SetWall(0, i);
+            SetWall(mHeight - 1, i);
         }
 
         // vertical borders
         for (int i = 0; i < mHeight; i++) {
-            mCellsCurr[i][0].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
-            mCellsCurr[i][mWidth - 1].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+            SetWall(i, 0);
+            SetWall(i, mWidth - 1);
         }
     }
 
@@ -194,14 +199,14 @@ public class Map {
 
                 if (FindInArray(CellWall, mCellsCurr[row][col].GetBitmap())) {
                     if (A1Walls >= 4)
-                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+                        SetWall(row, col);
                     else
                         mCellsNext[row][col].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                 } else if (FindInArray(CellSpace, mCellsCurr[row][col].GetBitmap())) {
                     if (A1Walls >= 5)
-                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+                        SetWall(row, col);
                     else if (preventLargeOpenAreas && A2Walls <= 1)
-                        mCellsNext[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
+                        SetWall(row, col);
                     else
                         mCellsNext[row][col].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 1)]);
                 }
@@ -322,6 +327,12 @@ public class Map {
         for (int i = 0; i < refine + 1; i++) {
             RefineMap(false);
         }
+
+        for (int row = 0; row < mHeight; row++) {
+            for (int col = 0; col < mWidth; col++) {
+                SetWallHealth(mCellsCurr[row][col]);
+            }
+        }
         GetEmptyFloorPoints();
         return this;
     }
@@ -345,6 +356,9 @@ public class Map {
         }
 
         mCellsCurr[celly][cellx].Hurt(mining);
+        if (mCellsCurr[celly][cellx].GetBitmap() != CellWall[0]) {
+            mCellsCurr[celly][cellx].SetBitMap(CellWall[0]);
+        }
         if (mCellsCurr[celly][cellx].GetHP() <= 0) {
             mCellsCurr[celly][cellx].SetBitMap(CellSpace[rand.nextInt(CellSpace.length - 2)]);
             numEmptyCells++;

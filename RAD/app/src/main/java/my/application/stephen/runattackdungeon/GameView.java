@@ -102,23 +102,26 @@ public class GameView extends SurfaceView implements Runnable {
 
         //Create Core GamePlay Elements
         createPlayer();
-        camOffsetY = player.GetY() - camHeight / 2;
-        camOffsetX = player.GetX() - camWidth / 2;
+        centerTheCamera();
         offsetTheCamera();
     }
 
+    private void centerTheCamera(){
+        camOffsetY = player.GetY() - camHeight / 2;
+        camOffsetX = player.GetX() - camWidth / 2;
+    }
     private void offsetTheCamera() {
         if (camOffsetY < 0) {
             camOffsetY = 0;
         }
         else if (camOffsetY >= currentLevel.GetMapHeight() - camHeight) {
-            camOffsetY = currentLevel.GetMapHeight() - camHeight - 1;
+            camOffsetY = currentLevel.GetMapHeight() - camHeight;
         }
         if (camOffsetX < 0) {
             camOffsetX = 0;
         }
         else if (camOffsetX >= currentLevel.GetMapWidth() - camWidth) {
-            camOffsetX = currentLevel.GetMapWidth() - camWidth - 1;
+            camOffsetX = currentLevel.GetMapWidth() - camWidth;
         }
     }
 
@@ -329,12 +332,17 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawLevelObject(ObjectBase object) {
-        canvas.drawBitmap(
-                object.GetBitmap(),
-                object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
-                object.GetY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (object.GetBitmap().getHeight() / 2),
-                paint
-        );
+        if (object.GetX() <= camWidth + camOffsetX &&
+                object.GetX() > camOffsetX &&
+                object.GetY() <= camHeight + camOffsetY &&
+                object.GetY() > camOffsetY) {
+            canvas.drawBitmap(
+                    object.GetBitmap(),
+                    ((object.GetX() - camOffsetX) * mBitMapWidth) + ((mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2)),
+                    ((object.GetY() - camOffsetY) * mBitMapHeight) + ((mBitMapHeight / 2) - (object.GetBitmap().getHeight() / 2)),
+                    paint
+            );
+        }
     }
 
     private void animateLevelObject(ObjectBase object, int offsetX, int offsetY) {
@@ -539,6 +547,8 @@ public class GameView extends SurfaceView implements Runnable {
             }
             player.SetX(currentLevel.getStairsUp().GetX());
             player.SetY(currentLevel.getStairsUp().GetY());
+            centerTheCamera();
+            offsetTheCamera();
         } else if (player.GetPoint().x == currentLevel.getStairsUp().GetPoint().x &&
                 player.GetPoint().y == currentLevel.getStairsUp().GetPoint().y) {
             if (currentLevelIndex == 0) {
@@ -547,6 +557,8 @@ public class GameView extends SurfaceView implements Runnable {
                 currentLevelIndex--;
                 player.SetX(currentLevel.getStairsDown().GetX());
                 player.SetY(currentLevel.getStairsDown().GetY());
+                centerTheCamera();
+                offsetTheCamera();
             }
         }
     }
@@ -558,7 +570,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void AddNewLevel() {
-        Level temp = new Level(levelImages, spaces, walls, screenWidth, screenHeight);
+        Level temp = new Level(levelImages, spaces, walls, screenWidth * 3, screenHeight * 3);
         Levels.add(temp);
         currentLevel = Levels.get(Levels.size() - 1);
         currentLevelIndex++;

@@ -7,7 +7,7 @@ import android.graphics.Point;
  * Created by Stephen on 2018-01-20.
  */
 
-public class Creature extends DestructableObject {
+public class Creature extends ObjectDestructable {
 
     private float defense = 0.0f;
     private float defenseMax = 0.8f;
@@ -16,7 +16,7 @@ public class Creature extends DestructableObject {
     private int dig = 0;
     private int digMax = 10;
     private boolean following = false;
-    private DestructableObject weapon;
+    private ObjectDestructable weapon;
 
     Creature(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap, HPMax);

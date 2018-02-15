@@ -3,7 +3,6 @@ package my.application.stephen.runattackdungeon;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 /**
@@ -19,10 +18,10 @@ public class Level extends Map {
     //The Clutter
     private int maxClutter = 5;
     private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
-    private int diamondPercent = 50;
+    private int diamondPercent = 1;
     //The Stairs
-    private BaseObject stairsUp;
-    private BaseObject stairsDown;
+    private ObjectBase stairsUp;
+    private ObjectBase stairsDown;
     //the enemies
     private int maxEnemies = 5;
     private ArrayList<Creature> enemies = new ArrayList<Creature>(maxEnemies);
@@ -102,11 +101,11 @@ public class Level extends Map {
 
     private void createStairs() {
         int newPoint = getNewEmptyPoint();
-        stairsDown = new BaseObject(GetFloorPoints().get(newPoint),
+        stairsDown = new ObjectBase(GetFloorPoints().get(newPoint),
                 Bitmaps[6]);
         TakeAwayEmptyFloorTiles(newPoint);
         newPoint = getNewEmptyPoint();
-        stairsUp = new BaseObject(GetFloorPoints().get(newPoint),
+        stairsUp = new ObjectBase(GetFloorPoints().get(newPoint),
                 Bitmaps[7]);
         TakeAwayEmptyFloorTiles(newPoint);
     }
@@ -139,11 +138,11 @@ public class Level extends Map {
     }
 
     //Getters
-    public BaseObject getStairsUp() {
+    public ObjectBase getStairsUp() {
         return stairsUp;
     }
 
-    public BaseObject getStairsDown() {
+    public ObjectBase getStairsDown() {
         return stairsDown;
     }
 
@@ -210,6 +209,9 @@ public class Level extends Map {
         switch (getCellType(cellx, celly)) {
             default:
             case Wall:
+                if (cellx >= GetMapWidth() || cellx < 0 || celly >= GetMapHeight() || celly < 0) {
+                    break;
+                }
                 harmWall(cellx, celly, mining);
                 if (GetCurrentMap()[celly][cellx].GetHP() <= 0 && rand.nextInt(100) <= diamondPercent){
                     Point tempPoint = new Point(cellx, celly);

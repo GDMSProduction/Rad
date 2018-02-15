@@ -48,10 +48,10 @@ public class GameView extends SurfaceView implements Runnable {
     private int dpadHeight = 0;
     private int dPadOpacity = 100;
     private int DPADbuffer = 80;
-    private BaseObject dPadUp;
-    private BaseObject dPadDown;
-    private BaseObject dPadLeft;
-    private BaseObject dPadRight;
+    private ObjectBase dPadUp;
+    private ObjectBase dPadDown;
+    private ObjectBase dPadLeft;
+    private ObjectBase dPadRight;
     //Level info
     private int depthTextSize = 64;
 
@@ -74,7 +74,7 @@ public class GameView extends SurfaceView implements Runnable {
     private Bitmap heroUp;
     private Bitmap heroDown;
     private Player player;
-    private int startingHealth = 10;
+    private int startingHealth = 3;
 
     //Class constructor
     public GameView(Context context, int screenX, int screenY) {
@@ -111,14 +111,14 @@ public class GameView extends SurfaceView implements Runnable {
         if (camOffsetY < 0) {
             camOffsetY = 0;
         }
-        if (camOffsetY >= currentLevel.GetHeight() - camHeight) {
-            camOffsetY = currentLevel.GetHeight() - camHeight;
+        if (camOffsetY >= currentLevel.GetMapHeight() - camHeight) {
+            camOffsetY = currentLevel.GetMapHeight() - camHeight;
         }
         if (camOffsetX < 0) {
             camOffsetX = 0;
         }
-        if (camOffsetX >= currentLevel.GetWidth() - camWidth) {
-            camOffsetX = currentLevel.GetWidth() - camWidth;
+        if (camOffsetX >= currentLevel.GetMapWidth() - camWidth) {
+            camOffsetX = currentLevel.GetMapWidth() - camWidth;
         }
     }
 
@@ -141,6 +141,7 @@ public class GameView extends SurfaceView implements Runnable {
         player.SetDig(5);
         player.SetAttack(5);
     }
+
     private void createImages(Context context) {
 
         spaces = new Bitmap[6];
@@ -166,7 +167,7 @@ public class GameView extends SurfaceView implements Runnable {
         Bitmaps[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.directional_button), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
         Bitmaps[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.heart_3d), (int) (mBitMapWidth * 1.05), (int) (mBitMapHeight * 1.05));
 
-        levelImages = new Bitmap[25];
+        levelImages = new Bitmap[26];
         //Clutter
         levelImages[0] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.barrel), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         levelImages[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.chest), (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
@@ -180,26 +181,28 @@ public class GameView extends SurfaceView implements Runnable {
         //ENEMIES
         levelImages[8] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blob_green), mBitMapWidth, mBitMapHeight);
         levelImages[9] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.goblin_easy), mBitMapWidth, mBitMapHeight);
+
         //Consumable
         levelImages[10] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.apple), mBitMapWidth, mBitMapHeight);
         levelImages[11] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bottles), mBitMapWidth, mBitMapHeight);
-        levelImages[12] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.diploma), mBitMapWidth, mBitMapHeight);
+        levelImages[12] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.scroll), mBitMapWidth, mBitMapHeight);
         levelImages[13] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.drumstick), mBitMapWidth, mBitMapHeight);
         //Weapons
-        levelImages[14] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.axe), mBitMapWidth, mBitMapHeight);
-        levelImages[15] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bow_and_arrow), mBitMapWidth, mBitMapHeight);
-        levelImages[16] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
-        levelImages[17] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
+        levelImages[14] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.human_fist_different_sides), mBitMapWidth, mBitMapHeight);
+        levelImages[15] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.axe), mBitMapWidth, mBitMapHeight);
+        levelImages[16] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.bow_and_arrow), mBitMapWidth, mBitMapHeight);
+        levelImages[17] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
+        levelImages[18] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
         //Light
-        levelImages[18] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.torch), mBitMapWidth, mBitMapHeight);
-        levelImages[19] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.lantern), mBitMapWidth, mBitMapHeight);
+        levelImages[19] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.torch), mBitMapWidth, mBitMapHeight);
+        levelImages[20] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.lantern), mBitMapWidth, mBitMapHeight);
         //Mining
-        levelImages[20] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shovel), mBitMapWidth, mBitMapHeight);
-        levelImages[21] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.pickaxe), mBitMapWidth, mBitMapHeight);
+        levelImages[21] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shovel), mBitMapWidth, mBitMapHeight);
+        levelImages[22] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.pickaxe), mBitMapWidth, mBitMapHeight);
         //Wearables
-        levelImages[22] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_gold), mBitMapWidth, mBitMapHeight);
-        levelImages[23] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
-        levelImages[24] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
+        levelImages[23] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_gold), mBitMapWidth, mBitMapHeight);
+        levelImages[24] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
+        levelImages[25] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -225,23 +228,23 @@ public class GameView extends SurfaceView implements Runnable {
         DPAD = new Rect(dpadX + DPADbuffer, dpadY - DPADbuffer, dpadHeight, dpadHeight);
 
         Point dpadUpPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[1].getWidth() / 2), DPAD.top);
-        dPadUp = new BaseObject(dpadUpPoint, Bitmaps[1]);
+        dPadUp = new ObjectBase(dpadUpPoint, Bitmaps[1]);
 
         Matrix matrix = new Matrix();
         matrix.postRotate(270);
         Bitmap rotatedBitmap = Bitmap.createBitmap(Bitmaps[1], 0, 0, Bitmaps[1].getWidth(), Bitmaps[1].getHeight(), matrix, true);
         Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
-        dPadLeft = new BaseObject(dpadLeftPoint, rotatedBitmap);
+        dPadLeft = new ObjectBase(dpadLeftPoint, rotatedBitmap);
 
         //matrix.postRotate(180);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
         Point dpadDownPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (Bitmaps[1].getWidth() / 2), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
-        dPadDown = new BaseObject(dpadDownPoint, rotatedBitmap);
+        dPadDown = new ObjectBase(dpadDownPoint, rotatedBitmap);
 
         //matrix.postRotate(90);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
         Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
-        dPadRight = new BaseObject(dpadRightPoint, rotatedBitmap);
+        dPadRight = new ObjectBase(dpadRightPoint, rotatedBitmap);
     }
 
     private void SetNewPlayerPoint() {
@@ -303,6 +306,7 @@ public class GameView extends SurfaceView implements Runnable {
             //User Interface
             //THESE NEED TO BE LAST.
             drawingTheDPAD();
+            drawingTheHealth();
             drawingCurrentDepth();
             drawingScore();
             //Unlocking the canvas
@@ -324,7 +328,7 @@ public class GameView extends SurfaceView implements Runnable {
         canvas.drawText(score, 0, depthTextSize * 2, paint);
     }
 
-    private void drawLevelObject(BaseObject object) {
+    private void drawLevelObject(ObjectBase object) {
         canvas.drawBitmap(
                 object.GetBitmap(),
                 object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
@@ -333,7 +337,7 @@ public class GameView extends SurfaceView implements Runnable {
         );
     }
 
-    private void animateLevelObject(BaseObject object, int offsetX, int offsetY) {
+    private void animateLevelObject(ObjectBase object, int offsetX, int offsetY) {
         canvas.drawBitmap(
                 object.GetBitmap(),
                 object.GetX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2),
@@ -345,6 +349,19 @@ public class GameView extends SurfaceView implements Runnable {
     private void drawingTheStairs() {
         drawLevelObject(currentLevel.getStairsUp());
         drawLevelObject(currentLevel.getStairsDown());
+    }
+
+    private void drawingTheHealth() {
+        int tempWidth = (currentLevel.GetMapWidth()-1)*mBitMapWidth;
+        for (int i = 0; i < player.GetHP(); i++) {
+            canvas.drawBitmap(Bitmaps[2],
+                    tempWidth - (Bitmaps[2].getWidth() * i),
+                    0,
+                    paint);
+        }
+    }
+
+    private void drawingThePlayerItems(){
     }
 
     private void drawingTheDPAD() {
@@ -393,7 +410,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheMap() {
-        DestructableObject[][] tempMap = currentLevel.GetCurrentMap();
+        ObjectDestructable[][] tempMap = currentLevel.GetCurrentMap();
 
         for (int row = 0; row < camHeight; row++) {
             for (int col = 0; col < camWidth; col++) {
@@ -479,7 +496,7 @@ public class GameView extends SurfaceView implements Runnable {
                     if (currentLevel.getCellType(player.GetX() + 1, player.GetY()) == Level.CellType.Space) {
                         player.SetX(player.GetX() + 1);
                         CheckStairs();
-                    }else {
+                    } else {
                         currentLevel.harmObject(player.GetX() + 1, player.GetY(), player.GetAttack(), player.GetDig(), player);
                     }
                     checkPlayerImage(heroRight);

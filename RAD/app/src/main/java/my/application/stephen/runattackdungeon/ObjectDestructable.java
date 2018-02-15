@@ -7,11 +7,11 @@ import android.graphics.Point;
  * Created by zfile on 2018-02-02.
  */
 
-public class DestructableObject extends BaseObject {
+public class ObjectDestructable extends ObjectBase {
     private int hitPoints = 10;
     private int hitPointsMax = 10;
 
-    DestructableObject(Point newPoint, Bitmap newBitmap, int HPMax) {
+    ObjectDestructable(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap);
         hitPoints = hitPointsMax = HPMax;
     }

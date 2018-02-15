@@ -34,9 +34,9 @@ public class Map {
     //random number, used for random number generation
     protected Random rand = new Random();
     //the current map tileset
-    private DestructableObject[][] mCellsCurr;
+    private ObjectDestructable[][] mCellsCurr;
     //the next generation of the map tileset.
-    private DestructableObject[][] mCellsNext;
+    private ObjectDestructable[][] mCellsNext;
     //The points of every floor tile.
     private ArrayList<Point> FloorTiles;
 
@@ -59,7 +59,7 @@ public class Map {
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
                 Point tempPoint = new Point(0, 0);
-                DestructableObject temp = new DestructableObject(tempPoint, CellWall[0], 5);
+                ObjectDestructable temp = new ObjectDestructable(tempPoint, CellWall[0], 5);
                 temp.SetPoint(col, row);
                 mCellsCurr[row][col] = temp;
                 if (rand.nextLong() % 100 + 1 <= WallPercent) {
@@ -75,11 +75,11 @@ public class Map {
         mCellsCurr[row][col].SetBitMap(CellWall[rand.nextInt(CellWall.length)]);
     }
 
-    private void SetWallHealth(DestructableObject destructableObject) {
-        if (destructableObject.GetBitmap() == CellWall[1])
-            destructableObject.SetMaxHP(sturdywallHealth);
-        else if (destructableObject.GetBitmap() == CellWall[0])
-            destructableObject.SetMaxHP(breakingwallHealth);
+    private void SetWallHealth(ObjectDestructable objectDestructable) {
+        if (objectDestructable.GetBitmap() == CellWall[1])
+            objectDestructable.SetMaxHP(sturdywallHealth);
+        else if (objectDestructable.GetBitmap() == CellWall[0])
+            objectDestructable.SetMaxHP(breakingwallHealth);
     }
 
     private void MakeRooms() {
@@ -217,7 +217,7 @@ public class Map {
         CopyArray(mCellsNext, mCellsCurr, mWidth, mHeight);
     }
 
-    private void CopyArray(DestructableObject[][] ImageArray1, DestructableObject[][] ImageArray2, int width, int height) {
+    private void CopyArray(ObjectDestructable[][] ImageArray1, ObjectDestructable[][] ImageArray2, int width, int height) {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 ImageArray2[j][i] = ImageArray1[j][i];
@@ -271,18 +271,18 @@ public class Map {
 
         RoomCenters = new Point[roomNums];
 
-        mCellsCurr = new DestructableObject[mHeight][mWidth];
-        mCellsNext = new DestructableObject[mHeight][mWidth];
+        mCellsCurr = new ObjectDestructable[mHeight][mWidth];
+        mCellsNext = new ObjectDestructable[mHeight][mWidth];
 
         GenerateNewMap();
     }
 
-    public DestructableObject[][] GetCurrentMap() {
+    public ObjectDestructable[][] GetCurrentMap() {
         return mCellsCurr;
     }
 
-    public DestructableObject[][] GetSubMap(int offsetX, int offsetY, int width, int height) {
-        DestructableObject[][] temp = new DestructableObject[height][width];
+    public ObjectDestructable[][] GetSubMap(int offsetX, int offsetY, int width, int height) {
+        ObjectDestructable[][] temp = new ObjectDestructable[height][width];
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                 temp[row][col] = mCellsCurr[row + offsetY][col + offsetX];
@@ -291,11 +291,11 @@ public class Map {
         return temp;
     }
 
-    public int GetHeight() {
+    public int GetMapHeight() {
         return mHeight;
     }
 
-    public int GetWidth() {
+    public int GetMapWidth() {
         return mWidth;
     }
 
@@ -344,17 +344,12 @@ public class Map {
         }
         return (FindInArray(CellSpace, mCellsCurr[celly][cellx].GetBitmap()));
     }
-
     public void TakeAwayEmptyFloorTiles(int floorTile) {
         FloorTiles.remove(floorTile);
         numEmptyCells--;
     }
 
     public void harmWall(int cellx, int celly, int mining) {
-        if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
-            return;
-        }
-
         mCellsCurr[celly][cellx].Hurt(mining);
         if (mCellsCurr[celly][cellx].GetBitmap() != CellWall[0]) {
             mCellsCurr[celly][cellx].SetBitMap(CellWall[0]);
@@ -364,5 +359,4 @@ public class Map {
             numEmptyCells++;
         }
     }
-
 }

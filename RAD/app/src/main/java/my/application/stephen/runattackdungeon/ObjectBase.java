@@ -8,12 +8,12 @@ import android.graphics.Rect;
  * Created by Stephen on 2018-01-18.
  */
 
-public class BaseObject {
+public class ObjectBase {
     private Point mPoint = new Point(0, 0);
     private Bitmap image;
     private Rect detectCollision;
 
-    BaseObject(Point newPoint, Bitmap newBitmap) {
+    ObjectBase(Point newPoint, Bitmap newBitmap) {
         mPoint = newPoint;
         image = newBitmap;
         //initializing rect object

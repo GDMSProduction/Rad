@@ -89,36 +89,36 @@ public class GameView extends SurfaceView implements Runnable {
         createImages(context);
 
         //Create currentLevel
-        currentLevel = new Level(levelImages, spaces, walls, screenWidth, screenHeight);
+        currentLevel = new Level(levelImages, spaces, walls, screenWidth * 3, screenHeight * 3);
         Levels.add(currentLevel);
         currentLevelIndex = 0;
         //currentLevel.GenerateNewMap();
 
         //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
-        camHeight = screenY / spaces[0].getHeight();
         camWidth = screenX / spaces[0].getWidth();
+        camHeight = screenY / spaces[0].getHeight();
 
         createDPAD(screenY);
 
         //Create Core GamePlay Elements
         createPlayer();
-        //offsetTheCamera();
+        camOffsetY = player.GetY() - camHeight / 2;
+        camOffsetX = player.GetX() - camWidth / 2;
+        offsetTheCamera();
     }
 
     private void offsetTheCamera() {
-        camOffsetY = player.GetY() - camHeight / 2;
-        camOffsetX = player.GetX() - camWidth / 2;
         if (camOffsetY < 0) {
             camOffsetY = 0;
         }
-        if (camOffsetY >= currentLevel.GetMapHeight() - camHeight) {
-            camOffsetY = currentLevel.GetMapHeight() - camHeight;
+        else if (camOffsetY >= currentLevel.GetMapHeight() - camHeight) {
+            camOffsetY = currentLevel.GetMapHeight() - camHeight - 1;
         }
         if (camOffsetX < 0) {
             camOffsetX = 0;
         }
-        if (camOffsetX >= currentLevel.GetMapWidth() - camWidth) {
-            camOffsetX = currentLevel.GetMapWidth() - camWidth;
+        else if (camOffsetX >= currentLevel.GetMapWidth() - camWidth) {
+            camOffsetX = currentLevel.GetMapWidth() - camWidth - 1;
         }
     }
 
@@ -410,7 +410,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheMap() {
-        ObjectDestructable[][] tempMap = currentLevel.GetCurrentMap();
+        ObjectDestructable[][] tempMap = currentLevel.GetSubMap(camOffsetX, camOffsetY, camWidth, camHeight);
 
         for (int row = 0; row < camHeight; row++) {
             for (int col = 0; col < camWidth; col++) {
@@ -466,9 +466,14 @@ public class GameView extends SurfaceView implements Runnable {
                 //When the user presses on the screen
                 //we will do something here
                 PointF pressPoint = new PointF(motionEvent.getX(), motionEvent.getY());
+                //if current weapon type is melee:
                 if (DetectButtonPress(pressPoint, dPadUp.GetCollideRect())) {
                     if (currentLevel.getCellType(player.GetX(), player.GetY() - 1) == Level.CellType.Space) {
                         player.SetY(player.GetY() - 1);
+                        if (player.GetY() < camOffsetY + camHeight/4) {
+                            camOffsetY--;
+                            offsetTheCamera();
+                        }
                         CheckStairs();
                     } else {
                         currentLevel.harmObject(player.GetX(), player.GetY() - 1, player.GetAttack(), player.GetDig(), player);
@@ -477,6 +482,10 @@ public class GameView extends SurfaceView implements Runnable {
                 } else if (DetectButtonPress(pressPoint, dPadDown.GetCollideRect())) {
                     if (currentLevel.getCellType(player.GetX(), player.GetY() + 1) == Level.CellType.Space) {
                         player.SetY(player.GetY() + 1);
+                        if (player.GetY() > camOffsetY + (camHeight * 3/4)) {
+                            camOffsetY++;
+                            offsetTheCamera();
+                        }
                         CheckStairs();
                     } else {
                         currentLevel.harmObject(player.GetX(), player.GetY() + 1, player.GetAttack(), player.GetDig(), player);
@@ -486,6 +495,10 @@ public class GameView extends SurfaceView implements Runnable {
                 if (DetectButtonPress(pressPoint, dPadLeft.GetCollideRect())) {
                     if (currentLevel.getCellType(player.GetX() - 1, player.GetY()) == Level.CellType.Space) {
                         player.SetX(player.GetX() - 1);
+                        if (player.GetX() < camOffsetX + camWidth/4) {
+                            camOffsetX--;
+                            offsetTheCamera();
+                        }
                         CheckStairs();
                     } else {
                         currentLevel.harmObject(player.GetX() - 1, player.GetY(), player.GetAttack(), player.GetDig(), player);
@@ -495,6 +508,10 @@ public class GameView extends SurfaceView implements Runnable {
                 } else if (DetectButtonPress(pressPoint, dPadRight.GetCollideRect())) {
                     if (currentLevel.getCellType(player.GetX() + 1, player.GetY()) == Level.CellType.Space) {
                         player.SetX(player.GetX() + 1);
+                        if (player.GetX() > camOffsetX + (camWidth*3/4)) {
+                            camOffsetX++;
+                            offsetTheCamera();
+                        }
                         CheckStairs();
                     } else {
                         currentLevel.harmObject(player.GetX() + 1, player.GetY(), player.GetAttack(), player.GetDig(), player);

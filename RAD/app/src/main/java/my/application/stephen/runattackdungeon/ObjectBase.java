@@ -10,6 +10,7 @@ import android.graphics.Rect;
 
 public class ObjectBase {
     private Point mPoint = new Point(0, 0);
+    private int centerOffset = 0;
     private Bitmap image;
     private Rect detectCollision;
 
@@ -33,28 +34,22 @@ public class ObjectBase {
         return mPoint.y;
     }
 
+    public int GetCenterOffset() {return centerOffset;}
+
     public Bitmap GetBitmap() {
         return image;
-    }
-
-    public int GetWidth() {
-        return image.getWidth();
-    }
-
-    public int GetHeight() {
-        return image.getHeight();
     }
 
     public Rect GetCollideRect() {
         return detectCollision;
     }
 
-
     //Setters
     public void SetBitMap(Bitmap newBitMap) {
         image = newBitMap;
     }
 
+    public void SetCenterOffset(int newCenterOffset) {centerOffset = newCenterOffset;}
     public void SetPoint(Point newPoint) {
         mPoint = newPoint;
     }

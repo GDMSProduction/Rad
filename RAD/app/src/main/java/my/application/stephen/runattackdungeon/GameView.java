@@ -332,10 +332,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawLevelObject(ObjectBase object) {
-        if (object.GetX() <= camWidth + camOffsetX &&
-                object.GetX() > camOffsetX &&
-                object.GetY() <= camHeight + camOffsetY &&
-                object.GetY() > camOffsetY) {
+        if (object.GetX() < camOffsetX + camWidth &&
+                object.GetY() < camOffsetY + camWidth) {
             canvas.drawBitmap(
                     object.GetBitmap(),
                     ((object.GetX() - camOffsetX) * mBitMapWidth) + ((mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2)),
@@ -360,7 +358,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheHealth() {
-        int tempWidth = (currentLevel.GetMapWidth()-1)*mBitMapWidth;
+        int tempWidth = (camWidth-1)*mBitMapWidth;
         for (int i = 0; i < player.GetHP(); i++) {
             canvas.drawBitmap(Bitmaps[2],
                     tempWidth - (Bitmaps[2].getWidth() * i),
@@ -418,11 +416,9 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheMap() {
-        ObjectDestructable[][] tempMap = currentLevel.GetSubMap(camOffsetX, camOffsetY, camWidth, camHeight);
-
         for (int row = 0; row < camHeight; row++) {
             for (int col = 0; col < camWidth; col++) {
-                canvas.drawBitmap(tempMap[row][col].GetBitmap(),
+                canvas.drawBitmap(currentLevel.GetCurrentMap()[row + camOffsetY][col + camOffsetX].GetBitmap(),
                         col * mBitMapWidth,
                         row * mBitMapHeight,
                         paint);

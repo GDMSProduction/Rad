@@ -333,7 +333,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawLevelObject(ObjectBase object) {
         if (object.GetX() < camOffsetX + camWidth &&
-                object.GetY() < camOffsetY + camWidth) {
+                object.GetY() < camOffsetY + camHeight) {
             canvas.drawBitmap(
                     object.GetBitmap(),
                     ((object.GetX() - camOffsetX) * mBitMapWidth) + ((mBitMapWidth / 2) - (object.GetBitmap().getWidth() / 2)),

@@ -2,6 +2,7 @@ package my.application.stephen.runattackdungeon;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.drm.DrmStore;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,6 +36,7 @@ public class Dungeon extends AppCompatActivity {
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
     private View mContentView;
+    private ActionBar actionBar;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -57,7 +59,7 @@ public class Dungeon extends AppCompatActivity {
         @Override
         public void run() {
             // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
+            actionBar = getSupportActionBar();
             if (actionBar != null) {
                 actionBar.show();
             }
@@ -146,7 +148,7 @@ public class Dungeon extends AppCompatActivity {
 
     private void hide() {
         // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
+        actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
         }

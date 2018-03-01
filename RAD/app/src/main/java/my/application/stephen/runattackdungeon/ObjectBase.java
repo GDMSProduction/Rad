@@ -22,51 +22,51 @@ public class ObjectBase {
     }
 
     //Getters
-    public Point GetPoint() {
+    public Point getPoint() {
         return mPoint;
     }
 
-    public int GetX() {
+    public int getX() {
         return mPoint.x;
     }
 
-    public int GetY() {
+    public int getY() {
         return mPoint.y;
     }
 
-    public int GetCenterOffset() {return centerOffset;}
+    public int getCenterOffset() {return centerOffset;}
 
-    public Bitmap GetBitmap() {
+    public Bitmap getBitmap() {
         return image;
     }
 
-    public Rect GetCollideRect() {
+    public Rect getCollideRect() {
         return detectCollision;
     }
 
     //Setters
-    public void SetBitMap(Bitmap newBitMap) {
+    public void setBitMap(Bitmap newBitMap) {
         image = newBitMap;
     }
 
-    public void SetCenterOffset(int newCenterOffset) {centerOffset = newCenterOffset;}
-    public void SetPoint(Point newPoint) {
+    public void setCenterOffset(int newCenterOffset) {centerOffset = newCenterOffset;}
+    public void setPoint(Point newPoint) {
         mPoint = newPoint;
     }
-    public void SetPoint(int x, int y) {
+    public void setPoint(int x, int y) {
         Point temp = new Point (x, y);
         mPoint = temp;
     }
 
-    public void SetX(int newX) {
+    public void setX(int newX) {
         mPoint.x = newX;
     }
 
-    public void SetY(int newY) {
+    public void setY(int newY) {
         mPoint.y = newY;
     }
 
-    public void SetDetectCollision(Rect newRect) {
+    public void setDetectCollision(Rect newRect) {
         detectCollision = newRect;
     }
 

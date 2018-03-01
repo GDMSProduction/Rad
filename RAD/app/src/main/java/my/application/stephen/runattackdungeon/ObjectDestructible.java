@@ -7,31 +7,29 @@ import android.graphics.Point;
  * Created by zfile on 2018-02-02.
  */
 
-public class ObjectDestructable extends ObjectBase {
+public class ObjectDestructible extends ObjectBase {
     private int hitPoints = 10;
     private int hitPointsMax = 10;
 
-    ObjectDestructable(Point newPoint, Bitmap newBitmap, int HPMax) {
+    ObjectDestructible(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap);
         hitPoints = hitPointsMax = HPMax;
     }
 
-    public int GetHP() {
+    public int getHP() {
         return hitPoints;
     }
 
-    public int GetMaxpHP() {
+    public int getMaxpHP() {
         return hitPointsMax;
     }
 
-    public void SetMaxHP(int newMax) {
+    public void setMaxHP(int newMax) {
+        hitPoints += newMax - hitPointsMax;
         hitPointsMax = newMax;
-        if (hitPoints < hitPointsMax){
-            hitPoints = hitPointsMax;
-        }
     }
 
-    public void Hurt(int damage) {
+    public void hurt(int damage) {
         if (hitPoints - damage <= 0) {
             hitPoints = 0;
         } else {
@@ -39,7 +37,7 @@ public class ObjectDestructable extends ObjectBase {
         }
     }
 
-    public void Heal(int healing) {
+    public void heal(int healing) {
         if (healing + hitPoints >= hitPointsMax) {
             hitPoints = hitPointsMax;
         } else {

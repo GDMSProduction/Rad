@@ -23,6 +23,6 @@ public class Player extends Creature {
     public void incrementScore(int points){ score+=points;}
     public void levelUP(){
         level++;
-        SetMaxHP((int)(GetMaxpHP()*1.2));
+        setMaxHP((int)(getMaxpHP()*1.2));
     }
 }

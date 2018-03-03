@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="my.application.stephen.runattackdungeon.Dungeon"
+        <activity android:name="my.application.stephen.runattackdungeon.MainMenu"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:screenOrientation="sensorLandscape"
@@ -23,31 +23,31 @@
         </activity>
         <activity android:name="my.application.stephen.runattackdungeon.SettingsActivity"
             android:label="Settings"
-            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.MainMenu">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="my.application.stephen.runattackdungeon.Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.MainMenu" />
         </activity>
         <activity android:name="my.application.stephen.runattackdungeon.GameActivity"
             android:label="RUN! Attack Dungeon"
             android:screenOrientation="sensorLandscape"
-            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.MainMenu">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="my.application.stephen.runattackdungeon.Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.MainMenu" />
         </activity>
         <activity android:name="my.application.stephen.runattackdungeon.HighScoresActivity"
             android:label="High Scores"
-            android:parentActivityName="my.application.stephen.runattackdungeon.Dungeon">
+            android:parentActivityName="my.application.stephen.runattackdungeon.MainMenu">
 
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="my.application.stephen.runattackdungeon.Dungeon" />
+                android:value="my.application.stephen.runattackdungeon.MainMenu" />
         </activity>
     </application>
 

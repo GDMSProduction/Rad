@@ -1,6 +1,7 @@
 package my.application.stephen.runattackdungeon;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -18,6 +19,8 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static android.support.v4.content.ContextCompat.startActivity;
+
 /**
  * Created by Stephen Brasel on 2018-01-18.
  */
@@ -25,8 +28,12 @@ import java.util.Random;
 public class GameView extends SurfaceView implements Runnable {
     //boolean variable to track if the game is playing or not
     volatile boolean playing;
+    private boolean win;
     //the game thread
     private Thread gameThread = null;
+
+    final double TICKS_RATE = 1516.667;
+
     //These objects will be used for drawing
     private Paint paint;
     private Canvas canvas;
@@ -49,6 +56,7 @@ public class GameView extends SurfaceView implements Runnable {
     public static Bitmap[] imageLight;
     public static Bitmap[] imageMining;
     public static Bitmap[] imageWearables;
+    public static Bitmap[] imageNPC;
 
     //User Interface.
     //dPad
@@ -66,6 +74,7 @@ public class GameView extends SurfaceView implements Runnable {
     private int depthTextSize = 64;
 
     //the Levels
+    private boolean friendlyFire = false;
     private int numLevels = 2;
     private ArrayList<Level> Levels = new ArrayList<Level>(numLevels);
     private Level currentLevel;
@@ -83,11 +92,11 @@ public class GameView extends SurfaceView implements Runnable {
     private Bitmap heroRight;
     private Bitmap heroUp;
     private Bitmap heroDown;
-    private Player player;
+    private Creature player;
     private int startingHealth = 3;
 
     //Class constructor
-    public GameView(Context context, int screenX, int screenY) {
+    public GameView(Context context, int screenX, int screenY/*, boolean FriendlyFire*/) {
         super(context);
 
         screenWidth = screenX;
@@ -102,10 +111,13 @@ public class GameView extends SurfaceView implements Runnable {
         camWidth = screenX / spaces[0].getWidth();
         camHeight = screenY / spaces[0].getHeight();
 
+        //friendlyFire = FriendlyFire;
+
         //Create currentLevel
-        currentLevel = new Level(screenWidth / spaces[0].getHeight(), screenHeight / spaces[0].getHeight(), true);
-        Levels.add(currentLevel);
-        currentLevelIndex = 0;
+        AddNewLevel();
+//        currentLevel = new Level(screenWidth / spaces[0].getHeight(), screenHeight / spaces[0].getHeight(), true);
+//        Levels.add(currentLevel);
+        currentLevel = Levels.get(0);
         //currentLevel.GenerateNewMap();
 
 
@@ -122,22 +134,9 @@ public class GameView extends SurfaceView implements Runnable {
         camOffsetX = player.getX() - camWidth / 2;
     }
 
-    private void offsetTheCamera() {
-        if (camOffsetY < 0) {
-            camOffsetY = 0;
-        } else if (camOffsetY > currentLevel.GetMapHeight() - camHeight) {
-            camOffsetY = currentLevel.GetMapHeight() - camHeight;
-        }
-        if (camOffsetX < 0) {
-            camOffsetX = 0;
-        } else if (camOffsetX > currentLevel.GetMapWidth() - camWidth) {
-            camOffsetX = currentLevel.GetMapWidth() - camWidth;
-        }
-    }
-
     private void createPlayer() {
         int newPoint = currentLevel.getNewEmptyPointIndex();
-        player = new Player(
+        player = new Creature(
                 currentLevel.GetFloorPoints().get(newPoint),
                 heroDown,
                 startingHealth);
@@ -147,6 +146,7 @@ public class GameView extends SurfaceView implements Runnable {
         player.setWeapon(new Weapon(0, 0, 0, player.getPoint(), imageWeapon[0], 10));
         player.setMiningTool(new MiningTool(3, 0, player.getPoint(), imageMining[0], 10));
         player.setLightSource(new LightSource(5, 2, 0, player.getPoint(), imageLight[0], 500));
+        currentLevel.getCreatures().add(player);
     }
 
     private void createImages(Context context) {
@@ -212,18 +212,18 @@ public class GameView extends SurfaceView implements Runnable {
         imagePotion = new Bitmap[7];
         imagePotion[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.bottles);
         //green
-        imagePotion[1] = Bitmap.createBitmap(imagePotion[0], 0,0, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
+        imagePotion[1] = Bitmap.createBitmap(imagePotion[0], 0, 0, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
         //light blue
-        imagePotion[2] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth()/3,0, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
+        imagePotion[2] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth() / 3, 0, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
         //black
-        imagePotion[3] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth()*2/3,0, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
+        imagePotion[3] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth() * 2 / 3, 0, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
         //red
-        imagePotion[4] = Bitmap.createBitmap(imagePotion[0], 0,imagePotion[0].getHeight()/2, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
+        imagePotion[4] = Bitmap.createBitmap(imagePotion[0], 0, imagePotion[0].getHeight() / 2, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
         //purple
-        imagePotion[5] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth()/3,imagePotion[0].getHeight()/2, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
+        imagePotion[5] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
         //dark blue
-        imagePotion[6] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth()*2/3,imagePotion[0].getHeight()/2, imagePotion[0].getWidth()/3, imagePotion[0].getHeight()/2);
-        for (int i = 1; i < 7; i++){
+        imagePotion[6] = Bitmap.createBitmap(imagePotion[0], imagePotion[0].getWidth() * 2 / 3, imagePotion[0].getHeight() / 2, imagePotion[0].getWidth() / 3, imagePotion[0].getHeight() / 2);
+        for (int i = 1; i < 7; i++) {
             imagePotion[i] = getResizedBitmap(imagePotion[i], mBitMapWidth, mBitMapHeight);
         }
 
@@ -296,33 +296,50 @@ public class GameView extends SurfaceView implements Runnable {
         dPadRight = new ObjectBase(dpadRightPoint, rotatedBitmap);
     }
 
-    private void SetNewPlayerPoint() {
+    private void SetNewLevelPoint(Creature creature) {
         int newPoint = currentLevel.getNewEmptyPointIndex();
-        player.setPoint(currentLevel.GetFloorPoints().get(newPoint));
+        creature.setPoint(currentLevel.GetFloorPoints().get(newPoint));
         currentLevel.TakeAwayEmptyFloorTiles(newPoint);
     }
 
     @Override
     public void run() {
+        double lag = 0;
+        double prev_game_tick = System.nanoTime() / 1000000;
+        double current_game_tick = 0;
+
         while (playing) {
-            //to update the frame
-            update();
+            current_game_tick = System.nanoTime() / 1000000;
+            lag += current_game_tick - prev_game_tick;
+            prev_game_tick = current_game_tick;
+
+            while (lag >= TICKS_RATE) {
+                //to update the frame
+                update();
+                lag -= TICKS_RATE;
+            }
+
             //to draw the frame
             draw();
+
             //to control
             control();
         }
+        Intent intent = new Intent(getContext(), HighScoresActivity.class);
+        startActivity(getContext(), intent, null);
     }
 
-    private void updateLevelObject(ObjectBase object) {
-        if (object.getX() < camOffsetX + camWidth &&
-                object.getY() < camOffsetY + camHeight) {
-
-        }
-    }
     private void update() {
 
-        currentLevel.UpdateEnemies(player.getPoint(), camWidth, camHeight, camOffsetX, camOffsetY);
+        if (player.getHP() <= 0){
+            win = false;
+            playing = false;
+            return;
+        }
+
+        currentLevel.UpdateEnemies(player.getPoint(),
+                camWidth, camHeight, camOffsetX, camOffsetY,
+                currentLevelIndex, friendlyFire);
 //        //updating player position
 //        player.update();
 //        //setting boom outside the screen
@@ -371,6 +388,33 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
+    private void control() {
+        try {
+            gameThread.sleep(17);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void pause() {
+        //when the game is paused
+        //setting the variable to false
+        playing = false;
+        try {
+            //stopping the thread
+            gameThread.join();
+        } catch (InterruptedException e) {
+        }
+    }
+
+    public void resume() {
+        //when the game is resumed
+        //starting the thread again
+        playing = true;
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
+
     private void drawingCurrentDepth() {
         paint.setColor(Color.BLACK);
         paint.setTextSize(depthTextSize);
@@ -397,15 +441,6 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void animateLevelObject(ObjectBase object, int offsetX, int offsetY) {
-        canvas.drawBitmap(
-                object.getBitmap(),
-                object.getX() * mBitMapWidth + (int) (mBitMapWidth / 2) - (object.getBitmap().getWidth() / 2),
-                object.getY() * mBitMapHeight + (int) (mBitMapHeight / 2) - (object.getBitmap().getHeight() / 2),
-                paint
-        );
-    }
-
     private void drawingTheStairs() {
         drawLevelObject(currentLevel.getStairsUp());
         drawLevelObject(currentLevel.getStairsDown());
@@ -423,7 +458,6 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawingTheEquippedItems() {
         int tempWidth = (camWidth - 1) * mBitMapWidth;
-        int tempHeight = (camHeight - 1) * mBitMapHeight;
         int counter = 0;
         if (player.getWeapon() != null) {
             canvas.drawBitmap(
@@ -452,7 +486,7 @@ public class GameView extends SurfaceView implements Runnable {
             );
             tempWidth -= mBitMapWidth;
         }
-        if (player.getRing() != null){
+        if (player.getRing() != null) {
             canvas.drawBitmap(
                     player.getRing().getBitmap(),
                     tempWidth,
@@ -461,7 +495,7 @@ public class GameView extends SurfaceView implements Runnable {
             );
             tempWidth -= mBitMapWidth;
         }
-        if (player.getShield() != null){
+        if (player.getShield() != null) {
             canvas.drawBitmap(
                     player.getShield().getBitmap(),
                     tempWidth,
@@ -470,25 +504,52 @@ public class GameView extends SurfaceView implements Runnable {
             );
         }
         tempWidth = (camWidth - 1) * mBitMapWidth;
-        if (player.getFood() != null){
+        drawingTheConsumables(tempWidth);
+//        scroll
+    }
+
+    private void drawingTheConsumables(int tempWidth) {
+        int tempHeight = (camHeight - 1) * mBitMapHeight;
+        if (player.getFood() != null) {
+            Rect posRect = new Rect(
+                    tempWidth,
+                    tempHeight,
+                    player.getFood().getBitmap().getWidth(),
+                    player.getFood().getBitmap().getHeight()
+            );
+            player.getFood().setDetectCollision(posRect);
             canvas.drawBitmap(
                     player.getFood().getBitmap(),
                     tempWidth,
                     tempHeight,
                     paint
             );
-            tempHeight -= mBitMapHeight;
         }
-        if (player.getPotion() != null){
+        tempHeight -= mBitMapHeight;
+        if (player.getPotion() != null) {
+            Rect posRect = new Rect(
+                    tempWidth,
+                    tempHeight,
+                    player.getPotion().getBitmap().getWidth(),
+                    player.getPotion().getBitmap().getHeight()
+            );
+            player.getPotion().setDetectCollision(posRect);
             canvas.drawBitmap(
                     player.getPotion().getBitmap(),
                     tempWidth,
                     tempHeight,
                     paint
             );
-            tempHeight -= mBitMapHeight;
         }
-        if (player.getScroll() != null){
+        tempHeight -= mBitMapHeight;
+        if (player.getScroll() != null) {
+            Rect posRect = new Rect(
+                    tempWidth,
+                    tempHeight,
+                    player.getScroll().getBitmap().getWidth(),
+                    player.getScroll().getBitmap().getHeight()
+            );
+            player.getScroll().setDetectCollision(posRect);
             canvas.drawBitmap(
                     player.getScroll().getBitmap(),
                     tempWidth,
@@ -496,7 +557,6 @@ public class GameView extends SurfaceView implements Runnable {
                     paint
             );
         }
-//        scroll
     }
 
     private void drawingTheDPAD() {
@@ -560,8 +620,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingTheEnemies() {
-        for (int i = 0; i < currentLevel.getEnemies().size(); i++) {
-            drawLevelObject(currentLevel.getEnemies().get(i));
+        for (int i = 0; i < currentLevel.getCreatures().size(); i++) {
+            drawLevelObject(currentLevel.getCreatures().get(i));
         }
     }
 
@@ -569,7 +629,9 @@ public class GameView extends SurfaceView implements Runnable {
         offsetTheCamera();
         for (int row = 0; row < camHeight; row++) {
             for (int col = 0; col < camWidth; col++) {
-                canvas.drawBitmap(currentLevel.GetCurrentMap()[row + camOffsetY][col + camOffsetX].getBitmap(),
+                canvas.drawBitmap(currentLevel.GetCurrentMap()
+                                [row + camOffsetY]
+                                [col + camOffsetX].getBitmap(),
                         col * mBitMapWidth,
                         row * mBitMapHeight,
                         paint);
@@ -577,31 +639,17 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void control() {
-        try {
-            gameThread.sleep(17);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private void offsetTheCamera() {
+        if (camOffsetY < 0) {
+            camOffsetY = 0;
+        } else if (camOffsetY > currentLevel.GetMapHeight() - camHeight) {
+            camOffsetY = currentLevel.GetMapHeight() - camHeight;
         }
-    }
-
-    public void pause() {
-        //when the game is paused
-        //setting the variable to false
-        playing = false;
-        try {
-            //stopping the thread
-            gameThread.join();
-        } catch (InterruptedException e) {
+        if (camOffsetX < 0) {
+            camOffsetX = 0;
+        } else if (camOffsetX > currentLevel.GetMapWidth() - camWidth) {
+            camOffsetX = currentLevel.GetMapWidth() - camWidth;
         }
-    }
-
-    public void resume() {
-        //when the game is resumed
-        //starting the thread again
-        playing = true;
-        gameThread = new Thread(this);
-        gameThread.start();
     }
 
     private boolean DetectButtonPress(PointF pressPoint, Rect rect) {
@@ -629,54 +677,79 @@ public class GameView extends SurfaceView implements Runnable {
                 //we will do something here
                 PointF pressPoint = new PointF(motionEvent.getX(), motionEvent.getY());
                 //if current weapon type is melee:
+                if (player.getFood() != null) {
+                    if (DetectButtonPress(pressPoint, player.getFood().getCollideRect() ) ){
+                        player.heal(player.getFood().getHealing());
+                        player.setFood(null);
+                    }
+                }
+                if (player.getScroll() != null){
+                    if (DetectButtonPress(pressPoint, player.getScroll().getCollideRect() ) ){
+                        goToLevel(player, 0, DirectionToGo.UP);
+                        RemoveCreatureFromCurrentLevel(player);
+                        currentLevel = Levels.get(0);
+                        currentLevelIndex = 0;
+                        currentLevel.getCreatures().add(player);
+                        player.setX(currentLevel.getStairsUp().getX());
+                        player.setY(currentLevel.getStairsUp().getY());
+                        centerTheCamera();
+                        offsetTheCamera();
+                        player.setScroll(null);
+                    }
+                }
+                if (player.getPotion() != null){
+                    if (DetectButtonPress(pressPoint, player.getPotion().getCollideRect() ) ){
+                        player.getPotion().PotionEffect(player, currentLevel);
+                        player.setPotion(null);
+                    }
+                }
                 if (DetectButtonPress(pressPoint, dPadUp.getCollideRect())) {
                     if (currentLevel.getCellType(player.getX(), player.getY() - 1) == Level.CellType.Space ||
-                            currentLevel.harmObject(player.getX(), player.getY() - 1, player.getAttack(), player.getDig(), player, currentLevelIndex)) {
+                            currentLevel.harmObject(player.getX(), player.getY() - 1, player, currentLevelIndex, friendlyFire)) {
                         player.setY(player.getY() - 1);
                         if (player.getY() < camOffsetY + camHeight / 4) {
                             camOffsetY--;
                             offsetTheCamera();
                         }
-                        CheckStairs();
+                        CheckStairs(player);
                     }
                     checkPlayerImage(heroUp);
                 } else if (DetectButtonPress(pressPoint, dPadDown.getCollideRect())) {
                     if (currentLevel.getCellType(player.getX(), player.getY() + 1) == Level.CellType.Space ||
-                            currentLevel.harmObject(player.getX(), player.getY() + 1, player.getAttack(), player.getDig(), player, currentLevelIndex)) {
+                            currentLevel.harmObject(player.getX(), player.getY() + 1, player, currentLevelIndex, friendlyFire)) {
                         player.setY(player.getY() + 1);
                         if (player.getY() > camOffsetY + (camHeight * 3 / 4)) {
                             camOffsetY++;
                             offsetTheCamera();
                         }
-                        CheckStairs();
+                        CheckStairs(player);
                     }
                     checkPlayerImage(heroDown);
                 }
                 if (DetectButtonPress(pressPoint, dPadLeft.getCollideRect())) {
                     if (currentLevel.getCellType(player.getX() - 1, player.getY()) == Level.CellType.Space ||
-                            currentLevel.harmObject(player.getX() - 1, player.getY(), player.getAttack(), player.getDig(), player, currentLevelIndex)) {
+                            currentLevel.harmObject(player.getX() - 1, player.getY(), player, currentLevelIndex, friendlyFire)) {
                         player.setX(player.getX() - 1);
                         if (player.getX() < camOffsetX + camWidth / 4) {
                             camOffsetX--;
                             offsetTheCamera();
                         }
-                        CheckStairs();
+                        CheckStairs(player);
                     }
                     checkPlayerImage(heroLeft);
 
                 } else if (DetectButtonPress(pressPoint, dPadRight.getCollideRect())) {
                     if (currentLevel.getCellType(player.getX() + 1, player.getY()) == Level.CellType.Space ||
-                            currentLevel.harmObject(player.getX() + 1, player.getY(), player.getAttack(), player.getDig(), player, currentLevelIndex)) {
+                            currentLevel.harmObject(player.getX() + 1, player.getY(), player, currentLevelIndex, friendlyFire)) {
                         player.setX(player.getX() + 1);
                         if (player.getX() > camOffsetX + (camWidth * 3 / 4)) {
                             camOffsetX++;
                             offsetTheCamera();
                         }
-                        CheckStairs();
+                        CheckStairs(player);
                     }
                     checkPlayerImage(heroRight);
                 }
-                //AddNewLevel();
                 break;
             case MotionEvent.ACTION_DOWN:
                 //When the user releases the screen
@@ -686,31 +759,93 @@ public class GameView extends SurfaceView implements Runnable {
         return true;
     }
 
-    private void CheckStairs() {
-        if (player.getPoint().x == currentLevel.getStairsDown().getPoint().x &&
-                player.getPoint().y == currentLevel.getStairsDown().getPoint().y) {
-            if (currentLevel == Levels.get(Levels.size() - 1)) {
-                AddNewLevel();
-            } else {
-                currentLevel = Levels.get(currentLevelIndex + 1);
-                currentLevelIndex++;
-            }
-            player.setX(currentLevel.getStairsUp().getX());
-            player.setY(currentLevel.getStairsUp().getY());
-            centerTheCamera();
-            offsetTheCamera();
-        } else if (player.getPoint().x == currentLevel.getStairsUp().getPoint().x &&
-                player.getPoint().y == currentLevel.getStairsUp().getPoint().y) {
-            if (currentLevelIndex == 0) {
-            } else {
-                currentLevel = Levels.get(currentLevelIndex - 1);
-                currentLevelIndex--;
-                player.setX(currentLevel.getStairsDown().getX());
-                player.setY(currentLevel.getStairsDown().getY());
-                centerTheCamera();
-                offsetTheCamera();
+    private void RemoveCreatureFromCurrentLevel(Creature creature){
+        for (int i = 0; i < currentLevel.getCreatures().size(); i++){
+            Creature temp = currentLevel.getCreatures().get(i);
+            if (temp == creature){
+                currentLevel.getCreatures().remove(i);
             }
         }
+    }
+
+    private void CheckStairs(Creature creature) {
+        if (currentLevel.getStairsDown().getPoint().x == creature.getPoint().x &&
+                currentLevel.getStairsDown().getPoint().y == creature.getPoint().y ) {
+            goToLevel(creature, creature.getCurrentDepth() + 1, DirectionToGo.DOWN);
+        } else if (currentLevel.getStairsUp().getPoint().x == creature.getPoint().x &&
+                currentLevel.getStairsUp().getPoint().y == creature.getPoint().y) {
+            goToLevel(creature, creature.getCurrentDepth() - 1, DirectionToGo.UP);
+        }
+    }
+    public enum DirectionToGo {DOWN, UP}
+
+    private void goToLevel(Creature creature, int levelToGoTo, DirectionToGo direction){
+        switch  (direction){
+            case DOWN:
+                if (currentLevel == Levels.get(Levels.size() - 1)) {
+                    AddNewLevel();
+                    //SetNewLevelPoint(creature);
+                }
+                RemoveCreatureFromCurrentLevel(creature);
+                if (creature == player) {
+                    currentLevel = Levels.get(levelToGoTo);
+                }
+                creature.setCurrentDepth(levelToGoTo);
+                currentLevel.getCreatures().add(creature);
+                creature.setX(currentLevel.getStairsUp().getX());
+                creature.setY(currentLevel.getStairsUp().getY());
+                if (creature == player) {
+                    centerTheCamera();
+                    offsetTheCamera();
+                }
+                break;
+            case UP:
+                if (currentLevelIndex == 0) {
+                } else {
+
+                    RemoveCreatureFromCurrentLevel(creature);
+                    if (creature == player) {
+                        currentLevel = Levels.get(levelToGoTo);
+                    }
+                    creature.setCurrentDepth(levelToGoTo);
+                    currentLevel.getCreatures().add(creature);
+                    creature.setX(currentLevel.getStairsDown().getX());
+                    creature.setY(currentLevel.getStairsDown().getY());
+                    if (creature == player) {
+                        centerTheCamera();
+                        offsetTheCamera();
+                    }
+                }
+                break;
+        }
+        if (creature == player){
+            currentLevelIndex = creature.getCurrentDepth();
+        }
+    }
+    private void AddNewLevel() {
+        Level temp;
+        int Width;
+        int Height;
+        if (currentLevel != null) {
+            Width = currentLevel.GetMapWidth() + currentLevelIndex;
+            if (Width > (screenWidth / spaces[0].getHeight()) * 3) {
+                Width = (screenWidth / spaces[0].getHeight()) * 3;
+            }
+            Height = currentLevel.GetMapHeight() + currentLevelIndex;
+            if (Height > (screenHeight / spaces[0].getHeight()) * 3) {
+                Height = (screenHeight / spaces[0].getHeight()) * 3;
+            }
+        } else  {
+            Width = screenWidth / spaces[0].getHeight();
+            Height =screenHeight / spaces[0].getHeight();
+        }
+
+        if (currentLevelIndex % 3 == 0 && currentLevelIndex != 0) {
+            temp = new Level(Width, Height, false);
+        } else {
+            temp = new Level(Width, Height, true);
+        }
+        Levels.add(temp);
     }
 
     private void checkPlayerImage(Bitmap image) {
@@ -719,16 +854,4 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void AddNewLevel() {
-        Level temp;
-        if (currentLevelIndex % 3 == 0) {
-            temp = new Level(currentLevel.GetMapWidth() + currentLevelIndex, currentLevel.GetMapHeight() + currentLevelIndex, false);
-        } else {
-            temp = new Level(currentLevel.GetMapWidth() + currentLevelIndex, currentLevel.GetMapHeight() + currentLevelIndex, true);
-        }
-        Levels.add(temp);
-        currentLevel = Levels.get(Levels.size() - 1);
-        currentLevelIndex++;
-        SetNewPlayerPoint();
-    }
 }

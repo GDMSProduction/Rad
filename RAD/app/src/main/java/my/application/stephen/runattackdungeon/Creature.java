@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 import static my.application.stephen.runattackdungeon.Creature.CreatureType.Slime;
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Random;
-import static my.application.stephen.runattackdungeon.Creature.DirectionType.Still;
 import static my.application.stephen.runattackdungeon.Creature.MovementLimit.inCamera;
 import static my.application.stephen.runattackdungeon.Creature.MovementType.None;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
@@ -49,14 +48,18 @@ public class Creature extends ObjectDestructible {
     private DirectionType directionType = Random;
     private MovementType movementType = None;
     private MovementLimit movementLimit = inCamera;
-    private float defense = 0.0f;
-    private float defenseMax = 0.8f;
+    private int defense = 0;
+    private int defenseMax = 80;//out of 100
     private int attack = 0;
     private int attackMax = 0;
-    private int dig = 0;
-    private int digMax = 2;
+    private int mine = 0;
+    private int mineMax = 2;
     private int lightRadius = 0;
+    private int currentDepth = 0;
     private boolean following = false;
+    private String name = "";
+    private int score = 0;
+    private int level = 0;
     private Weapon weapon = null;
     private MiningTool miningTool = null;
     private LightSource lightSource = null;
@@ -71,11 +74,11 @@ public class Creature extends ObjectDestructible {
         super(newPoint, newBitmap, HPMax);
     }
 
-    Creature(Point newPoint, Bitmap newBitmap, int HPMax, float DefMax) {
+    Creature(Point newPoint, Bitmap newBitmap, int HPMax, int DefMax) {
         super(newPoint, newBitmap, HPMax);
         defense = defenseMax = DefMax;
     }
-    Creature(CreatureType Type, Point newPoint, Bitmap newBitmap, int HPMax, float DefMax) {
+    Creature(CreatureType Type, Point newPoint, Bitmap newBitmap, int HPMax, int DefMax) {
         super(newPoint, newBitmap, HPMax);
         creatureType = Type;
         defense = defenseMax = DefMax;
@@ -94,21 +97,23 @@ public class Creature extends ObjectDestructible {
         return attackMax;
     }
 
-    public int getDig() {
-        return dig;
+    public int getMining() {
+        return mine;
     }
 
-    public int getDigMax() {
-        return digMax;
+    public int getMiningMax() {
+        return mineMax;
     }
 
-    public float getDef() {
+    public int getDefense() {
         return defense;
     }
 
-    public float getDefenseMax() {
+    public int getDefenseMax() {
         return defenseMax;
     }
+
+    public int getCurrentDepth() {return currentDepth;}
 
     public Weapon getWeapon(){return weapon;}
     public MiningTool getMiningTool(){return miningTool;}
@@ -122,6 +127,9 @@ public class Creature extends ObjectDestructible {
     public MovementType getMovementType() {return movementType;}
     public DirectionType getDirectionType() {return directionType;}
     public ArrayList<Point3d> getPath() {return Path;}
+    public String getName(){return name;}
+    public int getScore(){return score;}
+    public int getLevel(){return level;}
 
     public boolean isFollowing() {
         return following;
@@ -134,6 +142,8 @@ public class Creature extends ObjectDestructible {
     public void setFollowing(boolean follow) {
         following = follow;
     }
+
+    public void setCurrentDepth(int newDepth){currentDepth = newDepth;}
 
     public void setCreatureType(CreatureType newType){
         creatureType = newType;}
@@ -168,7 +178,9 @@ public class Creature extends ObjectDestructible {
             setDefense(defenseMax - shield.getPower());
         }
         shield = newShield;
-        setDefense(defenseMax + shield.getPower());
+        if (shield != null) {
+            setDefense(defenseMax + shield.getPower());
+        }
         return ret;
     }
     public Wearable setRing(Wearable newRing){
@@ -187,16 +199,18 @@ public class Creature extends ObjectDestructible {
             }
         }
         ring = newRing;
-        switch(ring.getEnchantType()){
-            case Attack:
-                setAttack(attackMax + ring.getPower());
-                break;
-            case Health:
-                setMaxHP(getMaxpHP() + ring.getPower());
-                break;
-            case Defense:
-                setDefense(defenseMax + ring.getPower());
-                break;
+        if (ring != null) {
+            switch (ring.getEnchantType()) {
+                case Attack:
+                    setAttack(attackMax + ring.getPower());
+                    break;
+                case Health:
+                    setMaxHP(getMaxpHP() + ring.getPower());
+                    break;
+                case Defense:
+                    setDefense(defenseMax + ring.getPower());
+                    break;
+            }
         }
         return ret;
     }
@@ -210,20 +224,24 @@ public class Creature extends ObjectDestructible {
             setAttack(tempAtk);
         }
         weapon = newWeapon;
-        setAttack(attackMax + weapon.getAttackPower() + weapon.getEnchantModifier());
+        if (weapon != null) {
+            setAttack(attackMax + weapon.getAttackPower() + weapon.getEnchantModifier());
+        }
         return ret;
     }
     public MiningTool setMiningTool(MiningTool newMiningTool){
         MiningTool ret = miningTool;
         if (miningTool != null) {
-            int tempDig = digMax - (miningTool.getDigPower() + miningTool.getEnchantModifier());
-            if (tempDig < 0) {
-                tempDig = 0;
+            int tempMine = mineMax - (miningTool.getMinePower() + miningTool.getEnchantModifier());
+            if (tempMine < 0) {
+                tempMine = 0;
             }
-            setDig(tempDig);
+            setMining(tempMine);
         }
         miningTool = newMiningTool;
-        setDig(digMax + miningTool.getDigPower() + miningTool.getEnchantModifier());
+        if (miningTool != null) {
+            setMining(mineMax + miningTool.getMinePower() + miningTool.getEnchantModifier());
+        }
         return ret;
     }
     public LightSource setLightSource(LightSource newLightSource){
@@ -232,25 +250,35 @@ public class Creature extends ObjectDestructible {
             int tempLightRadius = lightRadius - lightSource.getLightRadius();
         }
         lightSource = newLightSource;
-        setLight(lightSource.getLightRadius());
+        if (lightSource != null) {
+            setLight(lightSource.getLightRadius());
+        } else {
+            setLight(0);
+        }
         return ret;
     }
 
     public void setAttack(int newAttack) {
         attack = attackMax = newAttack;
     }
-
-    public void setDig(int newMiningPower){
-        dig = digMax = newMiningPower;
-    }
-
-    public void setDefense(float newDef) {
+    public void setDefense(int newDef) {
         if (newDef > defenseMax) {
             defense = defenseMax;
             return;
         } else {
             defense = newDef;
         }
+    }
+
+    public void setMining(int newMiningPower){
+        mine = mineMax = newMiningPower;
+    }
+
+    public void setName(String newName){name = newName;}
+    public void incrementScore(int points){ score+=points;}
+    public void levelUP(){
+        level++;
+        setMaxHP((int)(getMaxpHP()*1.2));
     }
 
     public void setLight(int newLightRadius) {lightRadius = newLightRadius;}

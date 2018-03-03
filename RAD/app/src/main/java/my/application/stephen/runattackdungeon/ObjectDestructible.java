@@ -38,7 +38,10 @@ public class ObjectDestructible extends ObjectBase {
     }
 
     public void heal(int healing) {
-        if (healing + hitPoints >= hitPointsMax) {
+        if(hitPoints == hitPointsMax) {
+            hitPoints++;
+            hitPointsMax++;
+        } else if (healing + hitPoints >= hitPointsMax) {
             hitPoints = hitPointsMax;
         } else {
             hitPoints += healing;

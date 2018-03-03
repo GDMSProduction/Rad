@@ -26,7 +26,7 @@ public class Level extends Map {
     public enum CellType {
         Wall, Space,
         Clutter, Barrel, Chest,
-        Slime, Goblin, Minotaur, Player,
+        Slime, Goblin, Minotaur, Humanoid,
         //everything that can be picked up/interacted with.
         Weapon, MiningTool, LightSource, Wearable,
         Food, Scroll, Potion
@@ -48,9 +48,9 @@ public class Level extends Map {
     //The Stairs
     private ObjectBase stairsUp;
     private ObjectBase stairsDown;
-    //the enemies
+    //the creatures
     private int maxEnemies = 5;
-    private ArrayList<Creature> enemies = new ArrayList<Creature>(maxEnemies);
+    private ArrayList<Creature> creatures = new ArrayList<Creature>(maxEnemies);
 
     Level(int Width, int Height, boolean natural) {
         super(Width, Height, natural);
@@ -69,7 +69,7 @@ public class Level extends Map {
             maxEnemies = 1;
         }
         createEnemies();
-        GetNewClutter();
+        createClutter();
     }
 
     //Getters
@@ -81,8 +81,8 @@ public class Level extends Map {
         return stairsDown;
     }
 
-    public ArrayList<Creature> getEnemies() {
-        return enemies;
+    public ArrayList<Creature> getCreatures() {
+        return creatures;
     }
 
     public ArrayList<Clutter> getClutter() {
@@ -123,7 +123,7 @@ public class Level extends Map {
         return rand.nextInt(GetNumEmptyPoints());
     }
 
-    private void GetNewClutter() {
+    private void createClutter() {
         clutter.clear();
         int newSize = rand.nextInt(maxClutter) + 1;
         clutter = new ArrayList<Clutter>(newSize);
@@ -161,12 +161,12 @@ public class Level extends Map {
 
     private void createEnemies() {
         //Create Enemies
-        enemies.clear();
+        creatures.clear();
         int newSize = rand.nextInt(maxEnemies) + 1;
-        enemies = new ArrayList<Creature>(newSize);
+        creatures = new ArrayList<Creature>(newSize);
         for (int i = 0; i < newSize; i++) {
             int hPMax = 3;
-            float defMax = 0.3f;
+            int defMax = 0;
             Bitmap enemyBitmap = imageEnemy[0];
             int newPoint = getNewEmptyPointIndex();
             Point enemyPoint = GetFloorPoints().get(newPoint);
@@ -180,7 +180,7 @@ public class Level extends Map {
                     break;
                 case 1:
                     hPMax = 5;
-                    defMax = 0.5f;
+                    defMax = 50;
                     enemyBitmap = imageEnemy[1];
                     temp = new Creature(Creature.CreatureType.Goblin, enemyPoint, enemyBitmap, hPMax, defMax);
                     temp.setAttack(1);
@@ -189,7 +189,7 @@ public class Level extends Map {
 
             TakeAwayEmptyFloorTiles(newPoint);
 
-            enemies.add(temp);
+            creatures.add(temp);
         }
     }
 
@@ -259,31 +259,40 @@ public class Level extends Map {
         food.add(fud);
     }
 
-    private void CreatePotion(Point point) {
+    private void CreatePotion(Point point, int currentLevel) {
+        //if it's a green potion, it restores your health.
         Food potion = new Food(Food.PotionColor.Green, 0, point, imagePotion[1], 0);
         switch (rand.nextInt(6)) {
             default:
+                potion.setHealing(currentLevel);
                 break;
             case 1:
+                //if it's a light blue potion, it randomly teleports you to an open space within 10 feet.
                 potion.setPotionColor(Food.PotionColor.LightBlue);
                 potion.setBitMap(imagePotion[2]);
                 break;
             case 2:
+                //if it's a black potion, it kills your light source.
                 potion.setPotionColor(Food.PotionColor.Black);
                 potion.setBitMap(imagePotion[3]);
                 break;
             case 3:
+                //if it's a red potion, it increases your attack + maxAttack.
                 potion.setBitMap(imagePotion[4]);
                 potion.setPotionColor(Food.PotionColor.Red);
-                potion.setHealing(10);
+                potion.setHealing(currentLevel/2);
                 break;
             case 4:
+                //if it's a purple potion, it poisons you.
                 potion.setPotionColor(Food.PotionColor.Purple);
                 potion.setBitMap(imagePotion[5]);
+                potion.setHealing(currentLevel);
                 break;
             case 5:
+                //if it's a dark blue potion, it increases your defense.
                 potion.setPotionColor(Food.PotionColor.DarkBlue);
                 potion.setBitMap(imagePotion[6]);
+                potion.setHealing(currentLevel/5);
                 break;
         }
         potions.add(potion);
@@ -294,10 +303,10 @@ public class Level extends Map {
         scrolls.add(scroll);
     }
 
-    private void CreateRandomConsumable(Point point) {
+    private void CreateRandomConsumable(Point point, int currentLevel) {
         switch (rand.nextInt(3)) {
             case 0:
-                CreatePotion(point);
+                CreatePotion(point, currentLevel);
                 break;
             default:
             case 1:
@@ -414,7 +423,7 @@ public class Level extends Map {
                         CreateFood(clutter.get(i).getPoint());
                         break;
                     case 2:
-                        CreatePotion(clutter.get(i).getPoint());
+                        CreatePotion(clutter.get(i).getPoint(), currentLevel);
                         break;
                 }
                 break;
@@ -432,7 +441,7 @@ public class Level extends Map {
                         break;
                     case 3:
                         //consumables
-                        CreateRandomConsumable(clutter.get(i).getPoint());
+                        CreateRandomConsumable(clutter.get(i).getPoint(), currentLevel);
                         break;
                 }
                 //Clutter dagger = new Clutter(3, clutter.get(i).getPoint(), imageWeapon[0], 3);
@@ -441,14 +450,14 @@ public class Level extends Map {
                 switch (rand.nextInt(3)) {
                     default:
                     case 0:
-                        int value = rand.nextInt(enemies.get(i).getMaxpHP() * 3) + 1;
-                        CreateCoins(value, enemies.get(i).getPoint());
+                        int value = rand.nextInt(creatures.get(i).getMaxpHP() * 3) + 1;
+                        CreateCoins(value, creatures.get(i).getPoint());
                         break;
                     case 1:
-                        CreateFood(enemies.get(i).getPoint());
+                        CreateFood(creatures.get(i).getPoint());
                         break;
                     case 2:
-                        CreatePotion(enemies.get(i).getPoint());
+                        CreatePotion(creatures.get(i).getPoint(), currentLevel);
                         break;
                 }
                 break;
@@ -456,24 +465,24 @@ public class Level extends Map {
                 switch (rand.nextInt(5)) {
                     default:
                     case 0:
-                        int value = rand.nextInt(enemies.get(i).getMaxpHP() * 3) + 1;
-                        CreateCoins(value, enemies.get(i).getPoint());
+                        int value = rand.nextInt(creatures.get(i).getMaxpHP() * 3) + 1;
+                        CreateCoins(value, creatures.get(i).getPoint());
                         break;
                     case 1:
-                        CreateWeapon(enemies.get(i).getPoint(), currentLevel);
+                        CreateWeapon(creatures.get(i).getPoint(), currentLevel);
                         break;
                     case 2:
-                        CreateWearable(enemies.get(i).getPoint(), currentLevel);
+                        CreateWearable(creatures.get(i).getPoint(), currentLevel);
                         break;
                     case 3:
-                        CreateMiningTool(enemies.get(i).getPoint(), currentLevel);
+                        CreateMiningTool(creatures.get(i).getPoint(), currentLevel);
 //                            mining tool,
                         break;
                     case 4:
-                        CreateRandomConsumable(enemies.get(i).getPoint());
+                        CreateRandomConsumable(creatures.get(i).getPoint(), currentLevel);
                         break;
                     case 5:
-                        CreateLightSource(enemies.get(i).getPoint(), currentLevel);
+                        CreateLightSource(creatures.get(i).getPoint(), currentLevel);
 //                            lights
                 }
                 break;
@@ -481,22 +490,22 @@ public class Level extends Map {
                 switch (rand.nextInt(7)) {
                     default:
                     case 0:
-                        CreateRandomTreasure(100 + (currentLevel * 2), enemies.get(i).getPoint());
+                        CreateRandomTreasure(100 + (currentLevel * 2), creatures.get(i).getPoint());
                         break;
                     case 1:
-                        CreateWeapon(enemies.get(i).getPoint(), currentLevel + 5);
+                        CreateWeapon(creatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 2:
-                        CreateWearable(enemies.get(i).getPoint(), currentLevel + 5);
+                        CreateWearable(creatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 3:
-                        CreateMiningTool(enemies.get(i).getPoint(), currentLevel + 5);
+                        CreateMiningTool(creatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 4:
-                        CreateRandomConsumable(enemies.get(i).getPoint());
+                        CreateRandomConsumable(creatures.get(i).getPoint(), currentLevel);
                         break;
                     case 5:
-                        CreateLightSource(enemies.get(i).getPoint(), currentLevel + 5);
+                        CreateLightSource(creatures.get(i).getPoint(), currentLevel + 5);
                         break;
                 }
                 break;
@@ -513,25 +522,19 @@ public class Level extends Map {
         }
         return isFound;
     }
-
-//
-//        if (object.getX() < camOffsetX + camWidth &&
-//            object.getY() < camOffsetY + camHeight) {
-//
-//    }
-    public void UpdateEnemies(Point target, int camWidth, int camHeight, int camOffsetX, int camOffsetY) {
-        for (int i = 0; i < enemies.size(); i++) {
-            if (enemies.get(i).getX() > camOffsetX &&
-                    enemies.get(i).getY() > camOffsetY &&
-                    enemies.get(i).getX() < camOffsetX + camWidth &&
-                    enemies.get(i).getY() < camOffsetY + camHeight) {
-                Creature temp = enemies.get(i);
+    public void UpdateEnemies(Point target, int camWidth, int camHeight, int camOffsetX, int camOffsetY, int currentLevel, boolean friendlyFire) {
+        for (int i = 0; i < creatures.size(); i++) {
+            if (creatures.get(i).getX() > camOffsetX &&
+                    creatures.get(i).getY() > camOffsetY &&
+                    creatures.get(i).getX() < camOffsetX + camWidth &&
+                    creatures.get(i).getY() < camOffsetY + camHeight) {
+                Creature temp = creatures.get(i);
                 switch (temp.getCreatureType()) {
                     default:
                     case Slime:
                         break;
                     case Goblin:
-                        moveGoblin(target, temp);
+                        moveGoblin(target, temp, currentLevel, friendlyFire);
                         break;
                     case Minotaur:
                         break;
@@ -542,12 +545,11 @@ public class Level extends Map {
         }
     }
 
-    private void moveGoblin(Point target, Creature temp) {
+    private void moveGoblin(Point target, Creature temp, int currentLevel, boolean friendlyFire) {
         switch (temp.getDirectionType()) {
             case Still:
                 break;
             case UpandDown:
-
                 //get points above OR below current point.
                 //if (point.y > otherpoint.y) {point.y = otherpoint.y} else if
                 // (point.y = otherpoint.y) {point.y = point.y}
@@ -558,7 +560,7 @@ public class Level extends Map {
                 // (point.y = otherpoint.y) {point.y = point.y}
                 break;
             case Random:
-                MoveRandomly(temp);
+                MoveRandomly(temp, currentLevel, friendlyFire);
                 break;
             case TowardsTargetDirectional:
                 break;
@@ -596,28 +598,35 @@ public class Level extends Map {
         }
     }
 
-    private void MoveRandomly(Creature temp) {
-        switch (rand.nextInt(4)) {
+    private void MoveRandomly(Creature temp, int currentLevel, boolean friendlyFire) {
+        switch (rand.nextInt(5)) {
+            default:
             case 0:
-                if (getCellType(temp.getX(), temp.getY() + 1) == CellType.Space) {
+                if (getCellType(temp.getX(), temp.getY() + 1) == CellType.Space ||
+                        harmObject(temp.getX(), temp.getY() + 1, temp, currentLevel, friendlyFire)) {
                     temp.setPoint(temp.getX(), temp.getY() + 1);
                     break;
                 }
             case 1:
-                if (getCellType(temp.getX(), temp.getY() - 1) == CellType.Space) {
+                if (getCellType(temp.getX(), temp.getY() - 1) == CellType.Space ||
+                        harmObject(temp.getX(), temp.getY() - 1, temp, currentLevel, friendlyFire)) {
                     temp.setPoint(temp.getX(), temp.getY() - 1);
                     break;
                 }
             case 2:
-                if (getCellType(temp.getX() + 1, temp.getY()) == CellType.Space) {
+                if (getCellType(temp.getX() + 1, temp.getY()) == CellType.Space ||
+                        harmObject(temp.getX() + 1, temp.getY(), temp, currentLevel, friendlyFire)) {
                     temp.setPoint(temp.getX() + 1, temp.getY());
                     break;
                 }
             case 3:
-                if (getCellType(temp.getX() - 1, temp.getY()) == CellType.Space) {
+                if (getCellType(temp.getX() - 1, temp.getY()) == CellType.Space ||
+                        harmObject(temp.getX() - 1, temp.getY(), temp, currentLevel, friendlyFire)) {
                     temp.setPoint(temp.getX() - 1, temp.getY());
+                    //CheckStairs
                     break;
                 }
+            case 4:
                 break;
         }
     }
@@ -646,15 +655,17 @@ public class Level extends Map {
                 return CellType.Clutter;
             }
         }
-        for (int i = 0; i < enemies.size(); i++) {
-            Bitmap tempImage = enemies.get(i).getBitmap();
-            if (enemies.get(i).getPoint().x == cellx && enemies.get(i).getPoint().y == celly) {
+        for (int i = 0; i < creatures.size(); i++) {
+            Bitmap tempImage = creatures.get(i).getBitmap();
+            if (creatures.get(i).getPoint().x == cellx && creatures.get(i).getPoint().y == celly) {
                 if (tempImage == imageEnemy[0]) {
                     return CellType.Slime;
                 } else if (tempImage == imageEnemy[1]) {
                     return CellType.Goblin;
                 } else if (tempImage == imageEnemy[2]) {
                     return CellType.Minotaur;
+                } else if (creatures.get(i).getCreatureType() == Creature.CreatureType.Humanoid){
+                    return CellType.Humanoid;
                 }
             }
         }
@@ -696,15 +707,16 @@ public class Level extends Map {
         return returnType;
     }
 
-    public boolean harmObject(int cellx, int celly, int damage, int mining, Player player, int currentLevel) {
-        boolean ifPlayerGetsMoved = false;
-        switch (getCellType(cellx, celly)) {
+    public boolean harmObject(int cellx, int celly, Creature harmer, int currentLevel, boolean friendlyFire) {
+        boolean ifCreatureGetsMoved = false;
+        CellType harmeeType = getCellType(cellx, celly);
+        switch (harmeeType) {
             default:
             case Wall:
                 if (cellx >= GetMapWidth() || cellx < 0 || celly >= GetMapHeight() || celly < 0) {
                     break;
                 }
-                harmWall(cellx, celly, mining);
+                harmWall(cellx, celly, harmer.getMining());
                 if (GetCurrentMap()[celly][cellx].getHP() <= 0 && rand.nextInt(GetMapHeight() * GetMapWidth()) <= diamondPercent) {
                     Point tempPoint = new Point(cellx, celly);
                     CreateRandomDiamond(tempPoint);
@@ -719,15 +731,15 @@ public class Level extends Map {
                     Clutter temp = clutter.get(i);
                     Bitmap tempImage = temp.getBitmap();
                     if (temp.getPoint().x == cellx && temp.getPoint().y == celly) {
-                        temp.hurt(damage);
+                        temp.hurt(harmer.getAttack());
                         if (tempImage == imageClutter[3] ||
                                 tempImage == imageClutter[4] ||
                                 tempImage == imageClutter[5]) {
-                            ifPlayerGetsMoved = true;
+                            ifCreatureGetsMoved = true;
                             if (tempImage != imageClutter[5]) {
-                                player.incrementScore(temp.getValue());
+                                harmer.incrementScore(temp.getValue());
                             } else {
-                                player.setMaxHP(player.getMaxpHP() + 1);
+                                harmer.setMaxHP(harmer.getMaxpHP() + 1);
                             }
                             clutter.remove(i);
                         } else if (temp.getHP() <= 0) {
@@ -745,57 +757,45 @@ public class Level extends Map {
                 }
                 break;
             case Slime:
-                for (int i = 0; i < enemies.size(); i++) {
-                    if (enemies.get(i).getPoint().x == cellx && enemies.get(i).getPoint().y == celly) {
-                        enemies.get(i).hurt(damage);
-                        if (enemies.get(i).getHP() <= 0) {
-                            CreateRandomDrop(i, CellType.Slime, currentLevel);
-                            enemies.remove(i);
-                            break;
-                        }
-                    }
+                if (harmer.getCreatureType() == Creature.CreatureType.Slime && !friendlyFire){
+                    break;
                 }
+                HarmCreature(cellx, celly, harmer, currentLevel, CellType.Slime);
                 break;
             case Goblin:
-                for (int i = 0; i < enemies.size(); i++) {
-                    if (enemies.get(i).getPoint().x == cellx && enemies.get(i).getPoint().y == celly) {
-                        enemies.get(i).hurt(damage);
-                        if (enemies.get(i).getHP() <= 0) {
-                            CreateRandomDrop(i, CellType.Goblin, currentLevel);
-                            enemies.remove(i);
-                            break;
-                        }
-                    }
+                if (harmer.getCreatureType() == Creature.CreatureType.Goblin && !friendlyFire){
+                    break;
                 }
+                HarmCreature(cellx, celly, harmer, currentLevel, CellType.Goblin);
                 break;
             case Minotaur:
-                for (int i = 0; i < enemies.size(); i++) {
-                    if (enemies.get(i).getPoint().x == cellx && enemies.get(i).getPoint().y == celly) {
-                        enemies.get(i).hurt(damage);
-                        if (enemies.get(i).getHP() <= 0) {
-                            CreateRandomDrop(i, CellType.Minotaur, currentLevel);
-                            enemies.remove(i);
-                            break;
-                        }
-                    }
+                if (harmer.getCreatureType() == Creature.CreatureType.Minotaur && !friendlyFire){
+                    break;
                 }
+                HarmCreature(cellx, celly, harmer, currentLevel, harmeeType);
+                break;
+            case Humanoid:
+                if (harmer.getCreatureType() == Creature.CreatureType.Humanoid && !friendlyFire){
+                    break;
+                }
+                HarmCreature(cellx, celly, harmer, currentLevel, harmeeType);
                 break;
 
             case Weapon:
                 for (int i = 0; i < weapons.size(); i++) {
                     if (weapons.get(i).getPoint().x == cellx && weapons.get(i).getPoint().y == celly) {
-                        Weapon possibleDrop = player.setWeapon(weapons.get(i));
+                        Weapon possibleDrop = harmer.setWeapon(weapons.get(i));
                         weapons.remove(i);
                         if (possibleDrop != null && possibleDrop.getBitmap() != imageWeapon[0]) {
                             //if it exists, we want to
-                            //  give the weapon on the ground to the player (should have happened in setWeapon)
+                            //  give the weapon on the ground to the harmer (should have happened in setWeapon)
                             //  delete the weapon on the ground from weapons.
-                            //  drop the swapped player weapon (possibleDrop)
+                            //  drop the swapped harmer weapon (possibleDrop)
                             possibleDrop.setPoint(cellx, celly);
                             weapons.add(possibleDrop);
                         }
-                        //either way, we want to move the player to the new point.
-                        ifPlayerGetsMoved = true;
+                        //either way, we want to move the harmer to the new point.
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
@@ -803,13 +803,13 @@ public class Level extends Map {
             case MiningTool:
                 for (int i = 0; i < miningTools.size(); i++) {
                     if (miningTools.get(i).getPoint().x == cellx && miningTools.get(i).getPoint().y == celly) {
-                        MiningTool possibleDrop = player.setMiningTool(miningTools.get(i));
+                        MiningTool possibleDrop = harmer.setMiningTool(miningTools.get(i));
                         miningTools.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             miningTools.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
@@ -817,27 +817,28 @@ public class Level extends Map {
             case LightSource:
                 for (int i = 0; i < lights.size(); i++) {
                     if (lights.get(i).getPoint().x == cellx && lights.get(i).getPoint().y == celly) {
-                        LightSource possibleDrop = player.setLightSource(lights.get(i));
+                        LightSource possibleDrop = harmer.setLightSource(lights.get(i));
                         lights.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             lights.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
                 break;
             case Wearable:
                 for (int i = 0; i < wearables.size(); i++) {
-                    if (wearables.get(i).getPoint().x == cellx && wearables.get(i).getPoint().y == celly) {
-                        Wearable possibleDrop = player.setWearable(wearables.get(i));
+                    if (wearables.get(i).getPoint().x == cellx &&
+                            wearables.get(i).getPoint().y == celly) {
+                        Wearable possibleDrop = harmer.setWearable(wearables.get(i));
                         wearables.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             wearables.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
@@ -846,13 +847,13 @@ public class Level extends Map {
             case Food:
                 for (int i = 0; i < food.size(); i++) {
                     if (food.get(i).getPoint().x == cellx && food.get(i).getPoint().y == celly) {
-                        Food possibleDrop = player.setFood(food.get(i));
+                        Food possibleDrop = harmer.setFood(food.get(i));
                         food.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             food.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
@@ -860,13 +861,13 @@ public class Level extends Map {
             case Scroll:
                 for (int i = 0; i < scrolls.size(); i++) {
                     if (scrolls.get(i).getPoint().x == cellx && scrolls.get(i).getPoint().y == celly) {
-                        Clutter possibleDrop = player.setScroll(scrolls.get(i));
+                        Clutter possibleDrop = harmer.setScroll(scrolls.get(i));
                         scrolls.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             scrolls.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
@@ -874,18 +875,32 @@ public class Level extends Map {
             case Potion:
                 for (int i = 0; i < potions.size(); i++) {
                     if (potions.get(i).getPoint().x == cellx && potions.get(i).getPoint().y == celly) {
-                        Food possibleDrop = player.setPotion(potions.get(i));
+                        Food possibleDrop = harmer.setPotion(potions.get(i));
                         potions.remove(i);
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             potions.add(possibleDrop);
                         }
-                        ifPlayerGetsMoved = true;
+                        ifCreatureGetsMoved = true;
                         break;
                     }
                 }
                 break;
         }
-        return ifPlayerGetsMoved;
+        return ifCreatureGetsMoved;
+    }
+
+    private void HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, CellType harmeeType) {
+        for (int i = 0; i < creatures.size(); i++){
+            if (creatures.get(i).getPoint().x == cellx && creatures.get(i).getPoint().y == celly) {
+                int damagetotal = (int)(harmer.getAttack()*((100 - creatures.get(i).getDefense())/100.0f));
+                creatures.get(i).hurt(damagetotal);
+                if (creatures.get(i).getHP() <= 0) {
+                    CreateRandomDrop(i, harmeeType, currentLevel);
+                    creatures.remove(i);
+                    break;
+                }
+            }
+        }
     }
 }

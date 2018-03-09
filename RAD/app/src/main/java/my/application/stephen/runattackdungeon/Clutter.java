@@ -8,6 +8,7 @@ import android.graphics.Point;
  */
 
 public class Clutter extends ObjectDestructible {
+    public enum magicType{Fire, Cold, Air, Earth, Water, Electric, Create, Destroy}
     private int value = 0;
     private int enchantModifier = 0;
 

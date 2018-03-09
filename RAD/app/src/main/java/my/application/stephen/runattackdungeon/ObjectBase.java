@@ -9,8 +9,11 @@ import android.graphics.Rect;
  */
 
 public class ObjectBase {
+    public enum AlignmentHorizontal {Left, Center, Right}
+    public enum AlignmentVertical {Top, Middle, Bottom}
+    private AlignmentHorizontal alignmentHorizontal = AlignmentHorizontal.Center;
+    private AlignmentVertical alignmentVertical = AlignmentVertical.Middle;
     private Point mPoint = new Point(0, 0);
-    private int centerOffset = 0;
     private Bitmap image;
     private Rect detectCollision;
 
@@ -25,6 +28,8 @@ public class ObjectBase {
     public Point getPoint() {
         return mPoint;
     }
+    public AlignmentVertical getAlignmentVertical() {return alignmentVertical;}
+    public AlignmentHorizontal getAlignmentHorizontal() {return alignmentHorizontal;}
 
     public int getX() {
         return mPoint.x;
@@ -33,8 +38,6 @@ public class ObjectBase {
     public int getY() {
         return mPoint.y;
     }
-
-    public int getCenterOffset() {return centerOffset;}
 
     public Bitmap getBitmap() {
         return image;
@@ -49,7 +52,6 @@ public class ObjectBase {
         image = newBitMap;
     }
 
-    public void setCenterOffset(int newCenterOffset) {centerOffset = newCenterOffset;}
     public void setPoint(Point newPoint) {
         mPoint = newPoint;
     }
@@ -71,5 +73,10 @@ public class ObjectBase {
     }
 
     //Helper Functions
+    public void checkImage(Bitmap image) {
+        if (getBitmap() != image) {
+            setBitMap(image);
+        }
+    }
 
 }

@@ -8,6 +8,7 @@ import android.graphics.Point;
  */
 
 public class Weapon extends Clutter {
+    public enum weaponType{RANGED, MELEE, MAGIC}
     private int attackPower = 0;
 
     Weapon(int atkPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {

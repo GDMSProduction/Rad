@@ -5,7 +5,6 @@ import android.graphics.Point;
 
 import java.util.ArrayList;
 
-import static my.application.stephen.runattackdungeon.Creature.CreatureType.Slime;
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Random;
 import static my.application.stephen.runattackdungeon.Creature.MovementLimit.inCamera;
 import static my.application.stephen.runattackdungeon.Creature.MovementType.None;
@@ -17,12 +16,6 @@ import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
 public class Creature extends ObjectDestructible {
 
-    public enum CreatureType{
-        Slime,
-        Goblin,
-        Minotaur,
-        Humanoid
-    }
     public enum DirectionType{
         Still,
         LeftandRight,
@@ -44,7 +37,6 @@ public class Creature extends ObjectDestructible {
         inDungeon,
         inWorld
     }
-    private CreatureType creatureType = Slime;
     private DirectionType directionType = Random;
     private MovementType movementType = None;
     private MovementLimit movementLimit = inCamera;
@@ -78,9 +70,8 @@ public class Creature extends ObjectDestructible {
         super(newPoint, newBitmap, HPMax);
         defense = defenseMax = DefMax;
     }
-    Creature(CreatureType Type, Point newPoint, Bitmap newBitmap, int HPMax, int DefMax) {
-        super(newPoint, newBitmap, HPMax);
-        creatureType = Type;
+    Creature(Point newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax) {
+        super(newPoint, newBitmap, HPMax, Type);
         defense = defenseMax = DefMax;
     }
 
@@ -123,7 +114,6 @@ public class Creature extends ObjectDestructible {
     public Food getFood() {return food;}
     public Food getPotion() {return potion;}
     public Clutter getScroll() {return scroll;}
-    public CreatureType getCreatureType() {return creatureType;}
     public MovementType getMovementType() {return movementType;}
     public DirectionType getDirectionType() {return directionType;}
     public ArrayList<Point3d> getPath() {return Path;}
@@ -144,9 +134,6 @@ public class Creature extends ObjectDestructible {
     }
 
     public void setCurrentDepth(int newDepth){currentDepth = newDepth;}
-
-    public void setCreatureType(CreatureType newType){
-        creatureType = newType;}
 
     public Food setPotion(Food newPotion){
         Food ret = potion;
@@ -291,9 +278,22 @@ public class Creature extends ObjectDestructible {
         }
     }
 
+    public void useFood(){
+        heal(getFood().getHealing());
+        setFood(null);
+    }
+    public void useScroll(Dungeon dungeon){
+        dungeon.goToLevel(this, scroll.getValue(), Dungeon.DirectionToGo.UP);
+        setScroll(null);
+    }
+    public void usePotion(Level currentLevel){
+        getPotion().PotionEffect(this, currentLevel);
+        setPotion(null);
+    }
+
     public boolean Update(Point target){
         boolean isAtTarget = false;
-        switch (creatureType){
+        switch (super.getCellType()){
             case Slime:
                 //No movement unless interacted with.
                 break;

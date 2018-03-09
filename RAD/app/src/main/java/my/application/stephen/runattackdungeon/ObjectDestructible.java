@@ -8,14 +8,31 @@ import android.graphics.Point;
  */
 
 public class ObjectDestructible extends ObjectBase {
-    private int hitPoints = 10;
-    private int hitPointsMax = 10;
+    public enum CellType {
+        Wall, Space, Void,
+        StairUp, StairDown,
+        Clutter, Barrel, Chest,
+        Slime, Goblin, Minotaur, Humanoid,
+        //everything that can be picked up/interacted with.
+        Weapon, MiningTool, LightSource, Wearable,
+        Food, Scroll, Potion
+    }
+    private CellType cellType = CellType.Wall;
+
+    private int hitPoints = 15;
+    private int hitPointsMax = 15;
 
     ObjectDestructible(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap);
         hitPoints = hitPointsMax = HPMax;
     }
+    ObjectDestructible(Point newPoint, Bitmap newBitmap, int HPMax, CellType CELLTYPE) {
+        super(newPoint, newBitmap);
+        hitPoints = hitPointsMax = HPMax;
+        cellType = CELLTYPE;
+    }
 
+    //Accessors
     public int getHP() {
         return hitPoints;
     }
@@ -24,6 +41,12 @@ public class ObjectDestructible extends ObjectBase {
         return hitPointsMax;
     }
 
+    public CellType getCellType(){return cellType;}
+
+    //Mutators
+    public void setCellType(CellType newCellType){cellType = newCellType;}
+
+    //Helper Functions
     public void setMaxHP(int newMax) {
         hitPoints += newMax - hitPointsMax;
         hitPointsMax = newMax;

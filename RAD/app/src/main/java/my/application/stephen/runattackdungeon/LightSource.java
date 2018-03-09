@@ -12,6 +12,7 @@ public class LightSource extends Weapon {
     LightSource(int newLightRadius, int atkPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(atkPower, newValue, mPoint, newImage, HPMax);
         lightRadius = newLightRadius;
+        setCellType(CellType.LightSource);
     }
     public int getLightRadius(){return lightRadius;}
 }

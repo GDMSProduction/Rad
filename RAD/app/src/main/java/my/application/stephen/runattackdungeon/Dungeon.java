@@ -47,9 +47,9 @@ public class Dungeon {
     }
 
     public void goToLevel(Creature creature, int levelToGoTo, DirectionToGo direction) {
-        dungeonLevels.get(creature.getCurrentDepth()).removeObjectFromMap(creature.getPoint(), creature);
         switch (direction) {
             case DOWN:
+                dungeonLevels.get(creature.getCurrentDepth()).removeObjectFromMap(creature.getPoint(), creature);
                 if (currentLevel == dungeonLevels.get(dungeonLevels.size() - 1)) {
                     AddNewLevel();
                 }
@@ -74,9 +74,9 @@ public class Dungeon {
                 }
                 break;
             case UP:
-                if (currentLevelIndex == 0) {
+                if (creature.getCurrentDepth() == 0) {
                 } else {
-
+                    dungeonLevels.get(creature.getCurrentDepth()).removeObjectFromMap(creature.getPoint(), creature);
                     RemoveCreatureFromCurrentLevel(creature);
                     if (creature == player) {
                         currentLevel = dungeonLevels.get(levelToGoTo);

@@ -14,10 +14,12 @@ public class Weapon extends Clutter {
     Weapon(int atkPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(newValue, mPoint, newImage, HPMax);
         attackPower = atkPower;
+        setCellType(CellType.Weapon);
     }
     Weapon(int atkPower, int enchant, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(newValue, enchant, mPoint, newImage, HPMax);
         attackPower = atkPower;
+        setCellType(CellType.Weapon);
     }
 
     public int getAttackPower(){return attackPower;}

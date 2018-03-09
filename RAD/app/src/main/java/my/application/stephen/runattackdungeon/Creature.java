@@ -64,15 +64,18 @@ public class Creature extends ObjectDestructible {
 
     Creature(Point newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap, HPMax);
+        setCellType(CellType.Slime);
     }
 
     Creature(Point newPoint, Bitmap newBitmap, int HPMax, int DefMax) {
         super(newPoint, newBitmap, HPMax);
         defense = defenseMax = DefMax;
+        setCellType(CellType.Slime);
     }
     Creature(Point newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax) {
         super(newPoint, newBitmap, HPMax, Type);
         defense = defenseMax = DefMax;
+        setCellType(CellType.Slime);
     }
 
     //getters

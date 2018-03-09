@@ -15,11 +15,13 @@ public class Clutter extends ObjectDestructible {
     Clutter(int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(mPoint, newImage, HPMax);
         value = newValue;
+        setCellType(CellType.Clutter);
     }
     Clutter(int newValue, int enchantPower, Point mPoint, Bitmap newImage, int HPMax) {
         super(mPoint, newImage, HPMax);
         value = newValue;
         enchantModifier = enchantPower;
+        setCellType(CellType.Clutter);
     }
     //setters
     public void setValue(int newValue){ value = newValue; }

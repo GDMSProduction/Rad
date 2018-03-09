@@ -13,6 +13,7 @@ public class MiningTool extends Clutter {
     MiningTool(int newDigPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(newValue, mPoint, newImage, HPMax);
         minePower = newDigPower;
+        setCellType(CellType.MiningTool);
     }
     public int getMinePower(){return minePower;}
 }

@@ -231,51 +231,60 @@ public class Level extends Map {
         int corridorWidth = Math.abs(start.x - end.x);
         int corridorHeight = Math.abs(start.y - end.y);
 
-        //Diagonals Quadrant 1 and 3, Equals
+        //Diagonals Quadrants 1 and 3, Horizontal/Vertical
         if (start.x >= end.x && start.y <= end.y ||
                 start.x <= end.x && start.y >= end.y) {
-
             switch (rand.nextInt(2)) {
                 default:
                 case 0:
                     //Top Left - Right
                     for (int j = 0; j <= corridorWidth; j++) {
-                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        super.setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
+//                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     //Top Left - Bottom
                     for (int k = 0; k <= corridorHeight; k++) {
-                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
+//                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     break;
                 case 1:
                     //Bottom Left - Right
                     for (int j = 0; j <= corridorWidth; j++) {
-                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
+//                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     //Bottom Right - Top
                     for (int k = 0; k <= corridorHeight; k++) {
-                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
+//                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     break;
             }
-        } else if (start.x > end.x && start.y > end.y ||
+        }
+        //Diagonals Quadrants 2 and 4
+        else if (start.x > end.x && start.y > end.y ||
                 start.x < end.x && start.y < end.y) {
             switch (rand.nextInt(2)) {
                 default:
                 case 0:
                     for (int j = 0; j <= corridorWidth; j++) {
-                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
+//                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     for (int k = 0; k <= corridorHeight; k++) {
-                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
+//                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     break;
                 case 1:
                     for (int j = 0; j <= corridorWidth; j++) {
-                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
+//                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     for (int k = 0; k <= corridorHeight; k++) {
-                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
+//                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
                     }
                     break;
             }

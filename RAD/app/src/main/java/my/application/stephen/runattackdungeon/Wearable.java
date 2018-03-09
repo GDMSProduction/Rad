@@ -16,6 +16,7 @@ public class Wearable extends Clutter {
         super(newValue, enchantPower, mPoint, newImage, HPMax);
         type = enchantType;
         power = Power;
+        setCellType(CellType.Wearable);
     }
     public EnchantType getEnchantType() {return type;}
     public int getPower(){return power;}

@@ -22,10 +22,12 @@ public class Food extends Clutter {
     Food(int health, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(newValue, mPoint, newImage, HPMax);
         healing = health;
+        setCellType(CellType.Food);
     }
     Food(PotionColor Color, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(newValue, mPoint, newImage, HPMax);
         color = Color;
+        setCellType(CellType.Potion);
     }
 
     public int getHealing(){return healing;}

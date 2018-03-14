@@ -11,6 +11,7 @@ import static my.application.stephen.runattackdungeon.GameView.walls;
 
 /**
  * Created by Stephen on 2018-01-16.
+ * Maps are the base layer of a generated dungeon: walls, floors, spaces.
  */
 
 public class Map {
@@ -24,13 +25,6 @@ public class Map {
     private int SpacePercent = 40;
     //the number of floor tiles
     protected int numEmptyCells = 0;
-    //the minimum number of empty cells
-    // 1 UP stair,
-    // 1 DOWN stair,
-    // 1 Enemy,
-    // 1 Clutter,
-    // 1 Player.
-    private int minimumEmptyCells = 5;
     //the amount of tiles in each row
     private int mWidth;
     //the amount of tiles in each column
@@ -60,7 +54,7 @@ public class Map {
     }
 
     //fills the current map with randomized tiles
-    private void InitializeMap(boolean natural) {
+    private void InitializeMap() {
         // innards of map
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
@@ -75,7 +69,7 @@ public class Map {
 
                 //randomize the map.
                 long randomPercent = java.lang.Math.abs(rand.nextLong() % 100);
-                if (randomPercent + 1 <= SpacePercent && natural) {
+                if (randomPercent + 1 <= SpacePercent) {
                     setSpace(mCellsCurr, row, col, spaces.length - 1);
                 } else {
                     setWall(mCellsCurr, row, col);
@@ -167,22 +161,32 @@ public class Map {
         return mWidth;
     }
 
-    public ArrayList<Point> getFloorPoints() {
+    public ArrayList<Point> getSomeFloorPoints(Point start, int width, int height) {
+        ArrayList<Point> someFloorTiles = new ArrayList<Point>();
+        for (int row = start.y; row < start.y + height; row++) {
+            for (int col = start.x; col < start.x + width; col++) {
+                if (FindInArray(spaces, mCellsCurr[row][col].get(0).getBitmap())) {
+                    someFloorTiles.add(new Point(col, row));
+                }
+            }
+        }
+        return someFloorTiles;
+    }
+
+    public ArrayList<Point> makeAvailablePoints(int Height, int Width) {
         numEmptyCells = 0;
         FloorTiles = new ArrayList<Point>();
-        for (int row = 0; row < mHeight; row++) {
-            for (int col = 0; col < mWidth; col++) {
-                if (FindInArray(spaces, mCellsCurr[row][col].get(0).getBitmap())) {
-                    Point temp = new Point(col, row);
-                    FloorTiles.add(temp);
-                    numEmptyCells++;
+        for (int row = 0; row < Height; row++) {
+            for (int col = 0; col < Width; col++) {
+                if (getOtherCellType(col, row) == ObjectDestructible.CellType.Space) {
+                    addEmptyFloorTile(col, row);
                 }
             }
         }
         return FloorTiles;
     }
 
-    public int getNumEmptyPoints() {
+    public int getNumEmptyCells() {
         return numEmptyCells;
     }
 
@@ -210,13 +214,11 @@ public class Map {
                 break;
         }
     }
-
     public void setGrassySpace(ArrayList<ObjectDestructible>[][] array, int row, int col) {
         array[row][col].get(0).setBitMap(spaces[4]);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.Space);
     }
-
-    public void setEmptySpace(ArrayList<ObjectDestructible>[][] array, int row, int col) {
+    public void setVoidSpace(ArrayList<ObjectDestructible>[][] array, int row, int col) {
         array[row][col].get(0).setBitMap(spaces[5]);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.Void);
     }
@@ -231,13 +233,11 @@ public class Map {
                 break;
         }
     }
-
     public void setBreakingWall(ArrayList<ObjectDestructible>[][] array, int row, int col) {
         array[row][col].get(0).setBitMap(walls[0]);
         array[row][col].get(0).setMaxHP(breakingwallHealth);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.Wall);
     }
-
     public void setSturdyWall(ArrayList<ObjectDestructible>[][] array, int row, int col, int Health) {
         if (Health < 0) {
             Health = sturdywallHealth;
@@ -252,25 +252,18 @@ public class Map {
     //refinement two is to create paths between areas.
     public Map generateNewMap(boolean natural) {
         // randomly initialize the map
-        InitializeMap(natural);
+        InitializeMap();
         MakeBorders(0, 0, mWidth - 1, mHeight - 1);
 
-        int refine = /*rand.nextInt(3) + 1*/ 3;
-
-        //refine the map for some number of generations
-        for (int i = 0; i < refine; i++) {
-            RefineMap(false);
-        }
-        for (int i = 0; i < refine; i++) {
-            RefineMap(true);
-        }
-
-        getFloorPoints();
-        if (numEmptyCells < minimumEmptyCells) {
-            for (int i = 0; i < minimumEmptyCells; i++) {
-                setSpace(mCellsCurr, rand.nextInt(mHeight - 3) + 1, rand.nextInt(mWidth - 3) + 1, spaces.length - 1);
+        if (natural == true) {
+            int refine = /*rand.nextInt(3) + 1*/ 3;
+            //refine the map for some number of generations
+            for (int i = 0; i < refine; i++) {
+                RefineMap(false);
             }
-            getFloorPoints();
+            for (int i = 0; i < refine; i++) {
+                RefineMap(true);
+            }
         }
         return this;
     }
@@ -290,15 +283,74 @@ public class Map {
         return (FindInArray(walls, mCellsCurr[celly][cellx].get(0).getBitmap()));
     }
 
-    public void takeAwayEmptyFloorTiles(int floorTile) {
+    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
+        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
+            return ObjectDestructible.CellType.Wall;
+        }
+        return mCellsCurr[celly][cellx].get(
+                mCellsCurr[celly][cellx].size() - 1
+        ).getCellType();
+    }
+
+    public void removeEmptyFloorTiles(int floorTile) {
         FloorTiles.remove(floorTile);
         numEmptyCells--;
     }
-//    public void addEmptyFloorTile(int X, int Y){
-//        Point temp = new Point(X, Y);
-//        FloorTiles.add(temp);
-//        numEmptyCells++;
-//    }
+    public void findAndRemoveEmptyFloorTiles(Point point) {
+        for (int i = 0; i < FloorTiles.size(); i++) {
+            Point temp = FloorTiles.get(i);
+            if (temp.x == point.x && temp.y == point.y) {
+                removeEmptyFloorTiles(i);
+            }
+        }
+    }
+
+    public void addEmptyFloorTile(int X, int Y) {
+        FloorTiles.add(new Point(X, Y));
+        numEmptyCells++;
+    }
+
+    public void addObjectToMap(Point point, ObjectDestructible object, boolean Distribute) {
+//        if (Distribute == true){
+//            getCurrentMap()[point.y][point.x].add(object);
+//        } else {
+        getCurrentMap()[point.y][point.x].add(object);
+//        }
+    }
+
+    public void removeObjectFromMap(Point point, ObjectDestructible object) {
+        for (int i = 0; i < getCurrentMap()[point.y][point.x].size(); i++) {
+            if (object == getCurrentMap()[point.y][point.x].get(i)) {
+                getCurrentMap()[point.y][point.x].remove(i);
+                break;
+            }
+        }
+    }
+
+    public void giveNewPointToObject(ObjectDestructible object) {
+        int floorTilesIndex = rand.nextInt(FloorTiles.size());
+        Point newPoint = FloorTiles.get(floorTilesIndex);
+
+        removeObjectFromMap(object.getPoint(), object);
+        object.setPoint(newPoint);
+        addObjectToMap(object.getPoint(), object, true);
+
+        removeEmptyFloorTiles(floorTilesIndex);
+    }
+
+    public void giveNewPointToObjectInRoom(ObjectDestructible object, Point start, int width, int height) {
+        ArrayList<Point> someFloorTiles = getSomeFloorPoints(start, width, height);
+        if (someFloorTiles.size() > 0) {
+            int floorTilesIndex = rand.nextInt(someFloorTiles.size());
+            Point newPoint = someFloorTiles.get(floorTilesIndex);
+
+            removeObjectFromMap(object.getPoint(), object);
+            object.setPoint(newPoint);
+            addObjectToMap(object.getPoint(), object, true);
+
+            findAndRemoveEmptyFloorTiles(newPoint);
+        }
+    }
 
     public void MakeBorders(int startX, int startY, int length, int height) {
         // horizontal  borders

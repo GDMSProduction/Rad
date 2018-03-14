@@ -2,14 +2,18 @@ package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
+import static my.application.stephen.runattackdungeon.GameView.camHeight;
+import static my.application.stephen.runattackdungeon.GameView.camWidth;
 import static my.application.stephen.runattackdungeon.GameView.imageClutter;
 import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
 import static my.application.stephen.runattackdungeon.GameView.imageFood;
 import static my.application.stephen.runattackdungeon.GameView.imageLight;
 import static my.application.stephen.runattackdungeon.GameView.imageMining;
+import static my.application.stephen.runattackdungeon.GameView.imageNPCDown;
 import static my.application.stephen.runattackdungeon.GameView.imagePotion;
 import static my.application.stephen.runattackdungeon.GameView.imageScroll;
 import static my.application.stephen.runattackdungeon.GameView.imageStairs;
@@ -24,18 +28,23 @@ import static my.application.stephen.runattackdungeon.GameView.walls;
 
 public class Level extends Map {
 
-    //the amount of desired rooms
     private int roomNums = 2;
-    //The Array of available roomCenters
-    private ArrayList<Map> AvailableRooms = new ArrayList<>(roomNums);
-    //whether or not to make "rooms"
-    private boolean makeRooms;
+    private ArrayList<Room> LevelRooms = new ArrayList<>(roomNums);
+    private ArrayList<Point> RoomStartPoints = new ArrayList<>(0);
+    private boolean makeRooms = false;
     private int roomHeightMax = 8;
-    private int roomHeightMin = 4;
+    public static final int roomHeightMin = 4;
     private int roomWidthMax = 8;
-    private int roomWidthMin = 4;
+    public static final int roomWidthMin = 4;
     private int roomSpacePercent = 100;
     private boolean roomNatural = false;
+    //the minimum number of empty cells
+    // 1 UP stair,
+    // 1 DOWN stair,
+    // 1 Enemy,
+    // 1 Clutter,
+    // 1 Player.
+    private int minimumEmptyCells = 5;
 
     //The Clutter
     private int maxClutter = 5;
@@ -49,64 +58,44 @@ public class Level extends Map {
     private ArrayList<Wearable> wearables = new ArrayList<>(0);
     private ArrayList<Weapon> weapons = new ArrayList<>(0);
     //The Stairs
-    private ObjectDestructible stairsUp;
-    private ObjectDestructible stairsDown;
-    //the creatures
+    private ObjectDestructible stairsUp = null;
+    private ObjectDestructible stairsDown = null;
+    //the Creatures
     private int maxEnemies = 5;
-    private ArrayList<Creature> creatures = new ArrayList<Creature>(maxEnemies);
+    private ArrayList<Creature> levelCreatures = new ArrayList<Creature>(maxEnemies);
 
-    Level(int Width, int Height, int SpacesPercent, boolean natural) {
+    Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel) {
         super(Width, Height, SpacesPercent, natural);
-        makeLevelPoints();
-//        if (Width < Height) {
-//            roomRadiusMax = Width / 8;
-//            if (roomRadiusMax*2 > camWidth){
-//                roomRadiusMax = camWidth/2;
-//            }
-//        } else {
-//            roomRadiusMax = Height / 8;
-//            if (roomRadiusMax*2 > camHeight){
-//                roomRadiusMax = camHeight/2;
-//            }
-//        }
-//        roomRadiusMin = roomRadiusMax / 4;
-//        if (roomRadiusMin < 2) {
-//            roomRadiusMin = 2;
-//        }
-//
-//        makeRooms = !natural;
-//        if (makeRooms) {
-//            roomNums = rand.nextInt((
-//                    (Width/(roomRadiusMax * 2 + 3)) *
-//                            (Height / (roomRadiusMax * 2 + 3)))
-//                    - 2)
-//                    + 2;
-//            if (roomNums <= 2){
-//                roomNums = 2;
-//            }
-//        }
-//
-//        RoomCenters = new Point[roomNums];
-//        AvailableRoomCenters = new ArrayList<Point>(Height * Width);
-//        MakeAvailableRoomCenters();
+        makeRooms = MakeRooms;
+        PutRoomsInMap(Width, Height, currentLevel);
+//            ConnectRooms();
+        makeAvailablePoints(getMapHeight(), getMapWidth());
+        if (numEmptyCells < minimumEmptyCells) {
+            for (int i = 0; i < minimumEmptyCells; i++) {
+                setSpace(getCurrentMap(), rand.nextInt(getMapHeight() - 3) + 1, rand.nextInt(getMapWidth() - 3) + 1, spaces.length - 1);
+            }
+            makeAvailablePoints(getMapHeight(), getMapWidth());
+        }
 
-//        MakeRooms();
-//        MakeCorridors();
-        int TotalSpaces = getNumEmptyPoints() - 2;
-        createStairs();
+        createStairs(currentLevel);
         if (getStairsUp() != null && getStairsDown() != null) {
             MakeCorridor(getStairsUp().getPoint(), getStairsDown().getPoint());
         }
-        maxEnemies = (int) (TotalSpaces * 2.0f / 18.0f);
+
+        int TotalSpaces = getNumEmptyCells() - 2;
+        maxEnemies = (int) (TotalSpaces * 0.2f);
         if (maxEnemies < 1) {
             maxEnemies = 1;
         }
-        createEnemies();
-        maxClutter = (int) (TotalSpaces * 1.0f / 18.0f);
-        if (maxClutter < 1) {
-            maxClutter = 1;
+        createEnemies(null);
+        if (natural) {
+            maxClutter = (int) (TotalSpaces * 0.2f);
+            if (maxClutter < 1) {
+                maxClutter = 1;
+            }
+            createClutter();
         }
-        createClutter();
+
     }
 
     //Getters
@@ -118,8 +107,8 @@ public class Level extends Map {
         return stairsDown;
     }
 
-    public ArrayList<Creature> getCreatures() {
-        return creatures;
+    public ArrayList<Creature> getLevelCreatures() {
+        return levelCreatures;
     }
 
     public ArrayList<Clutter> getClutter() {
@@ -157,298 +146,408 @@ public class Level extends Map {
     //Setters
     //Helper Functions
 
-//    private void MakeRooms() {
-//        for (int i = 0; i < roomNums && AvailableRooms.size() > 0; i++) {
-//            RoomCenters[i] = GetRandRoomCell();
-//            int distributionX = rand.nextInt(roomRadiusMax) + roomRadiusMin;
-//            int distributionY = rand.nextInt(roomRadiusMax) + roomRadiusMin;
-//            //hollows out room
-////            switch  (rand.nextInt(2)){
-////                case 0:
-//            for (int col = RoomCenters[i].x - distributionX; col < RoomCenters[i].x + distributionX; col++) {
-//                for (int row = RoomCenters[i].y - distributionY; row < RoomCenters[i].y + distributionY; row++) {
-//                    super.getCurrentMap()[row][col].setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-//                    Point temp = new Point(col, row);
-//                    int pointIndex = FindAvailablePoint(temp);
-//                    if (pointIndex >= 0) {
-//                        AvailableRooms.remove(pointIndex);
-//                    }
-//                }
-//            }
-////                    break;
-////                case 1:
-////                    for (int col = RoomCenters[i].x - distributionX; col <= RoomCenters[i].x + distributionX; col++) {
-////                        for (int row = RoomCenters[i].y - distributionY; row <= RoomCenters[i].y + distributionY; row++) {
-////                            mCellsCurr[row][col].setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-////                            Point temp = new Point(col, row);
-////                            int pointIndex = FindAvailablePoint(temp);
-////                            if (pointIndex >= 0) {
-////                                AvailableRoomCenters.remove(pointIndex);
-////                            }
-////                        }
-////                    }
-////                    break;
-////            }
-//            //makes room borders.
-//            if (distributionX > 10 || distributionY > 10) {
-//                //Make Room Stablizing Columns.
-//            }
-////            MakeBorders(RoomCenters[i].x - distributionX, RoomCenters[i].y - distributionY, distributionX, distributionY);
-//        }
-//    }
+    private void setRoomAmount(int Width, int Height) {
+        if (makeRooms) {
+            roomNums = rand.nextInt((Width / roomWidthMax) * (Height / roomHeightMax));
+            if (roomNums < 2) {
+                roomNums = 2;
+            }
+        }
+    }
 
-//    private int FindAvailablePoint(Point temp) {
-//        int ret = -1;
-//        for (int index = 0; index < AvailableRooms.size(); index++) {
-//            if (AvailableRooms.get(index).x == temp.x &&
-//                    AvailableRooms.get(index).y == temp.y) {
-//                return index;
-//            }
-//        }
-//        return ret;
-//    }
+    private void setRoomDimensionsMax(int Width, int Height) {
+        if (Width < Height) {
+            roomWidthMax = roomHeightMax = Width / 2;
+            if (roomWidthMax * 2 > camWidth) {
+                roomWidthMax = roomHeightMax = camWidth;
+            }
+            if (roomWidthMax <= roomWidthMin) {
+                roomWidthMax = roomHeightMax = roomWidthMin + 1;
+            }
+        } else {
+            roomHeightMax = roomWidthMax = Height / 2;
+            if (roomHeightMax * 2 > camHeight) {
+                roomHeightMax = roomWidthMax = camHeight;
+            }
+            if (roomHeightMax <= roomHeightMin) {
+                roomHeightMax = roomWidthMax = roomHeightMin + 1;
+            }
+        }
+    }
 
-    private Map GetRandRoom() {
-        return AvailableRooms.get(rand.nextInt(AvailableRooms.size()));
+    private void PutRoomsInMap(int Width, int Height, int currentLevel) {
+        setRoomDimensionsMax(Width, Height);
+        setRoomAmount(Width, Height);
+
+        LevelRooms = new ArrayList<Room>(roomNums);
+        makeRoomStartPoints();
+
+        for (int i = 0; i < roomNums; i++) {
+            int roomWidth = rand.nextInt(roomWidthMax - roomWidthMin) + roomWidthMin;
+            int roomHeight = rand.nextInt(roomHeightMax - roomHeightMin) + roomHeightMin;
+
+            Room newRoom = new Room(roomWidth, roomHeight, 100, false, maxClutter, maxEnemies);
+            LevelRooms.add(newRoom);
+
+            if (RoomStartPoints.size() <= 0) {
+                break;
+            }
+            int startPointIndex = rand.nextInt(RoomStartPoints.size());
+            newRoom.setStartPoint(RoomStartPoints.get(startPointIndex));
+            int startX = RoomStartPoints.get(startPointIndex).x;
+            int startY = RoomStartPoints.get(startPointIndex).y;
+
+            for (int col = startX; col < startX + roomWidth; col++) {
+                for (int row = startY; row < startY + roomHeight; row++) {
+                    getCurrentMap()[row][col] = newRoom.getCurrentMap()[row - startY][col - startX];
+                }
+            }
+            int debug = RoomStartPoints.size();
+            for (int col = startX - roomWidthMax; col < startX + roomWidth; col++) {
+                for (int row = startY - roomHeightMax; row < startY + roomHeight; row++) {
+                    for (int roomStartPointIndex = 0; roomStartPointIndex < RoomStartPoints.size(); roomStartPointIndex++) {
+                        if (RoomStartPoints.get(roomStartPointIndex).x == col && RoomStartPoints.get(roomStartPointIndex).y == row) {
+                            RoomStartPoints.remove(roomStartPointIndex);
+                        }
+                    }
+                }
+            }
+            debug = RoomStartPoints.size();
+        }
+//        for (int i = 0; i < LevelRooms.size(); i++){
+//            createClutter(LevelRooms.get(i));
+//            createEnemies(LevelRooms.get(i));
+////        }
+//        if (currentLevel % 25 == 0 && currentLevel != 0){
+//            createMinotaur(LevelRooms.get(0));
+//        }
+        //this is where the for loop ends.
+    }
+
+    private void makeRoomStartPoints() {
+        int maxRoomStartHeight = super.getMapHeight() - roomHeightMax;
+        int maxRoomStartWidth = super.getMapWidth() - roomWidthMax;
+        for (int row = 0; row < maxRoomStartHeight; row++) {
+            for (int col = 0; col < maxRoomStartWidth; col++) {
+                Point temp = new Point(col, row);
+                RoomStartPoints.add(temp);
+            }
+        }
     }
 
     private void MakeCorridor(Point start, Point end) {
-        int lesserX = start.x;
-        int greaterX = end.x;
-        if (start.x > end.x) {
-            lesserX = end.x;
-            greaterX = start.x;
-        }
-        int lesserY = start.y;
-        int greaterY = end.y;
-        if (start.y > end.y) {
-            lesserY = end.y;
-            greaterY = start.y;
-        }
+        Point start1 = start;
+        Point end1 = end;
+        int corridorWidth = (start.x - end.x);
+        int corridorHeight = (start.y - end.y);
 
-        Point thingy = start;
-        Point thingy2 = end;
-        int corridorWidth = Math.abs(start.x - end.x);
-        int corridorHeight = Math.abs(start.y - end.y);
-
-        //Diagonals Quadrants 1 and 3, Horizontal/Vertical
-        if (start.x >= end.x && start.y <= end.y ||
-                start.x <= end.x && start.y >= end.y) {
-            switch (rand.nextInt(2)) {
-                default:
-                case 0:
-                    //Top Left - Right
-                    for (int j = 0; j <= corridorWidth; j++) {
-                        super.setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
-//                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    //Top Left - Bottom
-                    for (int k = 0; k <= corridorHeight; k++) {
-                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
-//                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+        while (corridorHeight != 0 || corridorWidth != 0) {
+            int direction = rand.nextInt(2);
+            if (corridorWidth == 0) {
+                direction = 1;
+            } else if (corridorHeight == 0) {
+                direction = 0;
+            }
+            switch (direction) {
+                case 0: //Horizontal
+                    if (corridorWidth > 0) {
+                        end1.x++;
+                        corridorWidth--;
+                        super.setSpace(super.getCurrentMap(), end1.y, end1.x, 4);
+                    } else if (corridorWidth < 0) {
+                        end1.x--;
+                        corridorWidth++;
+                        super.setSpace(super.getCurrentMap(), end1.y, end1.x, 4);
                     }
                     break;
-                case 1:
-                    //Bottom Left - Right
-                    for (int j = 0; j <= corridorWidth; j++) {
-                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
-//                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    //Bottom Right - Top
-                    for (int k = 0; k <= corridorHeight; k++) {
-                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
-//                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+                case 1: //Vertical
+                    if (corridorHeight > 0) {
+                        end1.y++;
+                        corridorHeight--;
+                        super.setSpace(super.getCurrentMap(), end1.y, end1.x, 4);
+                    } else if (corridorHeight < 0) {
+                        end1.y--;
+                        corridorHeight++;
+                        super.setSpace(super.getCurrentMap(), end1.y, end1.x, 4);
                     }
                     break;
             }
         }
-        //Diagonals Quadrants 2 and 4
-        else if (start.x > end.x && start.y > end.y ||
-                start.x < end.x && start.y < end.y) {
-            switch (rand.nextInt(2)) {
-                default:
-                case 0:
-                    for (int j = 0; j <= corridorWidth; j++) {
-                        setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
-//                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    for (int k = 0; k <= corridorHeight; k++) {
-                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
-//                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    break;
-                case 1:
-                    for (int j = 0; j <= corridorWidth; j++) {
-                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
-//                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    for (int k = 0; k <= corridorHeight; k++) {
-                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
-//                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
-                    }
-                    break;
-            }
-        }
-    }
 
-//    private void MakeAvailableRooms() {
-//        for (int row = 3 + roomRadiusMax; row < super.getMapHeight() - 3 - roomRadiusMax; row++) {
-//            for (int col = 3 + roomRadiusMax; col < super.getMapWidth() - 3 - roomRadiusMax; col++) {
-//                Point temp = new Point(col, row);
-//                AvailableRoomCenters.add(temp);
+//        int lesserX = start.x;
+//        int greaterX = end.x;
+//        if (start.x > end.x) {
+//            lesserX = end.x;
+//            greaterX = start.x;
+//        }
+//        int lesserY = start.y;
+//        int greaterY = end.y;
+//        if (start.y > end.y) {
+//            lesserY = end.y;
+//            greaterY = start.y;
+//        }
+//        int corridorWidth = Math.abs(start.x - end.x);
+//        int corridorHeight = Math.abs(start.y - end.y);
+//        //Diagonals Quadrants 1 and 3, Horizontal/Vertical
+//        if (start.x >= end.x && start.y <= end.y ||
+//                start.x <= end.x && start.y >= end.y) {
+//            switch (rand.nextInt(2)) {
+//                default:
+//                case 0:
+//                    //Top Left - Right
+//                    for (int j = 0; j <= corridorWidth; j++) {
+//                        super.setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
+////                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    //Top Left - Bottom
+//                    for (int k = 0; k <= corridorHeight; k++) {
+//                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
+////                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    break;
+//                case 1:
+//                    //Bottom Left - Right
+//                    for (int j = 0; j <= corridorWidth; j++) {
+//                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
+////                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    //Bottom Right - Top
+//                    for (int k = 0; k <= corridorHeight; k++) {
+//                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
+////                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    break;
 //            }
 //        }
-//    }
+//        //Diagonals Quadrants 2 and 4
+//        else if (start.x > end.x && start.y > end.y ||
+//                start.x < end.x && start.y < end.y) {
+//            switch (rand.nextInt(2)) {
+//                default:
+//                case 0:
+//                    for (int j = 0; j <= corridorWidth; j++) {
+//                        setSpace(getCurrentMap(), lesserY, lesserX + j, 4);
+////                        super.getCurrentMap()[lesserY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    for (int k = 0; k <= corridorHeight; k++) {
+//                        setSpace(getCurrentMap(), lesserY + k, greaterX, 4);
+////                        super.getCurrentMap()[lesserY + k][greaterX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    break;
+//                case 1:
+//                    for (int j = 0; j <= corridorWidth; j++) {
+//                        setSpace(getCurrentMap(), greaterY, lesserX + j, 4);
+////                        super.getCurrentMap()[greaterY][lesserX + j].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    for (int k = 0; k <= corridorHeight; k++) {
+//                        setSpace(getCurrentMap(), lesserY + k, lesserX, 4);
+////                        super.getCurrentMap()[lesserY + k][lesserX].get(0).setBitMap(spaces[rand.nextInt(spaces.length - 1)]);
+//                    }
+//                    break;
+//            }
+//        }
 
-    public void addObjectToMap(Point point, ObjectDestructible object){
-        getCurrentMap()[point.y][point.x].add(object);
-    }
-    public void removeObjectFromMap(Point point, ObjectDestructible object){
-        for (int i = 0; i < getCurrentMap()[point.y][point.x].size(); i++){
-            if (object == getCurrentMap()[point.y][point.x].get(i)){
-                getCurrentMap()[point.y][point.x].remove(i);
-                break;
-            }
-        }
     }
 
-    private void createClutter() {
-        clutter.clear();
+    protected void createClutter() {
+//        clutter.clear();
         int newSize = rand.nextInt(maxClutter) + 1;
-        clutter = new ArrayList<Clutter>(newSize);
+//        clutter = new ArrayList<Clutter>(newSize);
         for (int i = 0; i < newSize; i++) {
-            if (getNumEmptyPoints() > 0) {
-                int clutterVal = 10;
-                Bitmap clutterBitmap = imageClutter[1];
-                Point clutterPoint = new Point(0, 0);
-                int clutterHP = 1;
+            if (getNumEmptyCells() > 0) {
 
-                Clutter temp = new Clutter(clutterVal, clutterPoint, clutterBitmap, clutterHP);
                 switch (rand.nextInt(5)) {
                     default:
                     case 0:
                         //rock
-                        temp.setBitMap(imageClutter[0]);
-                        temp.setValue(0);
-                        temp.setCellType(ObjectDestructible.CellType.Clutter);
+                        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+                        giveNewPointToObject(rock);
+                        clutter.add(rock);
                         break;
                     case 1:
                         //barrel
-                        temp.setBitMap(imageClutter[1]);
-                        temp.setValue(10);
-                        temp.setCellType(ObjectDestructible.CellType.Barrel);
+                        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
+                        giveNewPointToObject(barrel);
+                        clutter.add(barrel);
                         break;
                     case 2:
                         //chest
-                        temp.setBitMap(imageClutter[2]);
-                        temp.setValue(30);
-                        temp.setCellType(ObjectDestructible.CellType.Chest);
+                        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
+                        giveNewPointToObject(chest);
+                        clutter.add(chest);
                         break;
                 }
-                giveNewPointToObject(temp);
-                clutter.add(temp);
             }
         }
     }
 
-    private void createEnemies() {
-        //Create Enemies
-        creatures.clear();
-        int newSize = rand.nextInt(maxEnemies) + 1;
-        creatures = new ArrayList<Creature>(newSize);
+    protected void createClutter(Room room) {
+        int newSize = rand.nextInt(room.getMaxClutter());
         for (int i = 0; i < newSize; i++) {
-            if (getNumEmptyPoints() > 0) {
-                int hPMax = 3;
-                int defMax = 0;
-                Bitmap enemyBitmap = imageEnemy[0];
-                Point enemyPoint = new Point(0, 0);
-
-                Creature temp;
-                switch (rand.nextInt(4)) {
+            if (getNumEmptyCells() > 0) {
+                switch (rand.nextInt(5)) {
                     default:
                     case 0:
-                        temp = new Creature(enemyPoint, enemyBitmap, hPMax, ObjectDestructible.CellType.Slime, defMax);
-                        temp.setAttack(1000);
+                        //rock
+                        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+                        giveNewPointToObjectInRoom(rock, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+                        clutter.add(rock);
                         break;
                     case 1:
-                        hPMax = 5;
-                        defMax = 50;
-                        enemyBitmap = imageEnemy[1];
-                        temp = new Creature(enemyPoint, enemyBitmap, hPMax, ObjectDestructible.CellType.Goblin, defMax);
-                        temp.setAttack(1);
+                        //barrel
+                        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
+                        giveNewPointToObjectInRoom(barrel, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+                        clutter.add(barrel);
+                        break;
+                    case 2:
+                        //chest
+                        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
+                        giveNewPointToObjectInRoom(chest, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+                        clutter.add(chest);
                         break;
                 }
-
-                giveNewPointToObject(temp);
-                creatures.add(temp);
             }
         }
     }
 
-    private void createStairs() {
-        //DOWN STAIRS
-        Point tempPoint;
-        if (getNumEmptyPoints() > 0) {
-            tempPoint = new Point(0, 0);
-            stairsDown = new ObjectDestructible(tempPoint,
-                    imageStairs[0],
-                    1000,
-                    ObjectDestructible.CellType.StairDown);
+//    protected void createEnemies() {
+////        creatures.clear();
+//        int newSize = rand.nextInt(maxEnemies) + 1;
+////        creatures = new ArrayList<Creature>(newSize);
+//        for (int i = 0; i < newSize; i++) {
+//            if (getNumEmptyCells() > 0) {
+//                switch (rand.nextInt(4)) {
+//                    default:
+//                    case 0:
+//                        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000);
+//                        giveNewPointToObject(slime);
+//                        levelCreatures.add(slime);
+//                        break;
+//                    case 1:
+//                        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1);
+//                        giveNewPointToObject(goblin);
+//                        levelCreatures.add(goblin);
+//                        break;
+//                }
+//            }
+//        }
+//    }
+
+    protected void createEnemies(Room room) {
+        int newSize = 0;
+        if (room != null){
+            newSize = rand.nextInt(room.getMaxEnemies());
+        } else  {
+            newSize = rand.nextInt(maxEnemies);
+        }
+        for (int i = 0; i < newSize; i++) {
+            if (getNumEmptyCells() > 0) {
+                switch (rand.nextInt(4)) {
+                    case 0:
+                        createSlime(room);
+                        break;
+                    default:
+                    case 1:
+                        createGoblin(room);
+                        break;
+                    case 2:
+                        createMinotaur(room);
+                        break;
+                }
+            }
+        }
+    }
+    private void createSlime(@Nullable Room room) {
+        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000);
+        if (room != null) {
+            giveNewPointToObjectInRoom(slime, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(slime);
+        }
+        levelCreatures.add(slime);
+    }
+    private void createGoblin(@Nullable Room room) {
+        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1);
+        if (room != null) {
+            giveNewPointToObjectInRoom(goblin, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(goblin);
+        }
+        levelCreatures.add(goblin);
+    }
+
+    private void createMinotaur(@Nullable Room room) {
+        Creature minotaur = new Creature(new Point(0, 0), imageEnemy[2], 5, ObjectDestructible.CellType.Minotaur, 50, 5);
+        if (room != null) {
+            giveNewPointToObjectInRoom(minotaur, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(minotaur);
+        }
+        levelCreatures.add(minotaur);
+    }
+
+    private void createHumanoid(@Nullable Room room) {
+        Creature humanoid = new Creature(new Point(0, 0), imageNPCDown[0], 5, ObjectDestructible.CellType.Humanoid, 50, 5);
+        if (room != null) {
+            giveNewPointToObjectInRoom(humanoid, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(humanoid);
+        }
+        levelCreatures.add(humanoid);
+    }
+
+    private void createStairs(int currentLevel) {
+        if (getNumEmptyCells() > 0 && currentLevel <= 100) {
+            stairsDown = new ObjectDestructible(new Point(0, 0), imageStairs[0], 1000, ObjectDestructible.CellType.StairDown);
             giveNewPointToObject(stairsDown);
         }
-        //UP STAIRS
-        if (getNumEmptyPoints() > 0) {
-            tempPoint = new Point(0, 0);
-            stairsUp = new ObjectDestructible(tempPoint,
-                    imageStairs[1],
-                    1000,
-                    ObjectDestructible.CellType.StairUp);
+        if (getNumEmptyCells() > 0 && currentLevel != 0) {
+            stairsUp = new ObjectDestructible(new Point(0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
             giveNewPointToObject(stairsUp);
         }
     }
 
-
-    private void CreateCoins(int value, Point point) {
+    private void CreateCoins(Point point, int value) {
         Clutter coins = new Clutter(value, point, imageClutter[3], 0);
         coins.setCellType(ObjectDestructible.CellType.Clutter);
         clutter.add(coins);
-        addObjectToMap(point, coins);
+        addObjectToMap(point, coins, true);
     }
 
-    private void CreateHeartDiamond(Point point) {
-        Clutter diamondRed = new Clutter(200, point, imageClutter[5], 0);
+    private void CreateHeartDiamond(Point point, int value) {
+        Clutter diamondRed = new Clutter(200 + value, point, imageClutter[5], 0);
         diamondRed.setCellType(ObjectDestructible.CellType.Clutter);
         clutter.add(diamondRed);
-        addObjectToMap(point, diamondRed);
+        addObjectToMap(point, diamondRed, true);
     }
 
-    private void CreateWhiteDiamond(Point point) {
-        Clutter diamond = new Clutter(200, point, imageClutter[4], 0);
+    private void CreateWhiteDiamond(Point point, int value) {
+        Clutter diamond = new Clutter(200 + value, point, imageClutter[4], 0);
         diamond.setCellType(ObjectDestructible.CellType.Clutter);
         clutter.add(diamond);
-        addObjectToMap(point, diamond);
+        addObjectToMap(point, diamond, true);
     }
 
-    private void CreateRandomDiamond(Point point) {
+    private void CreateRandomDiamond(Point point, int value) {
         switch (rand.nextInt(2)) {
             default:
             case 0:
-                CreateWhiteDiamond(point);
+                CreateWhiteDiamond(point, value);
                 break;
             case 1:
-                CreateHeartDiamond(point);
+                CreateHeartDiamond(point, value);
                 break;
         }
     }
 
-    private void CreateRandomTreasure(int value, Point point) {
+    private void CreateRandomTreasure(Point point, int value) {
         switch (rand.nextInt(3)) {
             default:
             case 0:
-                CreateCoins(value, point);
+                CreateCoins(point, value);
                 break;
             case 1:
-                CreateRandomDiamond(point);
+                CreateRandomDiamond(point, value);
                 break;
         }
     }
@@ -468,12 +567,12 @@ public class Level extends Map {
         }
         fud.setCellType(ObjectDestructible.CellType.Food);
         food.add(fud);
-        addObjectToMap(point, fud);
+        addObjectToMap(point, fud, true);
     }
 
     private void CreatePotion(Point point, int currentLevel) {
         //if it's a green potion, it restores your health.
-        Food potion = new Food(Food.PotionColor.Green, 0, point, imagePotion[1], 0);
+        Food potion = new Food(Food.PotionColor.Green, currentLevel, point, imagePotion[1], 0);
         switch (rand.nextInt(6)) {
             default:
                 potion.setHealing(currentLevel);
@@ -509,14 +608,14 @@ public class Level extends Map {
         }
         potion.setCellType(ObjectDestructible.CellType.Potion);
         potions.add(potion);
-        addObjectToMap(point, potion);
+        addObjectToMap(point, potion, true);
     }
 
     private void CreateScroll(Point point, int currentLevel) {
         Clutter scroll = new Clutter(currentLevel, point, imageScroll[0], 2);
         scroll.setCellType(ObjectDestructible.CellType.Scroll);
         scrolls.add(scroll);
-        addObjectToMap(point, scroll);
+        addObjectToMap(point, scroll, true);
     }
 
     private void CreateRandomConsumable(Point point, int currentLevel) {
@@ -542,28 +641,28 @@ public class Level extends Map {
                 Weapon dagger = new Weapon(Attack, currentLevel, Attack * currentLevel, point, imageWeapon[1], 10);
                 dagger.setCellType(ObjectDestructible.CellType.Weapon);
                 weapons.add(dagger);
-                addObjectToMap(point, dagger);
+                addObjectToMap(point, dagger, true);
                 break;
             case 1:
                 Attack = 4;
                 Weapon sword = new Weapon(Attack, (int) (currentLevel / 2.0f), Attack * currentLevel, point, imageWeapon[2], 15);
                 sword.setCellType(ObjectDestructible.CellType.Weapon);
                 weapons.add(sword);
-                addObjectToMap(point, sword);
+                addObjectToMap(point, sword, true);
                 break;
             case 2:
                 Attack = 6;
                 Weapon axe = new Weapon(Attack, (int) (currentLevel / 4.0f), Attack * currentLevel, point, imageWeapon[3], 10);
                 axe.setCellType(ObjectDestructible.CellType.Weapon);
                 weapons.add(axe);
-                addObjectToMap(point, axe);
+                addObjectToMap(point, axe, true);
                 break;
             case 3:
                 Attack = 12;
                 Weapon bow = new Weapon(Attack, 0, (int) (50 - currentLevel / 2.0f), point, imageWeapon[4], 8);
                 bow.setCellType(ObjectDestructible.CellType.Weapon);
                 weapons.add(bow);
-                addObjectToMap(point, bow);
+                addObjectToMap(point, bow, true);
                 break;
         }
     }
@@ -574,7 +673,7 @@ public class Level extends Map {
             case 0:
                 Wearable shield = new Wearable(
                         Wearable.EnchantType.Defense,
-                        5 * currentLevel,
+                        5 * (currentLevel + 1),
                         5,
                         currentLevel,
                         point,
@@ -582,7 +681,7 @@ public class Level extends Map {
                         12 + currentLevel);
                 shield.setCellType(ObjectDestructible.CellType.Wearable);
                 wearables.add(shield);
-                addObjectToMap(point, shield);
+                addObjectToMap(point, shield, true);
                 break;
             case 1:
                 Wearable silverRing = new Wearable(
@@ -595,7 +694,7 @@ public class Level extends Map {
                         1000);
                 silverRing.setCellType(ObjectDestructible.CellType.Wearable);
                 wearables.add(silverRing);
-                addObjectToMap(point,silverRing);
+                addObjectToMap(point, silverRing, true);
                 break;
             case 2:
                 Wearable goldRing = new Wearable(
@@ -608,7 +707,7 @@ public class Level extends Map {
                         1000);
                 goldRing.setCellType(ObjectDestructible.CellType.Wearable);
                 wearables.add(goldRing);
-                addObjectToMap(point, goldRing);
+                addObjectToMap(point, goldRing, true);
                 break;
         }
     }
@@ -620,13 +719,13 @@ public class Level extends Map {
                 MiningTool shovel = new MiningTool(1, currentLevel, point, imageMining[0], 10);
                 shovel.setCellType(ObjectDestructible.CellType.MiningTool);
                 miningTools.add(shovel);
-                addObjectToMap(point, shovel);
+                addObjectToMap(point, shovel, true);
                 break;
             case 1:
                 MiningTool pickaxe = new MiningTool(3, 2 * (currentLevel + 1), point, imageMining[1], 100);
                 pickaxe.setCellType(ObjectDestructible.CellType.MiningTool);
                 miningTools.add(pickaxe);
-                addObjectToMap(point, pickaxe);
+                addObjectToMap(point, pickaxe, true);
                 break;
         }
     }
@@ -638,13 +737,13 @@ public class Level extends Map {
                 LightSource torch = new LightSource(5, 2, 0, point, imageLight[0], 500 + currentLevel);
                 torch.setCellType(ObjectDestructible.CellType.LightSource);
                 lights.add(torch);
-                addObjectToMap(point, torch);
+                addObjectToMap(point, torch, true);
                 break;
             case 1:
                 LightSource lantern = new LightSource(5, 4, currentLevel + 10, point, imageLight[1], 50 * currentLevel);
                 lantern.setCellType(ObjectDestructible.CellType.LightSource);
                 lights.add(lantern);
-                addObjectToMap(point, lantern);
+                addObjectToMap(point, lantern, true);
                 break;
         }
     }
@@ -652,10 +751,10 @@ public class Level extends Map {
     private void CreateRandomDrop(int i, ObjectDestructible.CellType type, int currentLevel) {
         switch (type) {
             case Barrel:
-                switch (rand.nextInt(3)) {
+                switch (rand.nextInt(4)) {
                     default:
                     case 0:
-                        CreateCoins(clutter.get(i).getValue(), clutter.get(i).getPoint());
+                        CreateCoins(clutter.get(i).getPoint(), clutter.get(i).getValue());
                         break;
                     case 1:
                         CreateFood(clutter.get(i).getPoint());
@@ -663,89 +762,97 @@ public class Level extends Map {
                     case 2:
                         CreatePotion(clutter.get(i).getPoint(), currentLevel);
                         break;
+                    case 3:
+                        CreateLightSource(clutter.get(i).getPoint(), currentLevel);
                 }
                 break;
             case Chest:
                 switch (rand.nextInt(4)) {
                     default:
                     case 0:
-                        CreateCoins(30, clutter.get(i).getPoint());
+                        CreateCoins(clutter.get(i).getPoint(), 30 + currentLevel);
                         break;
                     case 1:
-                        CreateRandomDiamond(clutter.get(i).getPoint());
+                        CreateRandomDiamond(clutter.get(i).getPoint(), currentLevel);
                         break;
                     case 2:
                         CreateWearable(clutter.get(i).getPoint(), currentLevel);
                         break;
                     case 3:
-                        //consumables
                         CreateRandomConsumable(clutter.get(i).getPoint(), currentLevel);
                         break;
                 }
-                //Clutter dagger = new Clutter(3, clutter.get(i).getPoint(), imageWeapon[0], 3);
                 break;
             case Slime:
+                Creature temp = levelCreatures.get(i);
+                int value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                value += temp.getTotalValue();
                 switch (rand.nextInt(3)) {
                     default:
                     case 0:
-                        int value = rand.nextInt(creatures.get(i).getMaxpHP() * 3) + 1;
-                        CreateCoins(value, creatures.get(i).getPoint());
+                        CreateCoins(levelCreatures.get(i).getPoint(), value);
                         break;
                     case 1:
-                        CreateFood(creatures.get(i).getPoint());
+                        CreateFood(levelCreatures.get(i).getPoint());
                         break;
                     case 2:
-                        CreatePotion(creatures.get(i).getPoint(), currentLevel);
+                        CreatePotion(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                 }
                 break;
             case Goblin:
-                switch (rand.nextInt(5)) {
+                temp = levelCreatures.get(i);
+                value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                value += temp.getTotalValue();
+                switch (rand.nextInt(6)) {
                     default:
                     case 0:
-                        int value = rand.nextInt(creatures.get(i).getMaxpHP() * 3) + 1;
-                        CreateCoins(value, creatures.get(i).getPoint());
+                        CreateCoins(temp.getPoint(), value);
                         break;
                     case 1:
-                        CreateWeapon(creatures.get(i).getPoint(), currentLevel);
+                        CreateWeapon(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                     case 2:
-                        CreateWearable(creatures.get(i).getPoint(), currentLevel);
+                        CreateWearable(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                     case 3:
-                        CreateMiningTool(creatures.get(i).getPoint(), currentLevel);
-//                            mining tool,
+                        CreateMiningTool(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                     case 4:
-                        CreateRandomConsumable(creatures.get(i).getPoint(), currentLevel);
+                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                     case 5:
-                        CreateLightSource(creatures.get(i).getPoint(), currentLevel);
+                        CreateLightSource(levelCreatures.get(i).getPoint(), currentLevel);
 //                            lights
                 }
                 break;
             case Minotaur:
+                temp = levelCreatures.get(i);
+                value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                value += temp.getTotalValue();
                 switch (rand.nextInt(7)) {
                     default:
                     case 0:
-                        CreateRandomTreasure(100 + (currentLevel * 2), creatures.get(i).getPoint());
+                        CreateRandomTreasure(levelCreatures.get(i).getPoint(), 100 + (currentLevel * 2) + value);
                         break;
                     case 1:
-                        CreateWeapon(creatures.get(i).getPoint(), currentLevel + 5);
+                        CreateWeapon(levelCreatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 2:
-                        CreateWearable(creatures.get(i).getPoint(), currentLevel + 5);
+                        CreateWearable(levelCreatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 3:
-                        CreateMiningTool(creatures.get(i).getPoint(), currentLevel + 5);
+                        CreateMiningTool(levelCreatures.get(i).getPoint(), currentLevel + 5);
                         break;
                     case 4:
-                        CreateRandomConsumable(creatures.get(i).getPoint(), currentLevel);
+                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), currentLevel);
                         break;
                     case 5:
-                        CreateLightSource(creatures.get(i).getPoint(), currentLevel + 5);
+                        CreateLightSource(levelCreatures.get(i).getPoint(), currentLevel + 5);
                         break;
                 }
+                break;
+            case Humanoid:
                 break;
         }
     }
@@ -762,18 +869,18 @@ public class Level extends Map {
     }
 
     public void UpdateEnemies(Dungeon dungeon, Point target, int camWidth, int camHeight, int camOffsetX, int camOffsetY, int currentLevel, boolean friendlyFire) {
-        for (int i = 0; i < creatures.size(); i++) {
-            if (creatures.get(i).getX() > camOffsetX &&
-                    creatures.get(i).getY() > camOffsetY &&
-                    creatures.get(i).getX() < camOffsetX + camWidth &&
-                    creatures.get(i).getY() < camOffsetY + camHeight) {
-                Creature temp = creatures.get(i);
+        for (int i = 0; i < levelCreatures.size(); i++) {
+            if (levelCreatures.get(i).getX() > camOffsetX &&
+                    levelCreatures.get(i).getY() > camOffsetY &&
+                    levelCreatures.get(i).getX() < camOffsetX + camWidth &&
+                    levelCreatures.get(i).getY() < camOffsetY + camHeight) {
+                Creature temp = levelCreatures.get(i);
                 switch (temp.getCellType()) {
                     default:
                     case Slime:
                         break;
                     case Goblin:
-                        //moveCreature(dungeon, target, temp, currentLevel, friendlyFire);
+                        moveCreature(dungeon, target, temp, currentLevel, friendlyFire);
                         break;
                     case Minotaur:
                         break;
@@ -813,20 +920,21 @@ public class Level extends Map {
                 while (!findInPath(temp.getPath(), temp.getPoint())) {
                     distance++;
                     Point pointLeft = new Point(target.x - 1, target.y);
-                    if (AddPossiblePathPoints(pointLeft, temp, distance, targetDest))
+                    if (AddPossiblePathPoints(pointLeft, temp, distance, targetDest)) {
                         break;
-
+                    }
                     Point pointRight = new Point(target.x + 1, target.y);
-                    if (AddPossiblePathPoints(pointRight, temp, distance, targetDest))
+                    if (AddPossiblePathPoints(pointRight, temp, distance, targetDest)) {
                         break;
-
+                    }
                     Point pointUp = new Point(target.x, target.y - 1);
-                    if (AddPossiblePathPoints(pointUp, temp, distance, targetDest))
+                    if (AddPossiblePathPoints(pointUp, temp, distance, targetDest)) {
                         break;
-
+                    }
                     Point pointDown = new Point(target.x, target.y + 1);
-                    if (AddPossiblePathPoints(pointDown, temp, distance, targetDest))
+                    if (AddPossiblePathPoints(pointDown, temp, distance, targetDest)) {
                         break;
+                    }
                 }
                 //int debug = 0;
                 //Iteratively find all points that can be walked on that are
@@ -838,55 +946,60 @@ public class Level extends Map {
     }
 
     private void MoveRandomly(Dungeon dungeon, Creature temp) {
-        switch (rand.nextInt(5)) {
+        switch (rand.nextInt(4)) {
             //South
             case 0:
-                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(),temp.getY() + 1);
-                break;
-                //North
+                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1)){
+                break;}
+            //North
             case 1:
-                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(),temp.getY() - 1);
-                break;
-                //West
+                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1)){
+                break;}
+            //West
             case 2:
-                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(),temp.getX() + 1);
-                break;
-                //East
+                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1)){
+                break;}
+            //East
             case 3:
-                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(),temp.getX() - 1);
-                break;
-                //Stay
+                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1)){
+                break;}
+            //Stay
             default:
             case 4:
                 break;
         }
     }
-    public void MoveCreatureHorizontal(Dungeon dungeon, Creature creature, int currentLevel, int X) {
+
+    public boolean MoveCreatureHorizontal(Dungeon dungeon, Creature creature, int currentLevel, int X) {
         if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
                 dungeon,
                 X,
-                creature.getY(),
+                creature.getPoint().y,
                 creature,
                 creature.getCurrentDepth(),
-                dungeon.getFriendlyFire() ) ) {
+                dungeon.getFriendlyFire())) {
             removeObjectFromMap(creature.getPoint(), creature);
             creature.setX(X);
-            addObjectToMap(creature.getPoint(), creature);
+            addObjectToMap(creature.getPoint(), creature, false);
+            return true;
         }
+        return false;
     }
 
-    public void MoveCreatureVertical(Dungeon dungeon, Creature creature, int currentLevel, int Y) {
+    public boolean MoveCreatureVertical(Dungeon dungeon, Creature creature, int currentLevel, int Y) {
         if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
                 dungeon,
-                creature.getX(),
+                creature.getPoint().x,
                 Y,
                 creature,
                 creature.getCurrentDepth(),
-                dungeon.getFriendlyFire() ) ) {
+                dungeon.getFriendlyFire())) {
             removeObjectFromMap(creature.getPoint(), creature);
             creature.setY(Y);
-            addObjectToMap(creature.getPoint(), creature);
+            addObjectToMap(creature.getPoint(), creature, false);
+            return true;
         }
+        return false;
     }
 
     private boolean AddPossiblePathPoints(Point point, Creature temp, int distance, Point3d targetDest) {
@@ -898,15 +1011,6 @@ public class Level extends Map {
             }
         }
         return false;
-    }
-
-    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly){
-        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
-            return ObjectDestructible.CellType.Wall;
-        }
-        return super.getCurrentMap()[celly][cellx].get(
-                super.getCurrentMap()[celly][cellx].size() - 1
-        ).getCellType();
     }
 
 //    public ObjectDestructible.CellType getCellType(int cellx, int celly) {
@@ -936,10 +1040,10 @@ public class Level extends Map {
 //                }
 //            }
 //        }
-//        if (creatures != null) {
-//            for (int i = 0; i < creatures.size(); i++) {
-//                if (creatures.get(i).getPoint().x == cellx && creatures.get(i).getPoint().y == celly) {
-//                    return creatures.get(i).getCellType();
+//        if (levelCreatures != null) {
+//            for (int i = 0; i < levelCreatures.size(); i++) {
+//                if (levelCreatures.get(i).getPoint().x == cellx && levelCreatures.get(i).getPoint().y == celly) {
+//                    return levelCreatures.get(i).getCellType();
 //                }
 //            }
 //        }
@@ -1008,12 +1112,12 @@ public class Level extends Map {
                 if (getCurrentMap()[celly][cellx].get(0).getHP() <= 0 && rand.nextInt(getMapHeight() * getMapWidth()) <= diamondPercent) {
                     switch (rand.nextInt(2)) {
 //                        case 0:
-//                            super.setEmptySpace(celly, cellx);
+//                            super.setVoidSpace(celly, cellx);
 //                            break;
                         default:
                         case 1:
                             Point tempPoint = new Point(cellx, celly);
-                            CreateRandomDiamond(tempPoint);
+                            CreateRandomDiamond(tempPoint, currentLevel);
                             break;
                     }
                 }
@@ -1099,7 +1203,7 @@ public class Level extends Map {
                             //  drop the swapped harmer weapon (possibleDrop)
                             possibleDrop.setPoint(cellx, celly);
                             weapons.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         //either way, we want to move the harmer to the new point.
                         ifCreatureGetsMoved = true;
@@ -1116,7 +1220,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             miningTools.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1132,7 +1236,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             lights.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1149,7 +1253,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             wearables.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1166,7 +1270,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             food.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1182,7 +1286,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             scrolls.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1198,7 +1302,7 @@ public class Level extends Map {
                         if (possibleDrop != null) {
                             possibleDrop.setPoint(cellx, celly);
                             potions.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop);
+                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
                         ifCreatureGetsMoved = true;
                         break;
@@ -1209,32 +1313,22 @@ public class Level extends Map {
         return ifCreatureGetsMoved;
     }
 
-    public ArrayList<Point> makeLevelPoints(){
-        numEmptyCells = 0;
-        FloorTiles = new ArrayList<Point>();
-        for (int row = 0; row < getMapHeight(); row++) {
-            for (int col = 0; col < getMapWidth(); col++) {
-                if (getOtherCellType(col, row) == ObjectDestructible.CellType.Space){
-                    Point temp = new Point(col, row);
-                    FloorTiles.add(temp);
-                    numEmptyCells++;
-                }
-            }
-        }
+    public ArrayList<Point> getLevelPoints() {
         return FloorTiles;
     }
 
-    public ArrayList<Point> getLevelPoints(){return FloorTiles;}
-
     private void HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {
-        for (int i = 0; i < creatures.size(); i++) {
-            if (creatures.get(i).getPoint().x == cellx && creatures.get(i).getPoint().y == celly) {
-                int damagetotal = (int) (harmer.getAttack() * ((100 - creatures.get(i).getDefense()) / 100.0f));
-                creatures.get(i).hurt(damagetotal);
-                if (creatures.get(i).getHP() <= 0) {
+        for (int i = 0; i < levelCreatures.size(); i++) {
+            Creature tempCreature = levelCreatures.get(i);
+            Point tempPoint = tempCreature.getPoint();
+
+            if (tempPoint.x == cellx && tempPoint.y == celly) {
+                int damagetotal = (int) (harmer.getAttack() * ((100 - tempCreature.getDefense()) / 100.0f));
+                tempCreature.hurt(damagetotal);
+                if (tempCreature.getHP() <= 0) {
                     CreateRandomDrop(i, harmeeType, currentLevel);
-                    removeObjectFromMap(creatures.get(i).getPoint(), creatures.get(i));
-                    creatures.remove(i);
+                    removeObjectFromMap(tempPoint, tempCreature);
+                    levelCreatures.remove(i);
                     break;
                 }
             }
@@ -1248,17 +1342,8 @@ public class Level extends Map {
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {
             super.setSpace(super.getCurrentMap(), celly, cellx, spaces.length - 2);
+            FloorTiles.add(new Point(cellx, celly));
+            numEmptyCells++;
         }
-    }
-
-    public void giveNewPointToObject(ObjectDestructible object) {
-        int floorTilesIndex = rand.nextInt(FloorTiles.size());
-        Point newPoint = FloorTiles.get(floorTilesIndex);
-
-        removeObjectFromMap(object.getPoint(), object);
-        object.setPoint(newPoint);
-        addObjectToMap(object.getPoint(), object);
-
-        FloorTiles.remove(floorTilesIndex);
     }
 }

@@ -1,12 +1,13 @@
 package my.application.stephen.runattackdungeon;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import static my.application.stephen.runattackdungeon.GameView.changeMap;
 import static my.application.stephen.runattackdungeon.GameView.screenHeight;
 import static my.application.stephen.runattackdungeon.GameView.screenWidth;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
+import static my.application.stephen.runattackdungeon.Level.roomHeightMin;
+import static my.application.stephen.runattackdungeon.Level.roomWidthMin;
 
 /**
  * Created by zfile on 2018-03-02.
@@ -17,8 +18,9 @@ public class Dungeon {
     public enum DirectionToGo {NORTH, SOUTH, EAST , WEST, DOWN, UP}
     //the Levels
     private boolean friendlyFire = false;
+    private boolean minotaurSlain = false;
     private int numLevels = 100;
-    private ArrayList<Level> dungeonLevels = new ArrayList<Level>(numLevels);
+    private ArrayList<Level> dungeonLevels = new ArrayList<>(numLevels);
     private Level currentLevel;
     private int currentLevelIndex = 0;
     private Creature player = null;
@@ -38,10 +40,10 @@ public class Dungeon {
     public void setPlayer(Creature newPlayer){player = newPlayer;}
     //Helper Functions
     private void RemoveCreatureFromCurrentLevel(Creature creature) {
-        for (int i = 0; i < currentLevel.getCreatures().size(); i++) {
-            Creature temp = currentLevel.getCreatures().get(i);
+        for (int i = 0; i < currentLevel.getLevelCreatures().size(); i++) {
+            Creature temp = currentLevel.getLevelCreatures().get(i);
             if (temp == creature) {
-                currentLevel.getCreatures().remove(i);
+                currentLevel.getLevelCreatures().remove(i);
             }
         }
     }
@@ -58,12 +60,12 @@ public class Dungeon {
                     currentLevel = dungeonLevels.get(levelToGoTo);
                 }
                 creature.setCurrentDepth(levelToGoTo);
-                dungeonLevels.get(levelToGoTo).getCreatures().add(creature);
+                dungeonLevels.get(levelToGoTo).getLevelCreatures().add(creature);
                 if (creature != null) {
                     if (creature == player && currentLevel.getStairsUp() != null) {
                         creature.setX(currentLevel.getStairsUp().getX());
                         creature.setY(currentLevel.getStairsUp().getY());
-                        dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature);
+                        dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature, true);
                     }
                     else {
                         dungeonLevels.get(levelToGoTo).giveNewPointToObject(creature);
@@ -82,11 +84,15 @@ public class Dungeon {
                         currentLevel = dungeonLevels.get(levelToGoTo);
                     }
                     creature.setCurrentDepth(levelToGoTo);
-                    currentLevel.getCreatures().add(creature);
+                    dungeonLevels.get(levelToGoTo).getLevelCreatures().add(creature);
                     if (creature != null) {
-                        creature.setX(currentLevel.getStairsDown().getX());
-                        creature.setY(currentLevel.getStairsDown().getY());
-                        dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature);
+                        if (creature == player && currentLevel.getStairsDown() != null) {
+                            creature.setX(currentLevel.getStairsDown().getX());
+                            creature.setY(currentLevel.getStairsDown().getY());
+                            dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature, true);
+                        } else{
+                            dungeonLevels.get(levelToGoTo).giveNewPointToObject(creature);
+                        }
                     }
                     if (creature == player) {
                         changeMap = true;
@@ -117,13 +123,19 @@ public class Dungeon {
             Height = screenHeight / spaces[0].getHeight();
         }
 
-//        if (currentLevelIndex % 5 == 0 && currentLevelIndex != 0){
+        if (Width < roomWidthMin){
+            Width = roomWidthMin;
+        }
+        if (Height < roomHeightMin){
+            Height = roomHeightMin;
+        }
+//        if (currentLevelIndex % 5 == 0 && currentLevelIndex != 0) {
 //            //ShopLevel
-//            temp = new Level(Width, Height, 40, false);
+//            temp = new Level(Width, Height, 0, false, currentLevelIndex);
 //        } else if (currentLevelIndex % 3 == 0 && currentLevelIndex != 0) {
-//            temp = new Level(Width, Height, 40, false);
+//            temp = new Level(Width, Height, 0, false, currentLevelIndex);
 //        } else {
-        temp = new Level(Width, Height, 50, true);
+            temp = new Level(Width, Height, 50, true, true, currentLevelIndex);
 //        }
         dungeonLevels.add(temp);
     }

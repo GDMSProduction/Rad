@@ -31,14 +31,14 @@ import static my.application.stephen.runattackdungeon.GameView.walls;
 
 public class Level extends Map {
 
+    public static final int roomHeightMin = 4;
+    public static final int roomWidthMin = 4;
     private int roomNums = 2;
     private ArrayList<Room> LevelRooms = new ArrayList<>(roomNums);
     private ArrayList<Point> RoomStartPoints = new ArrayList<>(0);
     private boolean makeRooms = false;
     private int roomHeightMax = 8;
-    public static final int roomHeightMin = 4;
     private int roomWidthMax = 8;
-    public static final int roomWidthMin = 4;
     private int roomSpacePercent = 100;
     private boolean roomNatural = false;
     //the minimum number of empty cells
@@ -91,7 +91,8 @@ public class Level extends Map {
             maxClutter = 1;
         }
 
-        createStairs(currentLevel);
+        createStairsDown(null, currentLevel);
+        createStairsUp(null, currentLevel);
         if (getStairsUp() != null && getStairsDown() != null) {
             MakeCorridor(getStairsUp().getPoint(), getStairsDown().getPoint());
         }
@@ -393,31 +394,19 @@ public class Level extends Map {
 
     private void createRock(@Nullable Room room) {
         Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
-        if (room != null) {
-            giveNewPointToObjectInRoom(rock, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(rock);
-        }
+        giveNewPointToObject(room, rock);
         clutter.add(rock);
     }
 
     private void createBarrel(@Nullable Room room) {
         Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
-        if (room != null) {
-            giveNewPointToObjectInRoom(barrel, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(barrel);
-        }
+        giveNewPointToObject(room, barrel);
         clutter.add(barrel);
     }
 
     private void createChest(@Nullable Room room) {
         Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
-        if (room != null) {
-            giveNewPointToObjectInRoom(chest, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(chest);
-        }
+        giveNewPointToObject(room, chest);
         clutter.add(chest);
     }
 
@@ -448,52 +437,38 @@ public class Level extends Map {
 
     private void createSlime(@Nullable Room room, int currentLevel) {
         Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000, currentLevel);
-        if (room != null) {
-            giveNewPointToObjectInRoom(slime, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(slime);
-        }
+        giveNewPointToObject(room, slime);
         levelCreatures.add(slime);
     }
 
     private void createGoblin(@Nullable Room room, int currentLevel) {
         Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1, currentLevel);
-        if (room != null) {
-            giveNewPointToObjectInRoom(goblin, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(goblin);
-        }
+        giveNewPointToObject(room, goblin);
         levelCreatures.add(goblin);
     }
 
     private void createMinotaur(@Nullable Room room, int currentLevel) {
         Creature minotaur = new Creature(new Point(0, 0), imageEnemy[2], 5, ObjectDestructible.CellType.Minotaur, 50, 5, currentLevel);
-        if (room != null) {
-            giveNewPointToObjectInRoom(minotaur, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(minotaur);
-        }
+        giveNewPointToObject(room, minotaur);
         levelCreatures.add(minotaur);
     }
 
     private void createHumanoid(@Nullable Room room, int currentLevel) {
         Creature humanoid = new Creature(new Point(0, 0), imageNPCDown[0], 5, ObjectDestructible.CellType.Humanoid, 50, 5, currentLevel);
-        if (room != null) {
-            giveNewPointToObjectInRoom(humanoid, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-        } else {
-            giveNewPointToObject(humanoid);
-        }
+        giveNewPointToObject(room, humanoid);
         levelCreatures.add(humanoid);
     }
 
-    private void createStairs(int currentLevel) {
+    private void createStairsDown(@Nullable Room room, int currentLevel) {
         if (getNumEmptyCells() > 0 && currentLevel <= 100) {
             stairsDown = new ObjectDestructible(new Point(0, 0), imageStairs[0], 1000, ObjectDestructible.CellType.StairDown);
-            giveNewPointToObject(stairsDown);
+            giveNewPointToObject(room, stairsDown);
         }
+    }
+    private void createStairsUp(@Nullable Room room, int currentLevel){
         if (getNumEmptyCells() > 0 && currentLevel > 0) {
             stairsUp = new ObjectDestructible(new Point(0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
-            giveNewPointToObject(stairsUp);
+            giveNewPointToObject(room, stairsUp);
         }
     }
 

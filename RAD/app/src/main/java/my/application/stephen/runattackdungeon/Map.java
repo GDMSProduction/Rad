@@ -2,6 +2,7 @@ package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -305,15 +306,19 @@ public class Map {
         }
     }
 
-    public void giveNewPointToObject(ObjectDestructible object) {
-        int floorTilesIndex = rand.nextInt(FloorTiles.size());
-        Point newPoint = FloorTiles.get(floorTilesIndex);
+    public void giveNewPointToObject(@Nullable Room room,  ObjectDestructible object) {
+        if (room != null) {
+            giveNewPointToObjectInRoom(object, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            int floorTilesIndex = rand.nextInt(FloorTiles.size());
+            Point newPoint = FloorTiles.get(floorTilesIndex);
 
-        removeObjectFromMap(object.getPoint(), object);
-        object.setPoint(newPoint);
-        addObjectToMap(object.getPoint(), object, true);
+            removeObjectFromMap(object.getPoint(), object);
+            object.setPoint(newPoint);
+            addObjectToMap(object.getPoint(), object, true);
 
-        removeEmptyFloorTiles(floorTilesIndex);
+            removeEmptyFloorTiles(floorTilesIndex);
+        }
     }
 
     public void giveNewPointToObjectInRoom(ObjectDestructible object, Point start, int width, int height) {

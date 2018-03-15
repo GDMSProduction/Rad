@@ -13,6 +13,7 @@ import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
  */
 
 class Room extends Map {
+    public enum roomType {EMPTY, LOOT, ENEMY, BOSS}
     private int maxClutter = 0;
     private int maxEnemies = 0;
     private Point startPoint = new Point (0,0);

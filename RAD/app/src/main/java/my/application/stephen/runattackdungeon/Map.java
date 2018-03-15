@@ -173,19 +173,6 @@ public class Map {
         return someFloorTiles;
     }
 
-    public ArrayList<Point> makeAvailablePoints(int Height, int Width) {
-        numEmptyCells = 0;
-        FloorTiles = new ArrayList<Point>();
-        for (int row = 0; row < Height; row++) {
-            for (int col = 0; col < Width; col++) {
-                if (getOtherCellType(col, row) == ObjectDestructible.CellType.Space) {
-                    addEmptyFloorTile(col, row);
-                }
-            }
-        }
-        return FloorTiles;
-    }
-
     public int getNumEmptyCells() {
         return numEmptyCells;
     }
@@ -281,15 +268,6 @@ public class Map {
             return true;
         }
         return (FindInArray(walls, mCellsCurr[celly][cellx].get(0).getBitmap()));
-    }
-
-    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
-        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
-            return ObjectDestructible.CellType.Wall;
-        }
-        return mCellsCurr[celly][cellx].get(
-                mCellsCurr[celly][cellx].size() - 1
-        ).getCellType();
     }
 
     public void removeEmptyFloorTiles(int floorTile) {

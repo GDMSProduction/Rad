@@ -7,7 +7,10 @@ import android.support.annotation.Nullable;
 import java.util.ArrayList;
 
 import static my.application.stephen.runattackdungeon.GameView.camHeight;
+import static my.application.stephen.runattackdungeon.GameView.camOffsetX;
+import static my.application.stephen.runattackdungeon.GameView.camOffsetY;
 import static my.application.stephen.runattackdungeon.GameView.camWidth;
+import static my.application.stephen.runattackdungeon.GameView.friendlyFire;
 import static my.application.stephen.runattackdungeon.GameView.imageClutter;
 import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
 import static my.application.stephen.runattackdungeon.GameView.imageFood;
@@ -67,6 +70,7 @@ public class Level extends Map {
     Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel) {
         super(Width, Height, SpacesPercent, natural);
         makeRooms = MakeRooms;
+
         PutRoomsInMap(Width, Height, currentLevel);
 //            ConnectRooms();
         makeAvailablePoints(getMapHeight(), getMapWidth());
@@ -77,25 +81,25 @@ public class Level extends Map {
             makeAvailablePoints(getMapHeight(), getMapWidth());
         }
 
-        createStairs(currentLevel);
-        if (getStairsUp() != null && getStairsDown() != null) {
-            MakeCorridor(getStairsUp().getPoint(), getStairsDown().getPoint());
-        }
-
         int TotalSpaces = getNumEmptyCells() - 2;
         maxEnemies = (int) (TotalSpaces * 0.2f);
         if (maxEnemies < 1) {
             maxEnemies = 1;
         }
-        createEnemies(null);
-        if (natural) {
-            maxClutter = (int) (TotalSpaces * 0.2f);
-            if (maxClutter < 1) {
-                maxClutter = 1;
-            }
-            createClutter();
+        maxClutter = (int) (TotalSpaces * 0.2f);
+        if (maxClutter < 1) {
+            maxClutter = 1;
         }
 
+        createStairs(currentLevel);
+        if (getStairsUp() != null && getStairsDown() != null) {
+            MakeCorridor(getStairsUp().getPoint(), getStairsDown().getPoint());
+        }
+
+        createEnemies(null, currentLevel);
+        if (natural) {
+            createClutter(null);
+        }
     }
 
     //Getters
@@ -145,6 +149,19 @@ public class Level extends Map {
 
     //Setters
     //Helper Functions
+
+    private ArrayList<Point> makeAvailablePoints(int Height, int Width) {
+        super.numEmptyCells = 0;
+        super.FloorTiles = new ArrayList<Point>();
+        for (int row = 0; row < Height; row++) {
+            for (int col = 0; col < Width; col++) {
+                if (getOtherCellType(col, row) == ObjectDestructible.CellType.Space) {
+                    super.addEmptyFloorTile(col, row);
+                }
+            }
+        }
+        return super.FloorTiles;
+    }
 
     private void setRoomAmount(int Width, int Height) {
         if (makeRooms) {
@@ -199,10 +216,12 @@ public class Level extends Map {
 
             for (int col = startX; col < startX + roomWidth; col++) {
                 for (int row = startY; row < startY + roomHeight; row++) {
-                    getCurrentMap()[row][col] = newRoom.getCurrentMap()[row - startY][col - startX];
+                    super.getCurrentMap()[row][col].clear();
+                    for (int index = 0; index < newRoom.getCurrentMap()[row - startY][col - startX].size(); index++) {
+                        super.getCurrentMap()[row][col].add(newRoom.getCurrentMap()[row - startY][col - startX].get(index));
+                    }
                 }
             }
-            int debug = RoomStartPoints.size();
             for (int col = startX - roomWidthMax; col < startX + roomWidth; col++) {
                 for (int row = startY - roomHeightMax; row < startY + roomHeight; row++) {
                     for (int roomStartPointIndex = 0; roomStartPointIndex < RoomStartPoints.size(); roomStartPointIndex++) {
@@ -212,12 +231,7 @@ public class Level extends Map {
                     }
                 }
             }
-            debug = RoomStartPoints.size();
         }
-//        for (int i = 0; i < LevelRooms.size(); i++){
-//            createClutter(LevelRooms.get(i));
-//            createEnemies(LevelRooms.get(i));
-////        }
 //        if (currentLevel % 25 == 0 && currentLevel != 0){
 //            createMinotaur(LevelRooms.get(0));
 //        }
@@ -349,116 +363,91 @@ public class Level extends Map {
 
     }
 
-    protected void createClutter() {
-//        clutter.clear();
-        int newSize = rand.nextInt(maxClutter) + 1;
-//        clutter = new ArrayList<Clutter>(newSize);
-        for (int i = 0; i < newSize; i++) {
-            if (getNumEmptyCells() > 0) {
-
-                switch (rand.nextInt(5)) {
-                    default:
-                    case 0:
-                        //rock
-                        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
-                        giveNewPointToObject(rock);
-                        clutter.add(rock);
-                        break;
-                    case 1:
-                        //barrel
-                        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
-                        giveNewPointToObject(barrel);
-                        clutter.add(barrel);
-                        break;
-                    case 2:
-                        //chest
-                        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
-                        giveNewPointToObject(chest);
-                        clutter.add(chest);
-                        break;
-                }
-            }
-        }
-    }
-
     protected void createClutter(Room room) {
-        int newSize = rand.nextInt(room.getMaxClutter());
+        int newSize = 0;
+        if (room != null) {
+            newSize = rand.nextInt(room.getMaxClutter());
+        } else {
+            newSize = rand.nextInt(maxClutter) + 1;
+        }
         for (int i = 0; i < newSize; i++) {
             if (getNumEmptyCells() > 0) {
                 switch (rand.nextInt(5)) {
                     default:
                     case 0:
                         //rock
-                        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
-                        giveNewPointToObjectInRoom(rock, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-                        clutter.add(rock);
+                        createRock(room);
                         break;
                     case 1:
                         //barrel
-                        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
-                        giveNewPointToObjectInRoom(barrel, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-                        clutter.add(barrel);
+                        createBarrel(room);
                         break;
                     case 2:
                         //chest
-                        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
-                        giveNewPointToObjectInRoom(chest, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
-                        clutter.add(chest);
+                        createChest(room);
                         break;
                 }
             }
         }
     }
 
-//    protected void createEnemies() {
-////        creatures.clear();
-//        int newSize = rand.nextInt(maxEnemies) + 1;
-////        creatures = new ArrayList<Creature>(newSize);
-//        for (int i = 0; i < newSize; i++) {
-//            if (getNumEmptyCells() > 0) {
-//                switch (rand.nextInt(4)) {
-//                    default:
-//                    case 0:
-//                        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000);
-//                        giveNewPointToObject(slime);
-//                        levelCreatures.add(slime);
-//                        break;
-//                    case 1:
-//                        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1);
-//                        giveNewPointToObject(goblin);
-//                        levelCreatures.add(goblin);
-//                        break;
-//                }
-//            }
-//        }
-//    }
+    private void createRock(@Nullable Room room) {
+        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+        if (room != null) {
+            giveNewPointToObjectInRoom(rock, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(rock);
+        }
+        clutter.add(rock);
+    }
 
-    protected void createEnemies(Room room) {
+    private void createBarrel(@Nullable Room room) {
+        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
+        if (room != null) {
+            giveNewPointToObjectInRoom(barrel, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(barrel);
+        }
+        clutter.add(barrel);
+    }
+
+    private void createChest(@Nullable Room room) {
+        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
+        if (room != null) {
+            giveNewPointToObjectInRoom(chest, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+        } else {
+            giveNewPointToObject(chest);
+        }
+        clutter.add(chest);
+    }
+
+    protected void createEnemies(Room room, int currentLevel) {
         int newSize = 0;
-        if (room != null){
+        if (room != null) {
             newSize = rand.nextInt(room.getMaxEnemies());
-        } else  {
+        } else {
             newSize = rand.nextInt(maxEnemies);
         }
         for (int i = 0; i < newSize; i++) {
             if (getNumEmptyCells() > 0) {
                 switch (rand.nextInt(4)) {
                     case 0:
-                        createSlime(room);
+                        createSlime(room, currentLevel);
                         break;
                     default:
                     case 1:
-                        createGoblin(room);
+                        createGoblin(room, currentLevel);
                         break;
                     case 2:
-                        createMinotaur(room);
+                        createMinotaur(room, currentLevel);
                         break;
                 }
             }
         }
     }
-    private void createSlime(@Nullable Room room) {
-        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000);
+
+    private void createSlime(@Nullable Room room, int currentLevel) {
+        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000, currentLevel);
         if (room != null) {
             giveNewPointToObjectInRoom(slime, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
         } else {
@@ -466,8 +455,9 @@ public class Level extends Map {
         }
         levelCreatures.add(slime);
     }
-    private void createGoblin(@Nullable Room room) {
-        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1);
+
+    private void createGoblin(@Nullable Room room, int currentLevel) {
+        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1, currentLevel);
         if (room != null) {
             giveNewPointToObjectInRoom(goblin, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
         } else {
@@ -476,8 +466,8 @@ public class Level extends Map {
         levelCreatures.add(goblin);
     }
 
-    private void createMinotaur(@Nullable Room room) {
-        Creature minotaur = new Creature(new Point(0, 0), imageEnemy[2], 5, ObjectDestructible.CellType.Minotaur, 50, 5);
+    private void createMinotaur(@Nullable Room room, int currentLevel) {
+        Creature minotaur = new Creature(new Point(0, 0), imageEnemy[2], 5, ObjectDestructible.CellType.Minotaur, 50, 5, currentLevel);
         if (room != null) {
             giveNewPointToObjectInRoom(minotaur, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
         } else {
@@ -486,8 +476,8 @@ public class Level extends Map {
         levelCreatures.add(minotaur);
     }
 
-    private void createHumanoid(@Nullable Room room) {
-        Creature humanoid = new Creature(new Point(0, 0), imageNPCDown[0], 5, ObjectDestructible.CellType.Humanoid, 50, 5);
+    private void createHumanoid(@Nullable Room room, int currentLevel) {
+        Creature humanoid = new Creature(new Point(0, 0), imageNPCDown[0], 5, ObjectDestructible.CellType.Humanoid, 50, 5, currentLevel);
         if (room != null) {
             giveNewPointToObjectInRoom(humanoid, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
         } else {
@@ -501,7 +491,7 @@ public class Level extends Map {
             stairsDown = new ObjectDestructible(new Point(0, 0), imageStairs[0], 1000, ObjectDestructible.CellType.StairDown);
             giveNewPointToObject(stairsDown);
         }
-        if (getNumEmptyCells() > 0 && currentLevel != 0) {
+        if (getNumEmptyCells() > 0 && currentLevel > 0) {
             stairsUp = new ObjectDestructible(new Point(0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
             giveNewPointToObject(stairsUp);
         }
@@ -868,30 +858,54 @@ public class Level extends Map {
         return isFound;
     }
 
-    public void UpdateEnemies(Dungeon dungeon, Point target, int camWidth, int camHeight, int camOffsetX, int camOffsetY, int currentLevel, boolean friendlyFire) {
+    public void UpdateEnemies(Dungeon dungeon, Creature target) {
         for (int i = 0; i < levelCreatures.size(); i++) {
-            if (levelCreatures.get(i).getX() > camOffsetX &&
-                    levelCreatures.get(i).getY() > camOffsetY &&
-                    levelCreatures.get(i).getX() < camOffsetX + camWidth &&
-                    levelCreatures.get(i).getY() < camOffsetY + camHeight) {
-                Creature temp = levelCreatures.get(i);
-                switch (temp.getCellType()) {
-                    default:
-                    case Slime:
-                        break;
-                    case Goblin:
-                        moveCreature(dungeon, target, temp, currentLevel, friendlyFire);
-                        break;
-                    case Minotaur:
-                        break;
-                    case Humanoid:
-                        break;
-                }
+            switch (levelCreatures.get(i).getMovementLimit()) {
+                default:
+                case inCamera:
+                    if (levelCreatures.get(i).getX() > camOffsetX &&
+                            levelCreatures.get(i).getY() > camOffsetY &&
+                            levelCreatures.get(i).getX() < camOffsetX + camWidth &&
+                            levelCreatures.get(i).getY() < camOffsetY + camHeight) {
+                        Creature temp = levelCreatures.get(i);
+                        switch (temp.getCellType()) {
+                            default:
+                            case Slime:
+                                break;
+                            case Goblin:
+                                moveCreature(dungeon, target.getPoint(), temp);
+                                break;
+                            case Minotaur:
+                                break;
+                            case Humanoid:
+                                break;
+                        }
+                    }
+                    break;
+                case inLevel:
+                    Creature temp = levelCreatures.get(i);
+                    switch (temp.getCellType()) {
+                        default:
+                        case Slime:
+                            break;
+                        case Goblin:
+                            moveCreature(dungeon, target.getPoint(), temp);
+                            break;
+                        case Minotaur:
+                            break;
+                        case Humanoid:
+                            break;
+                    }
+                    break;
+                case inDungeon:
+                    break;
+                case inWorld:
+                    break;
             }
         }
     }
 
-    private void moveCreature(Dungeon dungeon, Point target, Creature temp, int currentLevel, boolean friendlyFire) {
+    private void moveCreature(Dungeon dungeon, Point target, Creature temp) {
         switch (temp.getDirectionType()) {
             case Still:
                 break;
@@ -909,6 +923,33 @@ public class Level extends Map {
                 MoveRandomly(dungeon, temp);
                 break;
             case TowardsTargetDirectional:
+                Point start = temp.getPoint();
+                int distanceWidth = (start.x - target.x);
+                int distanceHeight = (start.y - target.y);
+
+                int direction = rand.nextInt(2);
+                if (distanceWidth == 0) {
+                    direction = 1;
+                } else if (distanceHeight == 0) {
+                    direction = 0;
+                }
+                switch (direction) {
+                    case 0: //Horizontal
+                        if (distanceWidth > 0) { //West
+                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
+                        } else if (distanceWidth < 0) { //East
+                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1);
+                        }
+                        break;
+                    case 1: //Vertical
+                        if (distanceHeight > 0) { //South
+                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
+                        } else if (distanceHeight < 0) { //North
+                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1);
+                        }
+                        break;
+                }
+
                 break;
             case TowardsTargetEfficient:
                 int distance = 0;
@@ -949,21 +990,25 @@ public class Level extends Map {
         switch (rand.nextInt(4)) {
             //South
             case 0:
-                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1)){
-                break;}
-            //North
+                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1)) {
+                    break;
+                }
+                //North
             case 1:
-                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1)){
-                break;}
-            //West
+                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1)) {
+                    break;
+                }
+                //West
             case 2:
-                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1)){
-                break;}
-            //East
+                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1)) {
+                    break;
+                }
+                //East
             case 3:
-                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1)){
-                break;}
-            //Stay
+                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1)) {
+                    break;
+                }
+                //Stay
             default:
             case 4:
                 break;
@@ -973,11 +1018,8 @@ public class Level extends Map {
     public boolean MoveCreatureHorizontal(Dungeon dungeon, Creature creature, int currentLevel, int X) {
         if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
                 dungeon,
-                X,
-                creature.getPoint().y,
-                creature,
-                creature.getCurrentDepth(),
-                dungeon.getFriendlyFire())) {
+                new Point(X, creature.getPoint().y),
+                creature)) {
             removeObjectFromMap(creature.getPoint(), creature);
             creature.setX(X);
             addObjectToMap(creature.getPoint(), creature, false);
@@ -989,11 +1031,8 @@ public class Level extends Map {
     public boolean MoveCreatureVertical(Dungeon dungeon, Creature creature, int currentLevel, int Y) {
         if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
                 dungeon,
-                creature.getPoint().x,
-                Y,
-                creature,
-                creature.getCurrentDepth(),
-                dungeon.getFriendlyFire())) {
+                new Point(creature.getPoint().x, Y),
+                creature)) {
             removeObjectFromMap(creature.getPoint(), creature);
             creature.setY(Y);
             addObjectToMap(creature.getPoint(), creature, false);
@@ -1099,25 +1138,34 @@ public class Level extends Map {
 //        return returnType;
 //    }
 
-    public boolean interactWithObject(Dungeon dungeon, int cellx, int celly, Creature harmer, int currentLevel, boolean friendlyFire) {
+    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
+        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
+            return ObjectDestructible.CellType.Wall;
+        }
+        return getCurrentMap()[celly][cellx].get(
+                getCurrentMap()[celly][cellx].size() - 1
+        ).getCellType();
+    }
+
+    public boolean interactWithObject(Dungeon dungeon, Point actee, Creature actor) {
         boolean ifCreatureGetsMoved = false;
-        ObjectDestructible.CellType harmeeType = getOtherCellType(cellx, celly);
+        ObjectDestructible.CellType harmeeType = getOtherCellType(actee.x, actee.y);
         switch (harmeeType) {
             default:
             case Wall:
-                if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
+                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.x < 0) {
                     break;
                 }
-                harmWall(cellx, celly, harmer.getMining());
-                if (getCurrentMap()[celly][cellx].get(0).getHP() <= 0 && rand.nextInt(getMapHeight() * getMapWidth()) <= diamondPercent) {
+                harmWall(actee.x, actee.y, actor.getMining());
+                if (getCurrentMap()[actee.y][actee.x].get(0).getHP() <= 0 && rand.nextInt(getMapHeight() * getMapWidth()) <= diamondPercent) {
                     switch (rand.nextInt(2)) {
 //                        case 0:
 //                            super.setVoidSpace(celly, cellx);
 //                            break;
                         default:
                         case 1:
-                            Point tempPoint = new Point(cellx, celly);
-                            CreateRandomDiamond(tempPoint, currentLevel);
+                            Point tempPoint = new Point(actee.x, actee.y);
+                            CreateRandomDiamond(tempPoint, actor.getCurrentDepth());
                             break;
                     }
                 }
@@ -1126,10 +1174,10 @@ public class Level extends Map {
                 ifCreatureGetsMoved = true;
                 break;
             case StairUp:
-                dungeon.goToLevel(harmer, harmer.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP);
+                dungeon.goToLevel(actor, actor.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP);
                 break;
             case StairDown:
-                dungeon.goToLevel(harmer, harmer.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
+                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
                 break;
             case Clutter:
             case Barrel:
@@ -1137,25 +1185,25 @@ public class Level extends Map {
                 for (int i = 0; i < clutter.size(); i++) {
                     Clutter temp = clutter.get(i);
                     Bitmap tempImage = temp.getBitmap();
-                    if (temp.getPoint().x == cellx && temp.getPoint().y == celly) {
-                        temp.hurt(harmer.getAttack());
+                    if (temp.getPoint().x == actee.x && temp.getPoint().y == actee.y) {
+                        temp.hurt(actor.getAttack());
                         if (tempImage == imageClutter[3] || // coins
                                 tempImage == imageClutter[4] || // white diamond
                                 tempImage == imageClutter[5]) { // red diamond
                             ifCreatureGetsMoved = true;
                             if (tempImage != imageClutter[5]) {
-                                harmer.incrementScore(temp.getValue());
+                                actor.incrementScore(temp.getValue());
                             } else {
-                                harmer.setMaxHP(harmer.getMaxpHP() + 1);
+                                actor.setMaxHP(actor.getMaxpHP() + 1);
                             }
                             removeObjectFromMap(temp.getPoint(), temp);
                             clutter.remove(i);
                         } else if (temp.getHP() <= 0) {
                             if (tempImage != imageClutter[0]) {
                                 if (tempImage == imageClutter[1]) {
-                                    CreateRandomDrop(i, ObjectDestructible.CellType.Barrel, currentLevel);
+                                    CreateRandomDrop(i, ObjectDestructible.CellType.Barrel, actor.getCurrentDepth());
                                 } else if (tempImage == imageClutter[2]) {
-                                    CreateRandomDrop(i, ObjectDestructible.CellType.Chest, currentLevel);
+                                    CreateRandomDrop(i, ObjectDestructible.CellType.Chest, actor.getCurrentDepth());
                                 }
                             }
                             removeObjectFromMap(temp.getPoint(), temp);
@@ -1166,34 +1214,34 @@ public class Level extends Map {
                 }
                 break;
             case Slime:
-                if (harmer.getCellType() == ObjectDestructible.CellType.Slime && !friendlyFire) {
+                if (actor.getCellType() == ObjectDestructible.CellType.Slime && !friendlyFire) {
                     break;
                 }
-                HarmCreature(cellx, celly, harmer, currentLevel, ObjectDestructible.CellType.Slime);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), ObjectDestructible.CellType.Slime);
                 break;
             case Goblin:
-                if (harmer.getCellType() == ObjectDestructible.CellType.Goblin && !friendlyFire) {
+                if (actor.getCellType() == ObjectDestructible.CellType.Goblin && !friendlyFire) {
                     break;
                 }
-                HarmCreature(cellx, celly, harmer, currentLevel, ObjectDestructible.CellType.Goblin);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), ObjectDestructible.CellType.Goblin);
                 break;
             case Minotaur:
-                if (harmer.getCellType() == ObjectDestructible.CellType.Minotaur && !friendlyFire) {
+                if (actor.getCellType() == ObjectDestructible.CellType.Minotaur && !friendlyFire) {
                     break;
                 }
-                HarmCreature(cellx, celly, harmer, currentLevel, harmeeType);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
                 break;
             case Humanoid:
-                if (harmer.getCellType() == ObjectDestructible.CellType.Humanoid && !friendlyFire) {
+                if (actor.getCellType() == ObjectDestructible.CellType.Humanoid && !friendlyFire) {
                     break;
                 }
-                HarmCreature(cellx, celly, harmer, currentLevel, harmeeType);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
                 break;
 
             case Weapon:
                 for (int i = 0; i < weapons.size(); i++) {
-                    if (weapons.get(i).getPoint().x == cellx && weapons.get(i).getPoint().y == celly) {
-                        Weapon possibleDrop = harmer.setWeapon(weapons.get(i));
+                    if (weapons.get(i).getPoint().x == actee.x && weapons.get(i).getPoint().y == actee.y) {
+                        Weapon possibleDrop = actor.setWeapon(weapons.get(i));
                         removeObjectFromMap(weapons.get(i).getPoint(), weapons.get(i));
                         weapons.remove(i);
                         if (possibleDrop != null && possibleDrop.getBitmap() != imageWeapon[0]) {
@@ -1201,7 +1249,7 @@ public class Level extends Map {
                             //  give the weapon on the ground to the harmer (should have happened in setWeapon)
                             //  delete the weapon on the ground from weapons.
                             //  drop the swapped harmer weapon (possibleDrop)
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             weapons.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1213,12 +1261,12 @@ public class Level extends Map {
                 break;
             case MiningTool:
                 for (int i = 0; i < miningTools.size(); i++) {
-                    if (miningTools.get(i).getPoint().x == cellx && miningTools.get(i).getPoint().y == celly) {
-                        MiningTool possibleDrop = harmer.setMiningTool(miningTools.get(i));
+                    if (miningTools.get(i).getPoint().x == actee.x && miningTools.get(i).getPoint().y == actee.y) {
+                        MiningTool possibleDrop = actor.setMiningTool(miningTools.get(i));
                         removeObjectFromMap(miningTools.get(i).getPoint(), miningTools.get(i));
                         miningTools.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             miningTools.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1229,12 +1277,12 @@ public class Level extends Map {
                 break;
             case LightSource:
                 for (int i = 0; i < lights.size(); i++) {
-                    if (lights.get(i).getPoint().x == cellx && lights.get(i).getPoint().y == celly) {
-                        LightSource possibleDrop = harmer.setLightSource(lights.get(i));
+                    if (lights.get(i).getPoint().x == actee.x && lights.get(i).getPoint().y == actee.y) {
+                        LightSource possibleDrop = actor.setLightSource(lights.get(i));
                         removeObjectFromMap(lights.get(i).getPoint(), lights.get(i));
                         lights.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             lights.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1245,13 +1293,13 @@ public class Level extends Map {
                 break;
             case Wearable:
                 for (int i = 0; i < wearables.size(); i++) {
-                    if (wearables.get(i).getPoint().x == cellx &&
-                            wearables.get(i).getPoint().y == celly) {
-                        Wearable possibleDrop = harmer.setWearable(wearables.get(i));
+                    if (wearables.get(i).getPoint().x == actee.x &&
+                            wearables.get(i).getPoint().y == actee.y) {
+                        Wearable possibleDrop = actor.setWearable(wearables.get(i));
                         removeObjectFromMap(wearables.get(i).getPoint(), wearables.get(i));
                         wearables.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             wearables.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1263,12 +1311,12 @@ public class Level extends Map {
 
             case Food:
                 for (int i = 0; i < food.size(); i++) {
-                    if (food.get(i).getPoint().x == cellx && food.get(i).getPoint().y == celly) {
-                        Food possibleDrop = harmer.setFood(food.get(i));
+                    if (food.get(i).getPoint().x == actee.x && food.get(i).getPoint().y == actee.y) {
+                        Food possibleDrop = actor.setFood(food.get(i));
                         removeObjectFromMap(food.get(i).getPoint(), food.get(i));
                         food.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             food.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1279,12 +1327,12 @@ public class Level extends Map {
                 break;
             case Scroll:
                 for (int i = 0; i < scrolls.size(); i++) {
-                    if (scrolls.get(i).getPoint().x == cellx && scrolls.get(i).getPoint().y == celly) {
-                        Clutter possibleDrop = harmer.setScroll(scrolls.get(i));
+                    if (scrolls.get(i).getPoint().x == actee.x && scrolls.get(i).getPoint().y == actee.y) {
+                        Clutter possibleDrop = actor.setScroll(scrolls.get(i));
                         removeObjectFromMap(scrolls.get(i).getPoint(), scrolls.get(i));
                         scrolls.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             scrolls.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1295,12 +1343,12 @@ public class Level extends Map {
                 break;
             case Potion:
                 for (int i = 0; i < potions.size(); i++) {
-                    if (potions.get(i).getPoint().x == cellx && potions.get(i).getPoint().y == celly) {
-                        Food possibleDrop = harmer.setPotion(potions.get(i));
+                    if (potions.get(i).getPoint().x == actee.x && potions.get(i).getPoint().y == actee.y) {
+                        Food possibleDrop = actor.setPotion(potions.get(i));
                         removeObjectFromMap(potions.get(i).getPoint(), potions.get(i));
                         potions.remove(i);
                         if (possibleDrop != null) {
-                            possibleDrop.setPoint(cellx, celly);
+                            possibleDrop.setPoint(actee.x, actee.y);
                             potions.add(possibleDrop);
                             addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
                         }
@@ -1311,10 +1359,6 @@ public class Level extends Map {
                 break;
         }
         return ifCreatureGetsMoved;
-    }
-
-    public ArrayList<Point> getLevelPoints() {
-        return FloorTiles;
     }
 
     private void HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {

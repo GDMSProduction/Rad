@@ -78,7 +78,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     //User Interface.
     //UI info
-    private int depthTextSize = 64;
+    private int largeTextSize = 64;
     private int UIOpacity = 150;
     //dPad
     private Rect DPAD;
@@ -92,15 +92,16 @@ public class GameView extends SurfaceView implements Runnable {
     private ObjectBase dPadRight;
     //The Dungeon
     private Dungeon dungeon = null;
+    public static boolean friendlyFire = false;
 
     //The Camera
     private Level levelToDraw = null;
     public static int mBitMapHeight;
     public static int mBitMapWidth;
-    private int camOffsetX = 0;
-    private int camOffsetY = 0;
-    private float mainOffsetX = 0;
-    private float mainOffsetY = 0;
+    public static int camOffsetX = 0;
+    public static int camOffsetY = 0;
+    public static float mainOffsetX = 0;
+    public static float mainOffsetY = 0;
     public static int camHeight;
     public static int camWidth;
 
@@ -129,7 +130,7 @@ public class GameView extends SurfaceView implements Runnable {
         //friendlyFire = FriendlyFire;
 
         //Create dungeon
-        dungeon = new Dungeon(false);
+        dungeon = new Dungeon();
         levelToDraw = dungeon.getCurrentLevel();
 
         //Create Core GamePlay Elements
@@ -371,7 +372,7 @@ public class GameView extends SurfaceView implements Runnable {
             levelToDraw = dungeon.getCurrentLevel();
             changeMap = false;
         }
-        if (checkForInputDOWN == true){
+        if (checkForInputDOWN == true) {
             dungeon.goToLevel(player, player.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
             checkForInputDOWN = false;
         }
@@ -406,9 +407,7 @@ public class GameView extends SurfaceView implements Runnable {
         }
 
         while (lag >= TICKS_RATE) {
-            dungeon.getCurrentLevel().UpdateEnemies(dungeon, player.getPoint(),
-                    camWidth, camHeight, camOffsetX, camOffsetY,
-                    dungeon.getCurrentLevelIndex(), dungeon.getFriendlyFire());
+            dungeon.getCurrentLevel().UpdateEnemies(dungeon, player);
             lag -= TICKS_RATE;
         }
 //        //updating player position
@@ -446,8 +445,8 @@ public class GameView extends SurfaceView implements Runnable {
             //THESE NEED TO BE LAST.
             paint.setAlpha(UIOpacity);
             drawingTheDPAD();
-            drawingTheHealth();
             drawingTheEquippedItems();
+            drawingTheHealth();
             paint.setAlpha(255);
             //UI text
             drawingCurrentDepth();
@@ -514,26 +513,30 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawingCurrentDepth() {
         paint.setColor(Color.BLACK);
-        paint.setTextSize(depthTextSize);
+        paint.setTextSize(largeTextSize);
         String depth = "Depth: " + player.getCurrentDepth() * 10 + " feet";
-        canvas.drawText(depth, mainOffsetX, depthTextSize, paint);
+        canvas.drawText(depth, mainOffsetX, largeTextSize + mainOffsetY, paint);
     }
 
     private void drawingScore() {
         paint.setColor(Color.BLACK);
-        paint.setTextSize(depthTextSize);
+        paint.setTextSize(largeTextSize);
         String score = "Gold: " + player.getScore();
-        canvas.drawText(score, mainOffsetX, depthTextSize * 2, paint);
+        canvas.drawText(score, mainOffsetX, largeTextSize * 2 + mainOffsetY, paint);
     }
 
     private void drawingTheHealth() {
-        int tempWidth = (camWidth - 1) * mBitMapWidth;
-        for (int i = 0; i < player.getHP(); i++) {
-            canvas.drawBitmap(UserInterface[2],
-                    tempWidth - (UserInterface[2].getWidth() * i) + mainOffsetX,
-                    mainOffsetY,
-                    paint);
-        }
+        String health = " x " + player.getHP();
+        Rect healthBounds = new Rect(0,0,0,0);
+        float healthWidth = paint.measureText(health);
+        float tempWidth = (camWidth) * mBitMapWidth + mainOffsetX;
+        canvas.drawBitmap(UserInterface[2],
+                tempWidth - UserInterface[2].getWidth() - healthWidth,
+                mainOffsetY,
+                paint);
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(largeTextSize);
+        canvas.drawText(health, tempWidth - healthWidth, largeTextSize + mainOffsetY, paint);
     }
 
     private void drawingTheEquippedItems() {

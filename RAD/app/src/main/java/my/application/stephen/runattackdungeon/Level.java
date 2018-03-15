@@ -51,7 +51,7 @@ public class Level extends Map {
 
     //The Clutter
     private int maxClutter = 5;
-    private ArrayList<Clutter> clutter = new ArrayList<Clutter>(maxClutter);
+    private ArrayList<Clutter> clutter = new ArrayList<>(maxClutter);
     private int diamondPercent = 1;
     private ArrayList<Food> food = new ArrayList<>(0);
     private ArrayList<Food> potions = new ArrayList<>(0);
@@ -65,7 +65,7 @@ public class Level extends Map {
     private ObjectDestructible stairsDown = null;
     //the Creatures
     private int maxEnemies = 5;
-    private ArrayList<Creature> levelCreatures = new ArrayList<Creature>(maxEnemies);
+    private ArrayList<Creature> levelCreatures = new ArrayList<>(maxEnemies);
 
     Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel) {
         super(Width, Height, SpacesPercent, natural);
@@ -151,9 +151,9 @@ public class Level extends Map {
     //Setters
     //Helper Functions
 
-    private ArrayList<Point> makeAvailablePoints(int Height, int Width) {
+    private void makeAvailablePoints(int Height, int Width) {
         super.numEmptyCells = 0;
-        super.FloorTiles = new ArrayList<Point>();
+        super.FloorTiles = new ArrayList<>();
         for (int row = 0; row < Height; row++) {
             for (int col = 0; col < Width; col++) {
                 if (getOtherCellType(col, row) == ObjectDestructible.CellType.Space) {
@@ -161,7 +161,6 @@ public class Level extends Map {
                 }
             }
         }
-        return super.FloorTiles;
     }
 
     private void setRoomAmount(int Width, int Height) {
@@ -197,7 +196,7 @@ public class Level extends Map {
         setRoomDimensionsMax(Width, Height);
         setRoomAmount(Width, Height);
 
-        LevelRooms = new ArrayList<Room>(roomNums);
+        LevelRooms = new ArrayList<>(roomNums);
         makeRoomStartPoints();
 
         for (int i = 0; i < roomNums; i++) {
@@ -365,7 +364,7 @@ public class Level extends Map {
     }
 
     protected void createClutter(Room room) {
-        int newSize = 0;
+        int newSize;
         if (room != null) {
             newSize = rand.nextInt(room.getMaxClutter());
         } else {
@@ -411,7 +410,7 @@ public class Level extends Map {
     }
 
     protected void createEnemies(Room room, int currentLevel) {
-        int newSize = 0;
+        int newSize;
         if (room != null) {
             newSize = rand.nextInt(room.getMaxEnemies());
         } else {
@@ -1128,7 +1127,7 @@ public class Level extends Map {
         switch (harmeeType) {
             default:
             case Wall:
-                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.x < 0) {
+                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
                     break;
                 }
                 harmWall(actee.x, actee.y, actor.getMining());

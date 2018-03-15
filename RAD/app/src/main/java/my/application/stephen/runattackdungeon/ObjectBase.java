@@ -56,8 +56,7 @@ public class ObjectBase {
         mPoint = newPoint;
     }
     public void setPoint(int x, int y) {
-        Point temp = new Point (x, y);
-        mPoint = temp;
+        mPoint = new Point (x, y);
     }
 
     public void setX(int newX) {

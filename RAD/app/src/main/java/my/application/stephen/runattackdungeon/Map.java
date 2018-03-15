@@ -45,9 +45,8 @@ public class Map {
     //if a pic is in the group, return true.
     //if not, return false.
     private boolean FindInArray(Bitmap[] ImageArray, Bitmap pic) {
-        int length = ImageArray.length;
-        for (int i = 0; i < length; i++) {
-            if (pic == ImageArray[i]) {
+        for (Bitmap aImageArray : ImageArray) {
+            if (pic == aImageArray) {
                 return true;
             }
         }
@@ -60,8 +59,8 @@ public class Map {
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
                 //Set the lists.
-                mCellsCurr[row][col] = new ArrayList<ObjectDestructible>(2);
-                mCellsNext[row][col] = new ArrayList<ObjectDestructible>(2);
+                mCellsCurr[row][col] = new ArrayList<>(2);
+                mCellsNext[row][col] = new ArrayList<>(2);
 
                 //set the map
                 Point tempPoint = new Point(col, row);
@@ -163,7 +162,7 @@ public class Map {
     }
 
     public ArrayList<Point> getSomeFloorPoints(Point start, int width, int height) {
-        ArrayList<Point> someFloorTiles = new ArrayList<Point>();
+        ArrayList<Point> someFloorTiles = new ArrayList<>();
         for (int row = start.y; row < start.y + height; row++) {
             for (int col = start.x; col < start.x + width; col++) {
                 if (FindInArray(spaces, mCellsCurr[row][col].get(0).getBitmap())) {
@@ -238,12 +237,12 @@ public class Map {
     //Creates a new map through random generation and two refinement process.
     //Refinement one is to prevent large open areas.
     //refinement two is to create paths between areas.
-    public Map generateNewMap(boolean natural) {
+    public void generateNewMap(boolean natural) {
         // randomly initialize the map
         InitializeMap();
         MakeBorders(0, 0, mWidth - 1, mHeight - 1);
 
-        if (natural == true) {
+        if (natural) {
             int refine = /*rand.nextInt(3) + 1*/ 3;
             //refine the map for some number of generations
             for (int i = 0; i < refine; i++) {
@@ -253,7 +252,6 @@ public class Map {
                 RefineMap(true);
             }
         }
-        return this;
     }
 
 

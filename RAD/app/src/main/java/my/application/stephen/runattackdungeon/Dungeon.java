@@ -11,6 +11,7 @@ import static my.application.stephen.runattackdungeon.Level.roomWidthMin;
 
 /**
  * Created by zfile on 2018-03-02.
+ * Dungeon class used to contain levels and specify the behavior and generation therein.
  */
 
 public class Dungeon {
@@ -65,16 +66,12 @@ public class Dungeon {
                         dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature, true);
                     }
                     else {
-                        dungeonLevels.get(levelToGoTo).giveNewPointToObject(creature);
+                        dungeonLevels.get(levelToGoTo).giveNewPointToObject(null, creature);
                     }
-                }
-                if (creature == player) {
-                    changeMap = true;
                 }
                 break;
             case UP:
-                if (creature.getCurrentDepth() == 0) {
-                } else {
+                if (creature.getCurrentDepth() > 0) {
                     dungeonLevels.get(creature.getCurrentDepth()).removeObjectFromMap(creature.getPoint(), creature);
                     RemoveCreatureFromCurrentLevel(creature);
                     if (creature == player) {
@@ -88,16 +85,14 @@ public class Dungeon {
                             creature.setY(currentLevel.getStairsDown().getY());
                             dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature, true);
                         } else{
-                            dungeonLevels.get(levelToGoTo).giveNewPointToObject(creature);
+                            dungeonLevels.get(levelToGoTo).giveNewPointToObject(null, creature);
                         }
-                    }
-                    if (creature == player) {
-                        changeMap = true;
                     }
                 }
                 break;
         }
         if (creature == player) {
+            changeMap = true;
             currentLevelIndex = creature.getCurrentDepth();
         }
     }
@@ -132,7 +127,7 @@ public class Dungeon {
 //        } else if (currentLevelIndex % 3 == 0 && currentLevelIndex != 0) {
 //            temp = new Level(Width, Height, 0, false, currentLevelIndex);
 //        } else {
-            temp = new Level(Width, Height, 50, true, true, currentLevelIndex);
+            temp = new Level(Width, Height, 50, true, true, dungeonLevels.size());
 //        }
         dungeonLevels.add(temp);
     }

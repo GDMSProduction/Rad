@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    tools:context="my.application.stephen.runattackdungeon.GameActivity">
+    tools:context="my.application.stephen.runattackdungeon.GameActivity"
+    tools:ignore="Overdraw">
 
 </android.support.constraint.ConstraintLayout>

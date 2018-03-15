@@ -180,7 +180,7 @@ public class GameView extends SurfaceView implements Runnable {
                 npcDown,
                 startingHealth);
         if (dungeon.getCurrentLevel().getNumEmptyCells() > 0) {
-            dungeon.getCurrentLevel().giveNewPointToObject(player);
+            dungeon.getCurrentLevel().giveNewPointToObject(null, player);
         }
         player.setCellType(ObjectDestructible.CellType.Humanoid);
         player.setAttack(5);
@@ -220,7 +220,7 @@ public class GameView extends SurfaceView implements Runnable {
         npcLeft = Bitmap.createBitmap(UserInterface[0], 0, 0, UserInterface[0].getWidth() / 3, UserInterface[0].getHeight() / 4);
         npcLeft = getResizedBitmap(npcLeft, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         Matrix flip = new Matrix();
-        flip.postScale(-1, 1, npcLeft.getWidth() / 2f, npcLeft.getHeight() / 2f);
+        flip.postScale(-1, 1, npcLeft.getWidth() / 2.0f, npcLeft.getHeight() / 2.0f);
         npcRight = Bitmap.createBitmap(npcLeft, 0, 0, npcLeft.getWidth(), npcLeft.getHeight(), flip, true);
         npcRight = getResizedBitmap(npcRight, (int) (mBitMapWidth * 0.75), (int) (mBitMapHeight * 0.75));
         npcUp = Bitmap.createBitmap(UserInterface[0], UserInterface[0].getWidth() / 3, UserInterface[0].getHeight() / 4, UserInterface[0].getWidth() / 3, UserInterface[0].getHeight() / 4);
@@ -275,7 +275,7 @@ public class GameView extends SurfaceView implements Runnable {
         //Weapons
         imageWeapon = new Bitmap[5];
         imageWeapon[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.human_fist_different_sides);
-        imageWeapon[0] = Bitmap.createBitmap(imageWeapon[0], imageWeapon[0].getWidth() / 2, 0, imageWeapon[0].getWidth() * 1 / 4, imageWeapon[0].getHeight());
+        imageWeapon[0] = Bitmap.createBitmap(imageWeapon[0], imageWeapon[0].getWidth() / 2, 0, (int)(imageWeapon[0].getWidth() * 0.25f), imageWeapon[0].getHeight());
         imageWeapon[0] = getResizedBitmap(imageWeapon[0], mBitMapWidth, mBitMapHeight);
         imageWeapon[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
         imageWeapon[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
@@ -318,23 +318,23 @@ public class GameView extends SurfaceView implements Runnable {
         dpadY = screenY - dpadHeight;
         DPAD = new Rect(dpadX + DPADbuffer, dpadY - DPADbuffer, dpadHeight, dpadHeight);
 
-        Point dpadUpPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (UserInterface[1].getWidth() / 2), DPAD.top);
+        Point dpadUpPoint = new Point(DPAD.left + (int) (DPAD.width() / 2.0f) - (int) (UserInterface[1].getWidth() / 2.0f), DPAD.top);
         dPadUp = new ObjectBase(dpadUpPoint, UserInterface[1]);
 
         Matrix matrix = new Matrix();
         matrix.postRotate(270);
         Bitmap rotatedBitmap = Bitmap.createBitmap(UserInterface[1], 0, 0, UserInterface[1].getWidth(), UserInterface[1].getHeight(), matrix, true);
-        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
+        Point dpadLeftPoint = new Point(DPAD.left, DPAD.top + (int) (DPAD.bottom / 2.0f) - (int) (rotatedBitmap.getHeight() / 2.0f));
         dPadLeft = new ObjectBase(dpadLeftPoint, rotatedBitmap);
 
         //matrix.postRotate(180);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadDownPoint = new Point(DPAD.left + (int) (DPAD.width() / 2) - (int) (UserInterface[1].getWidth() / 2), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
+        Point dpadDownPoint = new Point(DPAD.left + (int) (DPAD.width() / 2.0f) - (int) (UserInterface[1].getWidth() / 2.0f), DPAD.top + DPAD.bottom - rotatedBitmap.getHeight());
         dPadDown = new ObjectBase(dpadDownPoint, rotatedBitmap);
 
         //matrix.postRotate(90);
         rotatedBitmap = Bitmap.createBitmap(rotatedBitmap, 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight(), matrix, true);
-        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int) (DPAD.bottom / 2) - (int) (rotatedBitmap.getHeight() / 2));
+        Point dpadRightPoint = new Point(DPAD.right - rotatedBitmap.getWidth(), DPAD.top + (int) (DPAD.bottom / 2.0f) - (int) (rotatedBitmap.getHeight() / 2.0f));
         dPadRight = new ObjectBase(dpadRightPoint, rotatedBitmap);
     }
 
@@ -368,15 +368,15 @@ public class GameView extends SurfaceView implements Runnable {
             playing = false;
             return;
         }
-        if (changeMap == true) {
+        if (changeMap) {
             levelToDraw = dungeon.getCurrentLevel();
             changeMap = false;
         }
-        if (checkForInputDOWN == true) {
-            dungeon.goToLevel(player, player.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
+        if (checkForInputDOWN) {
+            //dungeon.goToLevel(player, player.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
             checkForInputDOWN = false;
         }
-        if (checkForInputUP == true) {
+        if (checkForInputUP) {
             if (player.getFood() != null) {
                 if (DetectButtonPress(pressPoint, player.getFood().getCollideRect())) {
                     player.useFood();

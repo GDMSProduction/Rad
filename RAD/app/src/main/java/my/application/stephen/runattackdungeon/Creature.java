@@ -362,25 +362,6 @@ public class Creature extends ObjectDestructible {
         setPotion(null);
     }
 
-    public boolean Update(Point target) {
-        boolean isAtTarget = false;
-        switch (super.getCellType()) {
-            case Slime:
-                //No movement unless interacted with.
-                break;
-            case Goblin:
-
-                break;
-            case Minotaur:
-                //A*, if in line of sight, charge.
-                break;
-            case Humanoid:
-                //A*
-                break;
-        }
-        return isAtTarget;
-    }
-
     public enum DirectionType {
         Still,
         LeftandRight,

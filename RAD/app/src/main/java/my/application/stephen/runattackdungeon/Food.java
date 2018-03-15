@@ -38,7 +38,7 @@ public class Food extends Clutter {
             default:
             case LightBlue:
                 //if it's a light blue potion, it randomly teleports you to an open space on the currentLevel.
-                currentLevel.giveNewPointToObject(creature);
+                currentLevel.giveNewPointToObject(null, creature);
                 break;
             case DarkBlue:
                 //if it's a dark blue potion, it increases your defense.

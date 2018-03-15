@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import static android.support.v4.content.ContextCompat.startActivity;
+import static my.application.stephen.runattackdungeon.Dungeon.minotaurSlain;
 
 /**
  * Created by Stephen Brasel on 2018-01-18.
@@ -367,6 +368,10 @@ public class GameView extends SurfaceView implements Runnable {
             win = false;
             playing = false;
             return;
+        }
+        if (minotaurSlain){
+            win = true;
+            playing = false;
         }
         if (changeMap) {
             levelToDraw = dungeon.getCurrentLevel();

@@ -18,7 +18,7 @@ public class Dungeon {
 
     public enum DirectionToGo {NORTH, SOUTH, EAST , WEST, DOWN, UP}
     //the Levels
-    private boolean minotaurSlain = false;
+    static boolean minotaurSlain = false;
     private int numLevels = 100;
     private ArrayList<Level> dungeonLevels = new ArrayList<>(numLevels);
     private Level currentLevel;
@@ -33,7 +33,7 @@ public class Dungeon {
     //Accessors
     public ArrayList<Level> getDungeonLevels() {return dungeonLevels;}
     public Level getCurrentLevel() {return currentLevel;}
-    public int getCurrentLevelIndex() {return currentLevelIndex;}
+    Creature getPlayer() {return player;}
     //Mutators
     public void setPlayer(Creature newPlayer){player = newPlayer;}
     //Helper Functions

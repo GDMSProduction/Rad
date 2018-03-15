@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
+import static my.application.stephen.runattackdungeon.Dungeon.minotaurSlain;
 import static my.application.stephen.runattackdungeon.GameView.camHeight;
 import static my.application.stephen.runattackdungeon.GameView.camOffsetX;
 import static my.application.stephen.runattackdungeon.GameView.camOffsetY;
@@ -1191,19 +1192,23 @@ public class Level extends Map {
                 if (actor.getCellType() == ObjectDestructible.CellType.Slime && !friendlyFire) {
                     break;
                 }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), ObjectDestructible.CellType.Slime);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
                 break;
             case Goblin:
                 if (actor.getCellType() == ObjectDestructible.CellType.Goblin && !friendlyFire) {
                     break;
                 }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), ObjectDestructible.CellType.Goblin);
+                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
                 break;
             case Minotaur:
                 if (actor.getCellType() == ObjectDestructible.CellType.Minotaur && !friendlyFire) {
                     break;
                 }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
+                if (HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType)){
+                    if (actor == dungeon.getPlayer()){
+                        minotaurSlain = true;
+                    }
+                }
                 break;
             case Humanoid:
                 if (actor.getCellType() == ObjectDestructible.CellType.Humanoid && !friendlyFire) {
@@ -1335,7 +1340,8 @@ public class Level extends Map {
         return ifCreatureGetsMoved;
     }
 
-    private void HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {
+    //returns true only if harmee is killed.
+    private boolean HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {
         for (int i = 0; i < levelCreatures.size(); i++) {
             Creature tempCreature = levelCreatures.get(i);
             Point tempPoint = tempCreature.getPoint();
@@ -1347,10 +1353,11 @@ public class Level extends Map {
                     CreateRandomDrop(i, harmeeType, currentLevel);
                     removeObjectFromMap(tempPoint, tempCreature);
                     levelCreatures.remove(i);
-                    break;
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     public void harmWall(int cellx, int celly, int mining) {

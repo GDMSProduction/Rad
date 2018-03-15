@@ -17,8 +17,9 @@ import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
 public class Creature extends ObjectDestructible {
 
-    private DirectionType directionType = TowardsTargetDirectional;
+    private DirectionType directionType = Random;
     private MovementLimit movementLimit = inCamera;
+    private Point target = new Point (0,0);
     private int defense = 0;
     private int defenseMax = 80;//out of 100
     private int attack = 0;
@@ -46,12 +47,20 @@ public class Creature extends ObjectDestructible {
         setCellType(CellType.Slime);
     }
 
-    Creature(Point newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax, int Attack, int Level) {
+    Creature(Point newPoint,
+             Bitmap newBitmap,
+             int HPMax,
+             CellType Type,
+             int DefMax,
+             int Attack,
+             int Level,
+             DirectionType DIRECTIONTYPE) {
         super(newPoint, newBitmap, HPMax, Type);
         defense = defenseMax = DefMax;
         setCellType(Type);
         setAttack(Attack);
         setCurrentDepth(Level);
+        directionType = DIRECTIONTYPE;
     }
 
     int getAttack() {
@@ -360,6 +369,10 @@ public class Creature extends ObjectDestructible {
     public void usePotion(Level currentLevel) {
         getPotion().PotionEffect(this, currentLevel);
         setPotion(null);
+    }
+
+    public Point getTarget() {
+        return target;
     }
 
     public enum DirectionType {

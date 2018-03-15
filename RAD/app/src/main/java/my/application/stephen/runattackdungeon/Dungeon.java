@@ -69,6 +69,9 @@ public class Dungeon {
                         dungeonLevels.get(levelToGoTo).giveNewPointToObject(null, creature);
                     }
                 }
+                if (creature == player){
+                    changeMap = true;
+                }
                 break;
             case UP:
                 if (creature.getCurrentDepth() > 0) {
@@ -88,11 +91,13 @@ public class Dungeon {
                             dungeonLevels.get(levelToGoTo).giveNewPointToObject(null, creature);
                         }
                     }
+                    if (creature == player){
+                        changeMap = true;
+                    }
                 }
                 break;
         }
         if (creature == player) {
-            changeMap = true;
             currentLevelIndex = creature.getCurrentDepth();
         }
     }

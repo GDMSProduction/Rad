@@ -377,7 +377,7 @@ public class Level extends Map {
                     default:
                     case 0:
                         //rock
-                        createRock(room);
+                        createRock(room, null);
                         break;
                     case 1:
                         //barrel
@@ -392,9 +392,15 @@ public class Level extends Map {
         }
     }
 
-    private void createRock(@Nullable Room room) {
-        Clutter rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
-        giveNewPointToObject(room, rock);
+    private void createRock(@Nullable Room room, @Nullable Point newPoint) {
+        Clutter rock;
+        if (newPoint == null) {
+            rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+            giveNewPointToObject(room, rock);
+        } else {
+            rock = new Clutter(0, 0, newPoint, imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+            addObjectToMap(newPoint, rock, false);
+        }
         clutter.add(rock);
     }
 
@@ -427,34 +433,63 @@ public class Level extends Map {
                     case 1:
                         createGoblin(room, currentLevel);
                         break;
-                    case 2:
-                        createMinotaur(room, currentLevel);
-                        break;
                 }
             }
         }
     }
 
     private void createSlime(@Nullable Room room, int currentLevel) {
-        Creature slime = new Creature(new Point(0, 0), imageEnemy[0], 3, ObjectDestructible.CellType.Slime, 0, 1000, currentLevel);
+        Creature slime = new Creature(
+                new Point(0, 0),
+                imageEnemy[0],
+                3,
+                ObjectDestructible.CellType.Slime,
+                0,
+                1000,
+                currentLevel,
+                Creature.DirectionType.Still);
         giveNewPointToObject(room, slime);
         levelCreatures.add(slime);
     }
 
     private void createGoblin(@Nullable Room room, int currentLevel) {
-        Creature goblin = new Creature(new Point(0, 0), imageEnemy[1], 5, ObjectDestructible.CellType.Goblin, 50, 1, currentLevel);
+        Creature goblin = new Creature(
+                new Point(0, 0),
+                imageEnemy[1],
+                5,
+                ObjectDestructible.CellType.Goblin,
+                50,
+                1,
+                currentLevel,
+                Creature.DirectionType.Random);
         giveNewPointToObject(room, goblin);
         levelCreatures.add(goblin);
     }
 
     private void createMinotaur(@Nullable Room room, int currentLevel) {
-        Creature minotaur = new Creature(new Point(0, 0), imageEnemy[2], 5, ObjectDestructible.CellType.Minotaur, 50, 5, currentLevel);
+        Creature minotaur = new Creature(
+                new Point(0, 0),
+                imageEnemy[2],
+                5,
+                ObjectDestructible.CellType.Minotaur,
+                50,
+                5,
+                currentLevel,
+                Creature.DirectionType.TowardsTargetDirectional);
         giveNewPointToObject(room, minotaur);
         levelCreatures.add(minotaur);
     }
 
     private void createHumanoid(@Nullable Room room, int currentLevel) {
-        Creature humanoid = new Creature(new Point(0, 0), imageNPCDown[0], 5, ObjectDestructible.CellType.Humanoid, 50, 5, currentLevel);
+        Creature humanoid = new Creature(
+                new Point(0, 0),
+                imageNPCDown[0],
+                5,
+                ObjectDestructible.CellType.Humanoid,
+                50,
+                5,
+                currentLevel,
+                Creature.DirectionType.Still);
         giveNewPointToObject(room, humanoid);
         levelCreatures.add(humanoid);
     }
@@ -465,7 +500,8 @@ public class Level extends Map {
             giveNewPointToObject(room, stairsDown);
         }
     }
-    private void createStairsUp(@Nullable Room room, int currentLevel){
+
+    private void createStairsUp(@Nullable Room room, int currentLevel) {
         if (getNumEmptyCells() > 0 && currentLevel > 0) {
             stairsUp = new ObjectDestructible(new Point(0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
             giveNewPointToObject(room, stairsUp);
@@ -833,7 +869,7 @@ public class Level extends Map {
         return isFound;
     }
 
-    public void UpdateEnemies(Dungeon dungeon, Creature target) {
+    public void UpdateEnemies(Dungeon dungeon) {
         for (int i = 0; i < levelCreatures.size(); i++) {
             switch (levelCreatures.get(i).getMovementLimit()) {
                 default:
@@ -843,34 +879,12 @@ public class Level extends Map {
                             levelCreatures.get(i).getX() < camOffsetX + camWidth &&
                             levelCreatures.get(i).getY() < camOffsetY + camHeight) {
                         Creature temp = levelCreatures.get(i);
-                        switch (temp.getCellType()) {
-                            default:
-                            case Slime:
-                                break;
-                            case Goblin:
-                                moveCreature(dungeon, target.getPoint(), temp);
-                                break;
-                            case Minotaur:
-                                break;
-                            case Humanoid:
-                                break;
-                        }
+                        moveCreature(dungeon, temp);
                     }
                     break;
                 case inLevel:
                     Creature temp = levelCreatures.get(i);
-                    switch (temp.getCellType()) {
-                        default:
-                        case Slime:
-                            break;
-                        case Goblin:
-                            moveCreature(dungeon, target.getPoint(), temp);
-                            break;
-                        case Minotaur:
-                            break;
-                        case Humanoid:
-                            break;
-                    }
+                    moveCreature(dungeon, temp);
                     break;
                 case inDungeon:
                     break;
@@ -879,8 +893,23 @@ public class Level extends Map {
             }
         }
     }
+    private void moveCreature(Dungeon dungeon, Creature temp){
+        switch (temp.getCellType()) {
+            default:
+            case Slime:
+                break;
+            case Goblin:
+                moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
+                break;
+            case Minotaur:
+                moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
+                break;
+            case Humanoid:
+                break;
+        }
+    }
 
-    private void moveCreature(Dungeon dungeon, Point target, Creature temp) {
+    private void moveCreatureDirectionType(Dungeon dungeon, Point target, Creature temp) {
         switch (temp.getDirectionType()) {
             case Still:
                 break;
@@ -911,16 +940,16 @@ public class Level extends Map {
                 switch (direction) {
                     case 0: //Horizontal
                         if (distanceWidth > 0) { //West
-                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
-                        } else if (distanceWidth < 0) { //East
                             MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1);
+                        } else if (distanceWidth < 0) { //East
+                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
                         }
                         break;
                     case 1: //Vertical
                         if (distanceHeight > 0) { //South
-                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
-                        } else if (distanceHeight < 0) { //North
                             MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1);
+                        } else if (distanceHeight < 0) { //North
+                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
                         }
                         break;
                 }
@@ -965,25 +994,21 @@ public class Level extends Map {
         switch (rand.nextInt(4)) {
             //South
             case 0:
-                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1)) {
-                    break;
-                }
-                //North
+                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
+                break;
+            //North
             case 1:
-                if (MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1)) {
-                    break;
-                }
-                //West
+                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1);
+                break;
+            //West
             case 2:
-                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1)) {
-                    break;
-                }
-                //East
+                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
+                break;
+            //East
             case 3:
-                if (MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1)) {
-                    break;
-                }
-                //Stay
+                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1);
+                break;
+            //Stay
             default:
             case 4:
                 break;
@@ -1161,7 +1186,11 @@ public class Level extends Map {
                     Clutter temp = clutter.get(i);
                     Bitmap tempImage = temp.getBitmap();
                     if (temp.getPoint().x == actee.x && temp.getPoint().y == actee.y) {
-                        temp.hurt(actor.getAttack());
+                        if (tempImage == imageClutter[0]) {
+                            temp.hurt(actor.getMining());
+                        } else {
+                            temp.hurt(actor.getAttack());
+                        }
                         if (tempImage == imageClutter[3] || // coins
                                 tempImage == imageClutter[4] || // white diamond
                                 tempImage == imageClutter[5]) { // red diamond
@@ -1204,8 +1233,8 @@ public class Level extends Map {
                 if (actor.getCellType() == ObjectDestructible.CellType.Minotaur && !friendlyFire) {
                     break;
                 }
-                if (HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType)){
-                    if (actor == dungeon.getPlayer()){
+                if (HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType)) {
+                    if (actor == dungeon.getPlayer()) {
                         minotaurSlain = true;
                     }
                 }
@@ -1362,7 +1391,7 @@ public class Level extends Map {
 
     public void harmWall(int cellx, int celly, int mining) {
         super.getCurrentMap()[celly][cellx].get(0).hurt(mining);
-        if (super.getCurrentMap()[celly][cellx].get(0).getBitmap() != walls[0]) {
+        if (super.getCurrentMap()[celly][cellx].get(0).getBitmap() != walls[0] && mining > 0) {
             super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {

@@ -296,6 +296,10 @@ public class GameView extends SurfaceView implements Runnable {
         imageWearables[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
         imageWearables[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
     }
+    private void createAudio(Context context){
+        int debug = 0;
+        debug--;
+    }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         int width = bm.getWidth();
@@ -358,8 +362,11 @@ public class GameView extends SurfaceView implements Runnable {
             //to control
             control();
         }
-        Intent intent = new Intent(getContext(), HighScoresActivity.class);
-        startActivity(getContext(), intent, null);
+        if (win) {
+            startActivity(getContext(), new Intent(getContext(), HighScoresActivity.class), null);
+        } else{
+            startActivity(getContext(), new Intent(getContext(), MainMenuActivity.class), null);
+        }
     }
 
     private void update() {
@@ -370,6 +377,7 @@ public class GameView extends SurfaceView implements Runnable {
             return;
         }
         if (minotaurSlain){
+            minotaurSlain = false;
             win = true;
             playing = false;
         }
@@ -412,7 +420,7 @@ public class GameView extends SurfaceView implements Runnable {
         }
 
         while (lag >= TICKS_RATE) {
-            dungeon.getCurrentLevel().UpdateEnemies(dungeon, player);
+            dungeon.getCurrentLevel().UpdateEnemies(dungeon);
             lag -= TICKS_RATE;
         }
 //        //updating player position

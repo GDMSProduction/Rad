@@ -397,7 +397,7 @@ public class Level extends Map {
         }
     }
 
-    private void createRock(@Nullable Room room, @Nullable Point newPoint) {
+    void createRock(@Nullable Room room, @Nullable Point newPoint) {
         Clutter rock;
         if (newPoint == null) {
             rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
@@ -1059,9 +1059,9 @@ public class Level extends Map {
     }
 
 //    public ObjectDestructible.CellType getCellType(int cellx, int celly) {
-//        ObjectDestructible.CellType returnType = ObjectDestructible.CellType.Wall;
+//        ObjectDestructible.CellType returnType = ObjectDestructible.CellType.SturdyWall;
 //        if (super.isCellWall(cellx, celly)) {
-//            return ObjectDestructible.CellType.Wall;
+//            return ObjectDestructible.CellType.SturdyWall;
 //        }
 //        if (super.isCellOpen(cellx, celly)) {
 //            returnType = ObjectDestructible.CellType.Space;
@@ -1146,7 +1146,7 @@ public class Level extends Map {
 
     public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
         if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
-            return ObjectDestructible.CellType.Wall;
+            return ObjectDestructible.CellType.SturdyWall;
         }
         return getCurrentMap()[celly][cellx].get(
                 getCurrentMap()[celly][cellx].size() - 1
@@ -1158,7 +1158,13 @@ public class Level extends Map {
         ObjectDestructible.CellType harmeeType = getOtherCellType(actee.x, actee.y);
         switch (harmeeType) {
             default:
+            case Border:
+                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
+                    break;
+                }
             case Wall:
+            case SturdyWall:
+            case BreakingWall:
                 if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
                     break;
                 }

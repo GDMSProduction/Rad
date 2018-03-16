@@ -4,16 +4,14 @@ import android.graphics.Point;
 
 import java.util.ArrayList;
 
-import static my.application.stephen.runattackdungeon.GameView.imageClutter;
-import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
-
 /**
  * Created by zfile on 2018-03-13.
  * Rooms are maps with exit points, start points, and more specific creature and clutter generation features
  */
 
 class Room extends Map {
-    public enum roomType {EMPTY, LOOT, ENEMY, BOSS}
+    public enum ROOMType {EMPTY, LOOT, ENEMY, LOOTandENEMY, BOSS}
+    private ROOMType roomType = Room.ROOMType.LOOTandENEMY;
     private int maxClutter = 0;
     private int maxEnemies = 0;
     private Point startPoint = new Point (0,0);

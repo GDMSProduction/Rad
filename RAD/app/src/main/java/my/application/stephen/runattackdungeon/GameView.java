@@ -29,28 +29,10 @@ import static my.application.stephen.runattackdungeon.Dungeon.minotaurSlain;
 
 public class GameView extends SurfaceView implements Runnable {
     private static final String TAG = "Array out of bounds.";
-    private double lag = 0;
-    //boolean variable to track if the game is playing or not
-    volatile boolean playing;
-    private boolean win;
-    private boolean checkForInputUP;
-    private PointF pressPoint;
     public static boolean changeMap = false;
-    //the game thread
-    private Thread gameThread = null;
-
-    final double TICKS_RATE = 516.667;
-
-    //These objects will be used for drawing
-    private Paint paint;
-    private Canvas canvas;
-    private SurfaceHolder surfaceHolder;
     //Screensize
     public static int screenWidth;
     public static int screenHeight;
-    private Random rand = new Random();
-    //Holder of images.
-    private Bitmap[] UserInterface;
     public static Bitmap[] spaces;
     public static Bitmap[] walls;
     public static Bitmap[] imageStairs;
@@ -67,16 +49,36 @@ public class GameView extends SurfaceView implements Runnable {
     public static Bitmap[] imageNPCRight;
     public static Bitmap[] imageNPCUp;
     public static Bitmap[] imageNPCDown;
+    public static boolean friendlyFire = false;
+    public static int mBitMapHeight;
+    public static int mBitMapWidth;
+    public static int camOffsetX = 0;
+    public static int camOffsetY = 0;
+    public static float mainOffsetX = 0;
+    public static float mainOffsetY = 0;
+    public static int camHeight;
+    public static int camWidth;
+    final double TICKS_RATE = 516.667;
+    //boolean variable to track if the game is playing or not
+    volatile boolean playing;
+    private double lag = 0;
+    private boolean win;
+    private boolean checkForInputUP;
+    private PointF pressPoint;
+    //the game thread
+    private Thread gameThread = null;
+    //These objects will be used for drawing
+    private Paint paint;
+    private Canvas canvas;
+    private SurfaceHolder surfaceHolder;
+    private Random rand = new Random();
+    //Holder of images.
+    private Bitmap[] UserInterface;
     private Bitmap npcLeft;
     private Bitmap npcRight;
     private Bitmap npcUp;
     private Bitmap npcDown;
     private boolean checkForInputDOWN;
-
-    public enum spaceTiles {Smooth, Rocky, Potholes, Bumpy, Grassy, Empty}
-
-    public enum wallTiles {Breaking, Sturdy}
-
     //User Interface.
     //UI info
     private int largeTextSize = 64;
@@ -93,19 +95,8 @@ public class GameView extends SurfaceView implements Runnable {
     private ObjectBase dPadRight;
     //The Dungeon
     private Dungeon dungeon = null;
-    public static boolean friendlyFire = false;
-
     //The Camera
     private Level levelToDraw = null;
-    public static int mBitMapHeight;
-    public static int mBitMapWidth;
-    public static int camOffsetX = 0;
-    public static int camOffsetY = 0;
-    public static float mainOffsetX = 0;
-    public static float mainOffsetY = 0;
-    public static int camHeight;
-    public static int camWidth;
-
     //the player
     private Creature player;
     private int startingHealth = 3;
@@ -278,7 +269,7 @@ public class GameView extends SurfaceView implements Runnable {
         //Weapons
         imageWeapon = new Bitmap[5];
         imageWeapon[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.human_fist_different_sides);
-        imageWeapon[0] = Bitmap.createBitmap(imageWeapon[0], imageWeapon[0].getWidth() / 2, 0, (int)(imageWeapon[0].getWidth() * 0.25f), imageWeapon[0].getHeight());
+        imageWeapon[0] = Bitmap.createBitmap(imageWeapon[0], imageWeapon[0].getWidth() / 2, 0, (int) (imageWeapon[0].getWidth() * 0.25f), imageWeapon[0].getHeight());
         imageWeapon[0] = getResizedBitmap(imageWeapon[0], mBitMapWidth, mBitMapHeight);
         imageWeapon[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.dagger), mBitMapWidth, mBitMapHeight);
         imageWeapon[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.sword), mBitMapWidth, mBitMapHeight);
@@ -298,7 +289,8 @@ public class GameView extends SurfaceView implements Runnable {
         imageWearables[1] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ring_silver), mBitMapWidth, mBitMapHeight);
         imageWearables[2] = getResizedBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.shield_wooden), mBitMapWidth, mBitMapHeight);
     }
-    private void createAudio(Context context){
+
+    private void createAudio(Context context) {
         int debug = 0;
         debug--;
     }
@@ -366,10 +358,11 @@ public class GameView extends SurfaceView implements Runnable {
         }
         end();
     }
-    public void end(){
+
+    public void end() {
         if (win) {
             startActivity(getContext(), new Intent(getContext(), HighScoresActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), null);
-        } else{
+        } else {
             startActivity(getContext(), new Intent(getContext(), MainMenuActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), null);
         }
     }
@@ -381,7 +374,7 @@ public class GameView extends SurfaceView implements Runnable {
             playing = false;
             return;
         }
-        if (minotaurSlain){
+        if (minotaurSlain) {
             minotaurSlain = false;
             win = true;
             playing = false;
@@ -460,12 +453,13 @@ public class GameView extends SurfaceView implements Runnable {
 
             //User Interface
             //THESE NEED TO BE LAST.
+            paint.setColor(Color.GRAY);
+            paint.setTextSize(largeTextSize);
             paint.setAlpha(UIOpacity);
             drawingTheDPAD();
             drawingTheEquippedItems();
-            drawingTheHealth();
-            paint.setAlpha(255);
             //UI text
+            drawingTheHealth();
             drawingCurrentDepth();
             drawingScore();
             //Unlocking the canvas
@@ -529,30 +523,53 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void drawingCurrentDepth() {
-        paint.setColor(Color.BLACK);
-        paint.setTextSize(largeTextSize);
         String depth = "Depth: " + player.getCurrentDepth() * 10 + " feet";
+        paint.setColor(Color.GRAY);
+        paint.setAlpha(UIOpacity);
+        canvas.drawRect(
+                mainOffsetX,
+                mainOffsetY,
+                mainOffsetX + paint.measureText(depth),
+                mainOffsetY + largeTextSize,
+                paint);
+        paint.setAlpha(255);
+        paint.setColor(Color.BLACK);
         canvas.drawText(depth, mainOffsetX, largeTextSize + mainOffsetY, paint);
     }
 
     private void drawingScore() {
-        paint.setColor(Color.BLACK);
-        paint.setTextSize(largeTextSize);
         String score = "Gold: " + player.getScore();
+        paint.setColor(Color.GRAY);
+        paint.setAlpha(UIOpacity);
+        canvas.drawRect(
+                mainOffsetX,
+                mainOffsetY + largeTextSize,
+                mainOffsetX + paint.measureText(score),
+                mainOffsetY + largeTextSize * 2,
+                paint);
+        paint.setAlpha(255);
+        paint.setColor(Color.BLACK);
         canvas.drawText(score, mainOffsetX, largeTextSize * 2 + mainOffsetY, paint);
     }
 
     private void drawingTheHealth() {
         String health = " x " + player.getHP();
-        Rect healthBounds = new Rect(0,0,0,0);
+        Rect healthBounds = new Rect(0, 0, 0, 0);
         float healthWidth = paint.measureText(health);
         float tempWidth = (camWidth) * mBitMapWidth + mainOffsetX;
+        paint.setAlpha(UIOpacity);
+        canvas.drawRect(
+                tempWidth - UserInterface[2].getWidth() - healthWidth,
+                mainOffsetY,
+                tempWidth,
+                mBitMapHeight + mainOffsetY,
+                paint);
         canvas.drawBitmap(UserInterface[2],
                 tempWidth - UserInterface[2].getWidth() - healthWidth,
                 mainOffsetY,
                 paint);
+        paint.setAlpha(255);
         paint.setColor(Color.BLACK);
-        paint.setTextSize(largeTextSize);
         canvas.drawText(health, tempWidth - healthWidth, largeTextSize + mainOffsetY, paint);
     }
 
@@ -568,6 +585,12 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getWeapon().getBitmap().getHeight()
             );
             player.getWeapon().setDetectCollision(posRect);
+            canvas.drawRect(
+                    (int) tempWidth,
+                    (int) tempHeight,
+                    player.getWeapon().getBitmap().getWidth() + (int) tempWidth,
+                    player.getWeapon().getBitmap().getHeight() + (int) tempHeight,
+                    paint);
             canvas.drawBitmap(
                     player.getWeapon().getBitmap(),
                     tempWidth,
@@ -584,6 +607,13 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getMiningTool().getBitmap().getHeight()
             );
             player.getMiningTool().setDetectCollision(posRect);
+            canvas.drawRect(
+                    (int) tempWidth,
+                    (int) tempHeight,
+                    player.getMiningTool().getBitmap().getWidth() + (int) tempWidth,
+                    player.getMiningTool().getBitmap().getHeight() + (int) tempHeight,
+                    paint
+            );
             canvas.drawBitmap(
                     player.getMiningTool().getBitmap(),
                     tempWidth,
@@ -600,6 +630,13 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getLightSource().getBitmap().getHeight()
             );
             player.getLightSource().setDetectCollision(posRect);
+            canvas.drawRect(
+                    (int) tempWidth,
+                    (int) tempHeight,
+                    player.getLightSource().getBitmap().getWidth() + (int) tempWidth,
+                    player.getLightSource().getBitmap().getHeight() + (int) tempHeight,
+                    paint
+            );
             canvas.drawBitmap(
                     player.getLightSource().getBitmap(),
                     tempWidth,
@@ -616,6 +653,13 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getRing().getBitmap().getHeight()
             );
             player.getRing().setDetectCollision(posRect);
+            canvas.drawRect(
+                    (int) tempWidth,
+                    (int) tempHeight,
+                    player.getRing().getBitmap().getWidth() + (int) tempWidth,
+                    player.getRing().getBitmap().getHeight() + (int) tempHeight,
+                    paint
+            );
             canvas.drawBitmap(
                     player.getRing().getBitmap(),
                     tempWidth,
@@ -632,6 +676,13 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getShield().getBitmap().getHeight()
             );
             player.getShield().setDetectCollision(posRect);
+            canvas.drawRect(
+                    (int) tempWidth,
+                    (int) tempHeight,
+                    player.getShield().getBitmap().getWidth() + (int) tempWidth,
+                    player.getShield().getBitmap().getHeight() + (int) tempHeight,
+                    paint
+            );
             canvas.drawBitmap(
                     player.getShield().getBitmap(),
                     tempWidth,
@@ -646,6 +697,13 @@ public class GameView extends SurfaceView implements Runnable {
     private void drawingTheConsumables(float tempWidth, float tempHeight) {
         tempWidth = (camWidth - 1) * mBitMapWidth + mainOffsetX;
         tempHeight = (camHeight - 1) * mBitMapHeight + mainOffsetY;
+        canvas.drawRect(
+                (int) tempWidth,
+                (int) tempHeight - (mBitMapHeight * 2),
+                mBitMapWidth + (int) tempWidth,
+                (int) tempHeight + mBitMapHeight,
+                paint
+        );
         if (player.getFood() != null) {
             Rect posRect = new Rect(
                     (int) tempWidth,
@@ -876,5 +934,9 @@ public class GameView extends SurfaceView implements Runnable {
         dungeon.getCurrentLevel().MoveCreatureHorizontal(dungeon, player, player.getCurrentDepth(), player.getX() + 1);
         player.checkImage(npcRight);
     }
+
+    public enum spaceTiles {Smooth, Rocky, Potholes, Bumpy, Grassy, Empty}
+
+    public enum wallTiles {Breaking, Sturdy}
 
 }

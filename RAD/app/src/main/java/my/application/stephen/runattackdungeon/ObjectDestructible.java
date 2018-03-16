@@ -9,7 +9,7 @@ import android.graphics.Point;
 
 public class ObjectDestructible extends ObjectBase {
     public enum CellType {
-        Wall, Space, Void,
+        Wall, SturdyWall, BreakingWall, Space, Void, Border,
         StairUp, StairDown,
         Clutter, Barrel, Chest,
         Slime, Goblin, Minotaur, Humanoid,
@@ -17,7 +17,7 @@ public class ObjectDestructible extends ObjectBase {
         Weapon, MiningTool, LightSource, Wearable,
         Food, Scroll, Potion
     }
-    private CellType cellType = CellType.Wall;
+    private CellType cellType = CellType.SturdyWall;
 
     private int hitPoints = 15;
     private int hitPointsMax = 15;

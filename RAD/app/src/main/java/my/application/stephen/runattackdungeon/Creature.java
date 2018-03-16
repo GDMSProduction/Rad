@@ -362,7 +362,13 @@ public class Creature extends ObjectDestructible {
     }
 
     public void useScroll(Dungeon dungeon) {
-        dungeon.goToLevel(this, scroll.getValue(), Dungeon.DirectionToGo.UP);
+        Dungeon.DirectionToGo direction;
+        if (scroll.getValue() >= currentDepth){
+            direction = Dungeon.DirectionToGo.DOWN;
+        } else {
+            direction = Dungeon.DirectionToGo.UP;
+        }
+        dungeon.goToLevel(this, scroll.getValue(), direction, false);
         setScroll(null);
     }
 
@@ -373,6 +379,10 @@ public class Creature extends ObjectDestructible {
 
     public Point getTarget() {
         return target;
+    }
+
+    public void setTarget(Point Target) {
+        target = Target;
     }
 
     public enum DirectionType {

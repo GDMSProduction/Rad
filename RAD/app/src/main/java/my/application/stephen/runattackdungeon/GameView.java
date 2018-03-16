@@ -117,6 +117,8 @@ public class GameView extends SurfaceView implements Runnable {
         screenWidth = screenX;
         screenHeight = screenY;
 
+        changeMap = false;
+        friendlyFire = false;
         //Create drawing objects
         surfaceHolder = getHolder();
         paint = new Paint();
@@ -362,10 +364,13 @@ public class GameView extends SurfaceView implements Runnable {
             //to control
             control();
         }
+        end();
+    }
+    public void end(){
         if (win) {
-            startActivity(getContext(), new Intent(getContext(), HighScoresActivity.class), null);
+            startActivity(getContext(), new Intent(getContext(), HighScoresActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), null);
         } else{
-            startActivity(getContext(), new Intent(getContext(), MainMenuActivity.class), null);
+            startActivity(getContext(), new Intent(getContext(), MainMenuActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), null);
         }
     }
 
@@ -386,7 +391,7 @@ public class GameView extends SurfaceView implements Runnable {
             changeMap = false;
         }
         if (checkForInputDOWN) {
-            //dungeon.goToLevel(player, player.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
+            //dungeon.goToLevel(player, player.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, false);
             checkForInputDOWN = false;
         }
         if (checkForInputUP) {
@@ -415,7 +420,6 @@ public class GameView extends SurfaceView implements Runnable {
             } else if (DetectButtonPress(pressPoint, dPadRight.getCollideRect())) {
                 dPadRightPress();
             }
-
             checkForInputUP = false;
         }
 

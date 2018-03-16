@@ -205,7 +205,7 @@ public class Map {
         array[row][col].get(0).setBitMap(spaces[4]);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.Space);
     }
-    public void setVoidSpace(ArrayList<ObjectDestructible>[][] array, int row, int col) {
+    public void setVoid(ArrayList<ObjectDestructible>[][] array, int row, int col) {
         array[row][col].get(0).setBitMap(spaces[5]);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.Void);
     }

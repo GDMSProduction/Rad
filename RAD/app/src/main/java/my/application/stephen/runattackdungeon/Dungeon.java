@@ -26,6 +26,7 @@ public class Dungeon {
     private Creature player = null;
 
     Dungeon(){
+        minotaurSlain = false;
         AddNewLevel();
         currentLevel = dungeonLevels.get(0);
     }
@@ -46,7 +47,7 @@ public class Dungeon {
         }
     }
 
-    public void goToLevel(Creature creature, int levelToGoTo, DirectionToGo direction) {
+    public void goToLevel(Creature creature, int levelToGoTo, DirectionToGo direction, boolean fallen) {
         switch (direction) {
             case DOWN:
                 dungeonLevels.get(creature.getCurrentDepth()).removeObjectFromMap(creature.getPoint(), creature);
@@ -60,7 +61,7 @@ public class Dungeon {
                 creature.setCurrentDepth(levelToGoTo);
                 dungeonLevels.get(levelToGoTo).getLevelCreatures().add(creature);
                 if (creature != null) {
-                    if (creature == player && currentLevel.getStairsUp() != null) {
+                    if (creature == player && currentLevel.getStairsUp() != null && !fallen) {
                         creature.setX(currentLevel.getStairsUp().getX());
                         creature.setY(currentLevel.getStairsUp().getY());
                         dungeonLevels.get(levelToGoTo).addObjectToMap(creature.getPoint(), creature, true);

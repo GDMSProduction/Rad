@@ -53,7 +53,6 @@ public class Level extends Map {
     //The Clutter
     private int maxClutter = 5;
     private ArrayList<Clutter> clutter = new ArrayList<>(maxClutter);
-    private int diamondPercent = 1;
     private ArrayList<Food> food = new ArrayList<>(0);
     private ArrayList<Food> potions = new ArrayList<>(0);
     private ArrayList<LightSource> lights = new ArrayList<>(0);
@@ -101,6 +100,12 @@ public class Level extends Map {
         createEnemies(null, currentLevel);
         if (natural) {
             createClutter(null);
+        }
+        if (currentLevel < 1){
+//            CreateHeartDiamond();
+        }
+        if (currentLevel > 5) {
+            createMinotaur(LevelRooms.get(0), currentLevel);
         }
     }
 
@@ -426,10 +431,10 @@ public class Level extends Map {
         for (int i = 0; i < newSize; i++) {
             if (getNumEmptyCells() > 0) {
                 switch (rand.nextInt(4)) {
+                    default:
                     case 0:
                         createSlime(room, currentLevel);
                         break;
-                    default:
                     case 1:
                         createGoblin(room, currentLevel);
                         break;
@@ -470,7 +475,7 @@ public class Level extends Map {
         Creature minotaur = new Creature(
                 new Point(0, 0),
                 imageEnemy[2],
-                5,
+                2 * currentLevel, //HPMmax
                 ObjectDestructible.CellType.Minotaur,
                 50,
                 5,
@@ -902,6 +907,7 @@ public class Level extends Map {
                 moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
                 break;
             case Minotaur:
+                temp.setTarget(dungeon.getPlayer().getPoint());
                 moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
                 break;
             case Humanoid:
@@ -1156,28 +1162,19 @@ public class Level extends Map {
                 if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
                     break;
                 }
-                harmWall(actee.x, actee.y, actor.getMining());
-                if (getCurrentMap()[actee.y][actee.x].get(0).getHP() <= 0 && rand.nextInt(getMapHeight() * getMapWidth()) <= diamondPercent) {
-                    switch (rand.nextInt(2)) {
-//                        case 0:
-//                            super.setVoidSpace(celly, cellx);
-//                            break;
-                        default:
-                        case 1:
-                            Point tempPoint = new Point(actee.x, actee.y);
-                            CreateRandomDiamond(tempPoint, actor.getCurrentDepth());
-                            break;
-                    }
-                }
+                harmWall(actee.x, actee.y, actor.getMining(), actor.getCurrentDepth());
                 break;
             case Space:
                 ifCreatureGetsMoved = true;
                 break;
-            case StairUp:
-                dungeon.goToLevel(actor, actor.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP);
-                break;
+            case Void:
+                actor.hurt(2);
+                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, true);
             case StairDown:
-                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN);
+                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, false);
+                break;
+            case StairUp:
+                dungeon.goToLevel(actor, actor.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP, false);
                 break;
             case Clutter:
             case Barrel:
@@ -1371,6 +1368,20 @@ public class Level extends Map {
 
     //returns true only if harmee is killed.
     private boolean HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {
+//        for (int j = 0; j < getCurrentMap()[celly][cellx].size(); j++){
+//            ObjectDestructible object = (getCurrentMap()[celly][cellx].get(j));
+//            if (object.getCellType() == harmeeType){
+//                Creature creature = (Creature)object;
+//                int damagetotal = (int) (harmer.getAttack() * ((100 - creature.getDefense()) / 100.0f));
+//                creature.hurt(damagetotal);
+//                if (creature.getHP() <= 0) {
+//                    CreateRandomDrop(creature, harmeeType, currentLevel);
+//                    removeObjectFromMap(new Point(celly, cellx), creature);
+//                    levelCreatures.remove(creature);
+//                    return true;
+//                }
+//            }
+//        }
         for (int i = 0; i < levelCreatures.size(); i++) {
             Creature tempCreature = levelCreatures.get(i);
             Point tempPoint = tempCreature.getPoint();
@@ -1389,15 +1400,26 @@ public class Level extends Map {
         return false;
     }
 
-    public void harmWall(int cellx, int celly, int mining) {
+    public void harmWall(int cellx, int celly, int mining, int currentDepth) {
         super.getCurrentMap()[celly][cellx].get(0).hurt(mining);
         if (super.getCurrentMap()[celly][cellx].get(0).getBitmap() != walls[0] && mining > 0) {
             super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {
             super.setSpace(super.getCurrentMap(), celly, cellx, spaces.length - 2);
-            FloorTiles.add(new Point(cellx, celly));
-            numEmptyCells++;
+            super.addEmptyFloorTile(cellx, celly);
+            switch (rand.nextInt(getMapHeight() * getMapWidth())) {
+                default:
+                case 0:
+                    createRock(null, new Point(cellx, celly));
+                    break;
+                case 1:
+                    super.setVoid(getCurrentMap(), celly, cellx);
+                    break;
+                case 2:
+                    CreateRandomDiamond(new Point(cellx, celly), currentDepth);
+                    break;
+            }
         }
     }
 }

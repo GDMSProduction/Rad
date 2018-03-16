@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.media.MediaPlayer;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -49,6 +50,9 @@ public class GameView extends SurfaceView implements Runnable {
     public static Bitmap[] imageNPCRight;
     public static Bitmap[] imageNPCUp;
     public static Bitmap[] imageNPCDown;
+    public static MediaPlayer[] miningNoises;
+    public static MediaPlayer[] minotaurNoises;
+
     public static boolean friendlyFire = false;
     public static int mBitMapHeight;
     public static int mBitMapWidth;
@@ -114,6 +118,7 @@ public class GameView extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         paint = new Paint();
         createImages(context);
+        createAudio(context);
 
         //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
         camWidth = screenX / spaces[0].getWidth();
@@ -291,8 +296,8 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void createAudio(Context context) {
-        int debug = 0;
-        debug--;
+        minotaurNoises = new MediaPlayer[1];
+        minotaurNoises[0] = MediaPlayer.create(context, R.raw.dinosaur_dragon_roar__253473__groadr);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {

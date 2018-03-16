@@ -134,7 +134,6 @@ public class Map {
 
     private int NeighboringWallCount(int x, int y, int wallDistribution) {
         int wallCount = 0;
-
         for (int row = y - wallDistribution; row <= y + wallDistribution; row++) {
             for (int col = x - wallDistribution; col <= x + wallDistribution; col++) {
                 if (row == y && col == x)
@@ -145,7 +144,6 @@ public class Map {
                     wallCount++;
             }
         }
-
         return wallCount;
     }
 
@@ -228,7 +226,7 @@ public class Map {
     public void setBreakingWall(ArrayList<ObjectDestructible>[][] array, int row, int col) {
         array[row][col].get(0).setBitMap(walls[0]);
         array[row][col].get(0).setMaxHP(breakingwallHealth);
-        array[row][col].get(0).setCellType(ObjectDestructible.CellType.SturdyWall);
+        array[row][col].get(0).setCellType(ObjectDestructible.CellType.BreakingWall);
     }
 
     public void setSturdyWall(ArrayList<ObjectDestructible>[][] array, int row, int col, int Health) {
@@ -238,6 +236,12 @@ public class Map {
         array[row][col].get(0).setBitMap(walls[1]);
         array[row][col].get(0).setMaxHP(Health);
         array[row][col].get(0).setCellType(ObjectDestructible.CellType.SturdyWall);
+    }
+
+    public void setBorderWall(ArrayList<ObjectDestructible>[][] array, int row, int col) {
+        array[row][col].get(0).setBitMap(walls[1]);
+        array[row][col].get(0).setMaxHP(Integer.MAX_VALUE);
+        array[row][col].get(0).setCellType(ObjectDestructible.CellType.Border);
     }
 
     //Creates a new map through random generation and two refinement process.
@@ -344,15 +348,14 @@ public class Map {
     public void MakeBorders(int startX, int startY, int length, int height, int borderThickness, ObjectDestructible.CellType borderType) {
         switch (borderType) {
             case Border:
-                int borderHealth = MAX_VALUE;
                 for (int thickness = 0; thickness < borderThickness; thickness++) {
                     for (int i = 0; i <= length; i++) {
-                        setSturdyWall(mCellsCurr, startY + thickness, startX + i, borderHealth);
-                        setSturdyWall(mCellsCurr, startY + height - thickness, startX + i, borderHealth);
+                        setBorderWall(mCellsCurr, startY + thickness, startX + i);
+                        setBorderWall(mCellsCurr, startY + height - thickness, startX + i);
                     }
                     for (int i = 0; i <= height; i++) {
-                        setSturdyWall(mCellsCurr, startY + i, startX + thickness, borderHealth);
-                        setSturdyWall(mCellsCurr, startY + i, startX + length - thickness, borderHealth);
+                        setBorderWall(mCellsCurr, startY + i, startX + thickness);
+                        setBorderWall(mCellsCurr, startY + i, startX + length - thickness);
                     }
                 }
                 break;

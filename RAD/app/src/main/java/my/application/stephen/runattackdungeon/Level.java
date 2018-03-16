@@ -23,6 +23,7 @@ import static my.application.stephen.runattackdungeon.GameView.imageScroll;
 import static my.application.stephen.runattackdungeon.GameView.imageStairs;
 import static my.application.stephen.runattackdungeon.GameView.imageWeapon;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
+import static my.application.stephen.runattackdungeon.GameView.minotaurNoises;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
 import static my.application.stephen.runattackdungeon.GameView.walls;
 
@@ -483,6 +484,7 @@ public class Level extends Map {
                 Creature.DirectionType.TowardsTargetDirectional);
         giveNewPointToObject(room, minotaur);
         levelCreatures.add(minotaur);
+        minotaurNoises[0].start();
     }
 
     private void createHumanoid(@Nullable Room room, int currentLevel) {

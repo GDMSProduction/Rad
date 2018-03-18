@@ -10,8 +10,7 @@ import java.util.ArrayList;
  */
 
 class Room extends Map {
-    public enum ROOMType {EMPTY, LOOT, ENEMY, LOOTandENEMY, BOSS}
-    private ROOMType roomType = Room.ROOMType.LOOTandENEMY;
+    private Level.ROOMType roomType = Level.ROOMType.LOOTandENEMY;
     private int maxClutter = 0;
     private int maxEnemies = 0;
     private Point startPoint = new Point (0,0);
@@ -20,10 +19,40 @@ class Room extends Map {
     private Point connectorEAST = null;
     private Point connectorWEST = null;
 
-    Room(int Width, int Height, int spacePercent, boolean natural, int MAXClutter, int MAXEnemies) {
-        super(Width, Height, spacePercent, natural);
-        maxClutter = MAXClutter;
-        maxEnemies = MAXEnemies;
+    Room(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, Level.ROOMType ROOMType) {
+        super(Width, Height, spacePercent, natural, borderThickness, borderType);
+        this.roomType = ROOMType;
+        switch (roomType){
+            case EMPTY:
+            case BOSS:
+                break;
+            case LOOT:
+                int TotalSpaces = getNumEmptyCells() - 2;
+                maxClutter = (int) (TotalSpaces * 0.4f);
+                if (maxClutter < 1) {
+                    maxClutter = 1;
+                }
+                break;
+            case ENEMY:
+                TotalSpaces = getNumEmptyCells() - 2;
+                maxEnemies = (int) (TotalSpaces * 0.4f);
+                if (maxEnemies < 1) {
+                    maxEnemies = 1;
+                }
+                break;
+                default:
+            case LOOTandENEMY:
+                TotalSpaces = getNumEmptyCells() - 2;
+                maxEnemies = (int) (TotalSpaces * 0.2f);
+                if (maxEnemies < 1) {
+                    maxEnemies = 1;
+                }
+                maxClutter = (int) (TotalSpaces * 0.2f);
+                if (maxClutter < 1) {
+                    maxClutter = 1;
+                }
+                break;
+        }
 
         createConnectorNorth();
         createConnectorSouth();
@@ -40,6 +69,7 @@ class Room extends Map {
     void setStartPoint(Point StartPoint) {
         startPoint = StartPoint;
     }
+    void setRoomType (Level.ROOMType newRoomType){roomType = newRoomType;}
     //Helper Functions
     private void createConnectorNorth(){
         ArrayList<Point> possibleConnectors = new ArrayList<>(getMapWidth());

@@ -52,6 +52,8 @@ public class GameView extends SurfaceView implements Runnable {
     public static Bitmap[] imageNPCDown;
     public static MediaPlayer[] miningNoises;
     public static MediaPlayer[] minotaurNoises;
+    public static MediaPlayer[] playerNoises;
+    public static MediaPlayer[] walkingNoises;
 
     public static boolean friendlyFire = false;
     public static int mBitMapHeight;
@@ -62,6 +64,10 @@ public class GameView extends SurfaceView implements Runnable {
     public static float mainOffsetY = 0;
     public static int camHeight;
     public static int camWidth;
+    private int camBottom;
+    private int camTop;
+    private int camLeft;
+    private int camRight;
     final double TICKS_RATE = 516.667;
     //boolean variable to track if the game is playing or not
     volatile boolean playing;
@@ -123,6 +129,10 @@ public class GameView extends SurfaceView implements Runnable {
         //Playable spaces on the currentLevel, i.e., the number of spaces wide and long that the player can potentially use.
         camWidth = screenX / spaces[0].getWidth();
         camHeight = screenY / spaces[0].getHeight();
+        camBottom = (int)(camHeight * 0.33f);
+        camTop = (int) (camHeight * 0.66f);
+        camLeft = (int) (camWidth * 0.33f);
+        camRight = (int) (camWidth * 0.66f);
         mainOffsetX = (screenX % spaces[0].getHeight()) / 2.0f;
         mainOffsetY = (screenY % spaces[0].getHeight()) / 2.0f;
 
@@ -146,15 +156,15 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     public void CameraInterpolate() {
-        if (camOffsetY > player.getY() - (int) (camHeight * 0.25f)) {
-            camOffsetY = player.getY() - (int) (camHeight * 0.25f);
-        } else if (camOffsetY < player.getY() - (int) (camHeight * 0.75f)) {
-            camOffsetY = player.getY() - (int) (camHeight * 0.75f);
+        if (camOffsetY > player.getY() - camBottom) {
+            camOffsetY = player.getY() - camBottom;
+        } else if (camOffsetY < player.getY() - camTop) {
+            camOffsetY = player.getY() - camTop;
         }
-        if (camOffsetX > player.getX() - (int) (camWidth * 0.25f)) {
-            camOffsetX = player.getX() - (int) (camWidth * 0.25f);
-        } else if (camOffsetX < player.getX() - (int) (camWidth * 0.75f)) {
-            camOffsetX = player.getX() - (int) (camWidth * 0.75f);
+        if (camOffsetX > player.getX() - camLeft) {
+            camOffsetX = player.getX() - camLeft;
+        } else if (camOffsetX < player.getX() - camRight) {
+            camOffsetX = player.getX() - camRight;
         }
     }
 
@@ -296,8 +306,16 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void createAudio(Context context) {
-        minotaurNoises = new MediaPlayer[1];
+        minotaurNoises = new MediaPlayer[2];
         minotaurNoises[0] = MediaPlayer.create(context, R.raw.dinosaur_dragon_roar__253473__groadr);
+        playerNoises = new MediaPlayer[1];
+        playerNoises[0] = MediaPlayer.create(context, R.raw.wilhelm__13797__sweetneo85);
+        walkingNoises = new MediaPlayer[2];
+        walkingNoises[0] = MediaPlayer.create(context, R.raw.left_foot__21692__ice9ine);
+        miningNoises = new MediaPlayer[2];
+        miningNoises[0] = MediaPlayer.create(context, R.raw.metal_02__56252__q_k);
+        miningNoises[1] = MediaPlayer.create(context, R.raw.metal_03__56253__q_k);
+
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -377,6 +395,7 @@ public class GameView extends SurfaceView implements Runnable {
         if (player.getHP() <= 0) {
             win = false;
             playing = false;
+            playerNoises[0].start();
             return;
         }
         if (minotaurSlain) {

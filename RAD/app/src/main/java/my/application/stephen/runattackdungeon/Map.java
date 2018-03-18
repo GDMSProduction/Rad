@@ -23,36 +23,33 @@ public class Map {
     protected Random rand = new Random();
     //The points of every floor tile.
     protected ArrayList<Point> FloorTiles;
-    //array of available images for Spaces
-//    private Bitmap[] spaces;
-    //array of available images for walls
-//    private Bitmap[] walls;
     private int sturdywallHealth = 15;
     private int breakingwallHealth = 5;
     //the percent of tiles that we want to be walls in the finalized map.
     private int SpacePercent = 40;
+    // the type of cells the Border will be made up of.
+    private ObjectDestructible.CellType borderType = ObjectDestructible.CellType.Wall;
     //the amount of tiles in each row
     private int mWidth;
     //the amount of tiles in each column
     private int mHeight;
     //the current map tileset
-    //private ObjectDestructible[][] mCellsCurr;
     private ArrayList<ObjectDestructible>[][] mCellsCurr;
     //the next generation of the map tileset.
-    //private ObjectDestructible[][] mCellsNext;
     private ArrayList<ObjectDestructible>[][] mCellsNext;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-    public Map(int Width, int Height, int spacePercent, boolean natural) {
+    public Map(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType BorderType) {
         mWidth = Width;
         mHeight = Height;
+        borderType = BorderType;
         SpacePercent = spacePercent;
         mCellsCurr = new ArrayList[mHeight][mWidth];
         mCellsNext = new ArrayList[mHeight][mWidth];
 
-        generateNewMap(natural);
+        generateNewMap(natural, borderThickness);
     }
 
     //Given a group of tiles,
@@ -247,7 +244,7 @@ public class Map {
     //Creates a new map through random generation and two refinement process.
     //Refinement one is to prevent large open areas.
     //refinement two is to create paths between areas.
-    public void generateNewMap(boolean natural) {
+    public void generateNewMap(boolean natural, int borderThickness) {
         // randomly initialize the map
         InitializeMap();
         RandomizeMap();
@@ -262,7 +259,13 @@ public class Map {
                 RefineMap(true);
             }
         }
-        MakeBorders(0, 0, mWidth - 1, mHeight - 1, 1, ObjectDestructible.CellType.SturdyWall);
+        MakeBorders(
+                0,
+                0,
+                mWidth - 1,
+                mHeight - 1,
+                borderThickness
+        );
     }
 
 
@@ -345,7 +348,7 @@ public class Map {
         }
     }
 
-    public void MakeBorders(int startX, int startY, int length, int height, int borderThickness, ObjectDestructible.CellType borderType) {
+    public void MakeBorders(int startX, int startY, int length, int height, int borderThickness) {
         switch (borderType) {
             case Border:
                 for (int thickness = 0; thickness < borderThickness; thickness++) {

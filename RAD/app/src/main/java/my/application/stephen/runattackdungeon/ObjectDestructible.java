@@ -11,7 +11,7 @@ public class ObjectDestructible extends ObjectBase {
     public enum CellType {
         Wall, SturdyWall, BreakingWall, Space, Void, Border,
         StairUp, StairDown,
-        Clutter, Barrel, Chest,
+        Rock, Clutter, Barrel, Chest,
         Slime, Goblin, Minotaur, Humanoid,
         //everything that can be picked up/interacted with.
         Weapon, MiningTool, LightSource, Wearable,

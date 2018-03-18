@@ -2,11 +2,11 @@ package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Random;
-import static my.application.stephen.runattackdungeon.Creature.DirectionType.TowardsTargetDirectional;
 import static my.application.stephen.runattackdungeon.Creature.MovementLimit.inCamera;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
@@ -217,21 +217,39 @@ public class Creature extends ObjectDestructible {
         following = follow;
     }
 
-    Food setPotion(Food newPotion) {
+    Food setPotion(@Nullable  Food newPotion) {
         Food ret = potion;
+        if (ret != null) {
+            ret.setOwner(null);
+        }
         potion = newPotion;
+        if (potion != null) {
+            potion.setOwner(this);
+        }
         return ret;
     }
 
-    Clutter setScroll(Clutter newScroll) {
+    Clutter setScroll(@Nullable Clutter newScroll) {
         Clutter ret = scroll;
+        if (ret != null){
+            ret.setOwner(null);
+        }
         scroll = newScroll;
+        if (scroll != null) {
+            scroll.setOwner(this);
+        }
         return ret;
     }
 
     Food setFood(Food newFood) {
         Food ret = food;
+        if (ret != null){
+            ret.setOwner(null);
+        }
         food = newFood;
+        if (food != null){
+            food.setOwner(this);
+        }
         return ret;
     }
 
@@ -247,88 +265,98 @@ public class Creature extends ObjectDestructible {
 
     private Wearable setShield(Wearable newShield) {
         Wearable ret = shield;
-        if (shield != null) {
-            setDefense(defenseMax - shield.getPower());
+        if (ret != null) {
+            setDefense(defenseMax - shield.getTotalPower());
+            ret.setOwner(null);
         }
         shield = newShield;
         if (shield != null) {
-            setDefense(defenseMax + shield.getPower());
+            setDefense(defenseMax + shield.getTotalPower());
+            shield.setOwner(this);
         }
         return ret;
     }
 
     private Wearable setRing(Wearable newRing) {
         Wearable ret = ring;
-        if (ring != null) {
+        if (ret != null) {
             switch (ring.getEnchantType()) {
                 case Attack:
-                    setAttack(attackMax - ring.getPower());
+                    setAttack(attackMax - ring.getTotalPower());
                     break;
                 case Health:
-                    setMaxHP(getMaxpHP() - ring.getPower());
+                    setMaxHP(getMaxpHP() - ring.getTotalPower());
                     break;
                 case Defense:
-                    setDefense(defenseMax - ring.getPower());
+                    setDefense(defenseMax - ring.getTotalPower());
                     break;
             }
+            ret.setOwner(null);
         }
         ring = newRing;
         if (ring != null) {
             switch (ring.getEnchantType()) {
                 case Attack:
-                    setAttack(attackMax + ring.getPower());
+                    setAttack(attackMax + ring.getTotalPower());
                     break;
                 case Health:
-                    setMaxHP(getMaxpHP() + ring.getPower());
+                    setMaxHP(getMaxpHP() + ring.getTotalPower());
                     break;
                 case Defense:
-                    setDefense(defenseMax + ring.getPower());
+                    setDefense(defenseMax + ring.getTotalPower());
                     break;
             }
+            ring.setOwner(this);
         }
         return ret;
     }
 
     Weapon setWeapon(Weapon newWeapon) {
         Weapon ret = weapon;
-        if (weapon != null) {
+        if (ret != null) {
             int tempAtk = attackMax - (weapon.getAttackPower() + weapon.getEnchantModifier());
             if (tempAtk < 0) {
                 tempAtk = 0;
             }
             setAttack(tempAtk);
+            ret.setOwner(null);
         }
         weapon = newWeapon;
         if (weapon != null) {
             setAttack(attackMax + weapon.getAttackPower() + weapon.getEnchantModifier());
+            weapon.setOwner(this);
         }
         return ret;
     }
 
     public MiningTool setMiningTool(MiningTool newMiningTool) {
         MiningTool ret = miningTool;
-        if (miningTool != null) {
+        if (ret != null) {
             int tempMine = mineMax - (miningTool.getMinePower() + miningTool.getEnchantModifier());
             if (tempMine < 0) {
                 tempMine = 0;
             }
             setMining(tempMine);
+            ret.setOwner(null);
         }
         miningTool = newMiningTool;
         if (miningTool != null) {
             setMining(mineMax + miningTool.getMinePower() + miningTool.getEnchantModifier());
+            miningTool.setOwner(this);
         }
         return ret;
     }
 
     public LightSource setLightSource(LightSource newLightSource) {
         LightSource ret = lightSource;
-        if (lightSource != null) {
+        if (ret != null) {
             int tempLightRadius = lightRadius - lightSource.getLightRadius();
+            ret.setOwner(null);
         }
         lightSource = newLightSource;
         if (lightSource != null) {
             setLight(lightSource.getLightRadius());
+            lightSource.setOwner(this);
         } else {
             setLight(0);
         }

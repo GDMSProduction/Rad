@@ -2,6 +2,7 @@ package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.support.annotation.Nullable;
 
 /**
  * Created by Stephen on 2018-01-18.
@@ -12,6 +13,7 @@ public class Clutter extends ObjectDestructible {
     public enum magicType{Fire, Cold, Air, Earth, Water, Electric, Create, Destroy}
     private int value = 0;
     private int enchantModifier = 0;
+    private Creature owner = null;
 
     Clutter(int newValue, Point mPoint, Bitmap newImage, int HPMax) {
         super(mPoint, newImage, HPMax);
@@ -31,7 +33,7 @@ public class Clutter extends ObjectDestructible {
         setCellType(Type);
     }
     //setters
-    public void setValue(int newValue){ value = newValue; }
+    public void setOwner(@Nullable Creature newOwner){owner = newOwner;}
     //getters
     int getValue(){return value;}
     int getEnchantModifier(){return enchantModifier;}

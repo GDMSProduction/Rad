@@ -107,6 +107,7 @@ public class Dungeon {
         Level temp;
         int Width;
         int Height;
+        int borderThickness = 3;
         if (dungeonLevels.size() != 0) {
             Width = dungeonLevels.get(dungeonLevels.size() - 1).getMapWidth() + dungeonLevels.size() - 1;
             if (Width > (screenWidth / spaces[0].getHeight()) * 3) {
@@ -133,7 +134,15 @@ public class Dungeon {
 //        } else if (currentLevelIndex % 3 == 0 && currentLevelIndex != 0) {
 //            temp = new Level(Width, Height, 0, false, currentLevelIndex);
 //        } else {
-            temp = new Level(Width, Height, 50, true, true, dungeonLevels.size());
+            temp = new Level(
+                    Width + (borderThickness * 2),
+                    Height + (borderThickness * 2),
+                    50,
+                    true,
+                    true,
+                    dungeonLevels.size(),
+                    borderThickness
+            );
 //        }
         dungeonLevels.add(temp);
     }

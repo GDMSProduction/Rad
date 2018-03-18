@@ -23,8 +23,10 @@ import static my.application.stephen.runattackdungeon.GameView.imageScroll;
 import static my.application.stephen.runattackdungeon.GameView.imageStairs;
 import static my.application.stephen.runattackdungeon.GameView.imageWeapon;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
+import static my.application.stephen.runattackdungeon.GameView.miningNoises;
 import static my.application.stephen.runattackdungeon.GameView.minotaurNoises;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
+import static my.application.stephen.runattackdungeon.GameView.walkingNoises;
 import static my.application.stephen.runattackdungeon.GameView.walls;
 
 /**
@@ -33,6 +35,7 @@ import static my.application.stephen.runattackdungeon.GameView.walls;
 
 public class Level extends Map {
 
+    public enum ROOMType {EMPTY, LOOT, ENEMY, LOOTandENEMY, BOSS}
     public static final int roomHeightMin = 4;
     public static final int roomWidthMin = 4;
     private int roomNums = 2;
@@ -68,16 +71,16 @@ public class Level extends Map {
     private int maxEnemies = 5;
     private ArrayList<Creature> levelCreatures = new ArrayList<>(maxEnemies);
 
-    Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel) {
-        super(Width, Height, SpacesPercent, natural);
+    Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel, int borderThickness) {
+        super(Width, Height, SpacesPercent, natural, borderThickness, ObjectDestructible.CellType.Border);
         makeRooms = MakeRooms;
 
-        PutRoomsInMap(Width, Height, currentLevel);
+        createRooms(Width, Height, borderThickness);
 //            ConnectRooms();
         makeAvailablePoints(getMapHeight(), getMapWidth());
         if (numEmptyCells < minimumEmptyCells) {
             for (int i = 0; i < minimumEmptyCells; i++) {
-                setSpace(getCurrentMap(), rand.nextInt(getMapHeight() - 3) + 1, rand.nextInt(getMapWidth() - 3) + 1, spaces.length - 1);
+                setSpace(getCurrentMap(), rand.nextInt(getMapHeight() - 6) + 3, rand.nextInt(getMapWidth() - 6) + 3, spaces.length - 1);
             }
             makeAvailablePoints(getMapHeight(), getMapWidth());
         }
@@ -102,7 +105,7 @@ public class Level extends Map {
         if (natural) {
             createClutter(null);
         }
-        if (currentLevel < 1){
+        if (currentLevel < 1) {
 //            CreateHeartDiamond();
         }
         if (currentLevel > 5) {
@@ -198,58 +201,122 @@ public class Level extends Map {
             }
         }
     }
+    private ObjectDestructible.CellType createBorderType(){
+        ObjectDestructible.CellType type;
+        switch (rand.nextInt(4) + 1){
+            case 0: //Treasure Islands.
+                type = ObjectDestructible.CellType.Border;
+                break;
+            default:
+            case 1:
+                type = ObjectDestructible.CellType.Wall;
+                break;
+            case 2:
+                type = ObjectDestructible.CellType.SturdyWall;
+                break;
+            case 3:
+                type = ObjectDestructible.CellType.BreakingWall;
+                break;
+            case 4:
+                type = ObjectDestructible.CellType.Space;
+                break;
+            case 5: //Treasure Islands.
+                type = ObjectDestructible.CellType.Void;
+                break;
+        }
+        return type;
+    }
+    private ROOMType createRoomType(){
+        ROOMType type;
+        switch(rand.nextInt(4)){
+            case 0:
+                type = ROOMType.EMPTY;
+                break;
+            case 1:
+                type = ROOMType.LOOT;
+                break;
+            case 2:
+                type = ROOMType.ENEMY;
+                break;
+            default:
+            case 3:
+                type = ROOMType.LOOTandENEMY;
+                break;
+        }
+        return type;
+    }
 
-    private void PutRoomsInMap(int Width, int Height, int currentLevel) {
-        setRoomDimensionsMax(Width, Height);
-        setRoomAmount(Width, Height);
-
+    private void createRooms(int Width, int Height, int borderThickness) {
+        setRoomDimensionsMax(Width - (borderThickness * 2), Height - (borderThickness * 2));
+        setRoomAmount(Width - (borderThickness * 2), Height - (borderThickness * 2));
         LevelRooms = new ArrayList<>(roomNums);
-        makeRoomStartPoints();
+        makeRoomStartPoints(borderThickness);
 
         for (int i = 0; i < roomNums; i++) {
             int roomWidth = rand.nextInt(roomWidthMax - roomWidthMin) + roomWidthMin;
             int roomHeight = rand.nextInt(roomHeightMax - roomHeightMin) + roomHeightMin;
+            int roomBorderThickness = rand.nextInt(2) + 1;
+            boolean natural = rand.nextBoolean();
+            if (createRoom(
+                    roomWidth,
+                    roomHeight,
+                    100,
+                    natural,
+                    roomBorderThickness,
+                    createBorderType(),
+                    createRoomType()
+            )) break;
+        }
+        //this is where the for loop ends.
+    }
 
-            Room newRoom = new Room(roomWidth, roomHeight, 100, false, maxClutter, maxEnemies);
-            LevelRooms.add(newRoom);
+    private boolean createRoom(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, ROOMType roomType) {
+        if (RoomStartPoints.size() <= 0) {
+            return true;
+        }
+        Room newRoom = new Room(
+                Width,
+                Height,
+                spacePercent,
+                natural,
+                borderThickness,
+                borderType,
+                roomType
+        );
+        LevelRooms.add(newRoom);
 
-            if (RoomStartPoints.size() <= 0) {
-                break;
-            }
-            int startPointIndex = rand.nextInt(RoomStartPoints.size());
-            newRoom.setStartPoint(RoomStartPoints.get(startPointIndex));
-            int startX = RoomStartPoints.get(startPointIndex).x;
-            int startY = RoomStartPoints.get(startPointIndex).y;
+        int startPointIndex = rand.nextInt(RoomStartPoints.size());
+        newRoom.setStartPoint(RoomStartPoints.get(startPointIndex));
+        int startX = RoomStartPoints.get(startPointIndex).x;
+        int startY = RoomStartPoints.get(startPointIndex).y;
 
-            for (int col = startX; col < startX + roomWidth; col++) {
-                for (int row = startY; row < startY + roomHeight; row++) {
-                    super.getCurrentMap()[row][col].clear();
-                    for (int index = 0; index < newRoom.getCurrentMap()[row - startY][col - startX].size(); index++) {
-                        super.getCurrentMap()[row][col].add(newRoom.getCurrentMap()[row - startY][col - startX].get(index));
-                    }
+        //setRoom in the currentMap.
+        for (int col = startX; col < startX + Width; col++) {
+            for (int row = startY; row < startY + Height; row++) {
+                super.getCurrentMap()[row][col].clear();
+                for (int index = 0; index < newRoom.getCurrentMap()[row - startY][col - startX].size(); index++) {
+                    super.getCurrentMap()[row][col].add(newRoom.getCurrentMap()[row - startY][col - startX].get(index));
                 }
             }
-            for (int col = startX - roomWidthMax; col < startX + roomWidth; col++) {
-                for (int row = startY - roomHeightMax; row < startY + roomHeight; row++) {
-                    for (int roomStartPointIndex = 0; roomStartPointIndex < RoomStartPoints.size(); roomStartPointIndex++) {
-                        if (RoomStartPoints.get(roomStartPointIndex).x == col && RoomStartPoints.get(roomStartPointIndex).y == row) {
-                            RoomStartPoints.remove(roomStartPointIndex);
-                        }
+        }
+        //Remove possible Room tiles
+        for (int col = startX - roomWidthMax; col < startX + Width; col++) {
+            for (int row = startY - roomHeightMax; row < startY + Height; row++) {
+                for (int roomStartPointIndex = 0; roomStartPointIndex < RoomStartPoints.size(); roomStartPointIndex++) {
+                    if (RoomStartPoints.get(roomStartPointIndex).x == col && RoomStartPoints.get(roomStartPointIndex).y == row) {
+                        RoomStartPoints.remove(roomStartPointIndex);
                     }
                 }
             }
         }
-//        if (currentLevel % 25 == 0 && currentLevel != 0){
-//            createMinotaur(LevelRooms.get(0));
-//        }
-        //this is where the for loop ends.
+        return false;
     }
 
-    private void makeRoomStartPoints() {
-        int maxRoomStartHeight = super.getMapHeight() - roomHeightMax;
-        int maxRoomStartWidth = super.getMapWidth() - roomWidthMax;
-        for (int row = 0; row < maxRoomStartHeight; row++) {
-            for (int col = 0; col < maxRoomStartWidth; col++) {
+    private void makeRoomStartPoints(int borderThickness) {
+        int maxRoomStartHeight = super.getMapHeight() - roomHeightMax - borderThickness;
+        int maxRoomStartWidth = super.getMapWidth() - roomWidthMax - borderThickness;
+        for (int row = borderThickness; row < maxRoomStartHeight; row++) {
+            for (int col = borderThickness; col < maxRoomStartWidth; col++) {
                 Point temp = new Point(col, row);
                 RoomStartPoints.add(temp);
             }
@@ -401,10 +468,10 @@ public class Level extends Map {
     void createRock(@Nullable Room room, @Nullable Point newPoint) {
         Clutter rock;
         if (newPoint == null) {
-            rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+            rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Rock);
             giveNewPointToObject(room, rock);
         } else {
-            rock = new Clutter(0, 0, newPoint, imageClutter[0], 1, ObjectDestructible.CellType.Clutter);
+            rock = new Clutter(0, 0, newPoint, imageClutter[0], 1, ObjectDestructible.CellType.Rock);
             addObjectToMap(newPoint, rock, false);
         }
         clutter.add(rock);
@@ -692,22 +759,24 @@ public class Level extends Map {
                 addObjectToMap(point, shield, true);
                 break;
             case 1:
-                Wearable silverRing = new Wearable(
-                        Wearable.EnchantType.Attack,
+                Wearable silverRing;
+                silverRing = new Wearable(
+                        createWearableEnchantType(),
                         50 * (currentLevel / 2 + 1),
-                        5,
+                        2,
                         currentLevel,
                         point,
                         imageWearables[1],
-                        1000);
+                        500);
                 silverRing.setCellType(ObjectDestructible.CellType.Wearable);
                 wearables.add(silverRing);
                 addObjectToMap(point, silverRing, true);
                 break;
             case 2:
-                Wearable goldRing = new Wearable(
-                        Wearable.EnchantType.Health,
-                        50 * (currentLevel / 2 + 1),
+                Wearable goldRing;
+                goldRing = new Wearable(
+                        createWearableEnchantType(),
+                        50 * (currentLevel + 1),
                         5,
                         currentLevel,
                         point,
@@ -718,6 +787,25 @@ public class Level extends Map {
                 addObjectToMap(point, goldRing, true);
                 break;
         }
+    }
+    private Wearable.EnchantType createWearableEnchantType(){
+        Wearable.EnchantType type;
+        switch (rand.nextInt(4)){
+            case 0:
+                type = Wearable.EnchantType.Defense;
+                break;
+            default:
+            case 1:
+                type = Wearable.EnchantType.Health;
+                break;
+            case 2:
+                type = Wearable.EnchantType.Attack;
+                break;
+            case 3:
+                type = Wearable.EnchantType.FeatherFall;
+                break;
+        }
+        return type;
     }
 
     private void CreateMiningTool(Point point, int currentLevel) {
@@ -900,7 +988,8 @@ public class Level extends Map {
             }
         }
     }
-    private void moveCreature(Dungeon dungeon, Creature temp){
+
+    private void moveCreature(Dungeon dungeon, Creature temp) {
         switch (temp.getCellType()) {
             default:
             case Slime:
@@ -1161,22 +1250,29 @@ public class Level extends Map {
         switch (harmeeType) {
             default:
             case Border:
-                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
-                    break;
-                }
+                miningNoises[0].start();
+                break;
             case Wall:
             case SturdyWall:
             case BreakingWall:
                 if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
                     break;
                 }
-                harmWall(actee.x, actee.y, actor.getMining(), actor.getCurrentDepth());
+                harmWall(actee.x, actee.y, actor.getMining(), actor.getCurrentDepth(), harmeeType);
                 break;
             case Space:
                 ifCreatureGetsMoved = true;
+                walkingNoises[0].start();
                 break;
             case Void:
-                actor.hurt(2);
+                int fallDamage = 2;
+                Wearable ring = actor.getRing();
+                if (ring != null){
+                    if (ring.getEnchantType() == Wearable.EnchantType.FeatherFall){
+                        fallDamage = 0;
+                    }
+                }
+                actor.hurt(fallDamage);
                 dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, true);
             case StairDown:
                 dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, false);
@@ -1184,6 +1280,12 @@ public class Level extends Map {
             case StairUp:
                 dungeon.goToLevel(actor, actor.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP, false);
                 break;
+            case Rock:
+                if (actor.getMining() > 0){
+                    miningNoises[1].start();
+                } else {
+                    miningNoises[0].start();
+                }
             case Clutter:
             case Barrel:
             case Chest:
@@ -1408,10 +1510,19 @@ public class Level extends Map {
         return false;
     }
 
-    public void harmWall(int cellx, int celly, int mining, int currentDepth) {
+    public void harmWall(int cellx, int celly, int mining, int currentDepth, ObjectDestructible.CellType wallType) {
         super.getCurrentMap()[celly][cellx].get(0).hurt(mining);
-        if (super.getCurrentMap()[celly][cellx].get(0).getBitmap() != walls[0] && mining > 0) {
-            super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
+        if (mining > 0) {
+            if (miningNoises[1].isPlaying()){
+            miningNoises[1].pause();
+            }
+            miningNoises[1].start();
+//            miningNoises[1].pause();
+            if (wallType == ObjectDestructible.CellType.SturdyWall) {
+                super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
+            }
+        } else {
+            miningNoises[0].start();
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {
             super.setSpace(super.getCurrentMap(), celly, cellx, spaces.length - 2);

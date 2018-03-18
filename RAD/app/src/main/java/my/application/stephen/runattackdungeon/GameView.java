@@ -107,6 +107,7 @@ public class GameView extends SurfaceView implements Runnable {
     private Dungeon dungeon = null;
     //The Camera
     private Level levelToDraw = null;
+    private Bitmap[] fogOfWar = null;
     //the player
     private Creature player;
     private int startingHealth = 3;
@@ -141,6 +142,10 @@ public class GameView extends SurfaceView implements Runnable {
         //Create dungeon
         dungeon = new Dungeon();
         levelToDraw = dungeon.getCurrentLevel();
+        int Width = screenWidth / spaces[0].getHeight();
+        int Height = screenHeight / spaces[0].getHeight();
+        fogOfWar = new Bitmap[Width * Height];
+
 
         //Create Core GamePlay Elements
         createPlayer();
@@ -405,6 +410,7 @@ public class GameView extends SurfaceView implements Runnable {
         }
         if (changeMap) {
             levelToDraw = dungeon.getCurrentLevel();
+            fogOfWar = new Bitmap[levelToDraw.getMapHeight() * levelToDraw.getMapWidth()];
             changeMap = false;
         }
         if (checkForInputDOWN) {
@@ -474,6 +480,7 @@ public class GameView extends SurfaceView implements Runnable {
             paint.setColor(Color.WHITE);
             //drawing the currentLevel
             drawingTheMap();
+            drawingTheFogOfWar();
 
             //User Interface
             //THESE NEED TO BE LAST.
@@ -873,6 +880,36 @@ public class GameView extends SurfaceView implements Runnable {
         for (int j = 0; j < levelToDraw.getLevelCreatures().size(); j++) {
             drawLevelObject(levelToDraw.getLevelCreatures().get(j));
         }
+    }
+
+    private void drawingTheFogOfWar() {
+        ArrayList<ObjectDestructible>[][] temp = levelToDraw.getCurrentMap();
+        int mapWidth = levelToDraw.getMapWidth();
+        int mapHeight = levelToDraw.getMapHeight();
+        try {
+            for (int row = 0; row < camHeight; row++) {
+                for (int col = 0; col < camWidth; col++) {
+                    for (int list = 0; list < levelToDraw.getCurrentMap()[row + camOffsetY][col + camOffsetX].size(); list++) {
+                        canvas.drawBitmap(levelToDraw.getCurrentMap()
+                                        [(row + camOffsetY)]
+                                        [(col + camOffsetX)].get(list).getBitmap(),
+                                (col * mBitMapWidth) + mainOffsetX,
+                                (row * mBitMapHeight) + mainOffsetY,
+                                paint);
+                    }
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.d(TAG, "\ncamHeight = " + camHeight + " camWidth = " + camWidth +
+                    "\ncamOffsetY = " + camOffsetY + " camOffSetX = " + camOffsetX +
+                    "\nMapHeight = " + levelToDraw.getMapHeight() + " MapWidth = " + levelToDraw.getMapWidth() + "\n", e);
+
+            Log.d(TAG, (camHeight + camOffsetY) + " was greater than " + levelToDraw.getMapHeight() + " OR\n" +
+                    (camWidth + camOffsetX) + " was greater than " + levelToDraw.getMapWidth() + " OR\n" +
+                    camOffsetY + " was less than 0. OR\n" +
+                    camOffsetX + " was less than 0.", e);
+        }
+
     }
 
     private void drawingTheMap() {

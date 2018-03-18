@@ -965,7 +965,7 @@ public class Level extends Map {
     }
 
     public void UpdateEnemies(Dungeon dungeon) {
-        for (int i = 0; i < levelCreatures.size(); i++) {
+        for (int i = 0; i < levelCreatures.size() - 1; i++) {
             switch (levelCreatures.get(i).getMovementLimit()) {
                 default:
                 case inCamera:

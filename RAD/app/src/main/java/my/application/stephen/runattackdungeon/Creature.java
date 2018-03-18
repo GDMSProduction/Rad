@@ -17,9 +17,26 @@ import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
 public class Creature extends ObjectDestructible {
 
+    public enum DirectionType {
+        Still,
+        LeftandRight,
+        UpandDown,
+        Random,
+        TowardsTargetDirectional,
+        TowardsTargetDodgeObstacles,
+        TowardsTargetEfficient
+    }
+    public enum MovementLimit {
+        inCamera,
+        inLevel,
+        inDungeon,
+        inWorld
+    }
+    public enum state {Chase, Wander, Dead, Gather}
+
     private DirectionType directionType = Random;
     private MovementLimit movementLimit = inCamera;
-    private Point target = new Point (0,0);
+    private Point target = new Point(0, 0);
     private int defense = 0;
     private int defenseMax = 80;//out of 100
     private int attack = 0;
@@ -46,15 +63,7 @@ public class Creature extends ObjectDestructible {
         super(newPoint, newBitmap, HPMax);
         setCellType(CellType.Slime);
     }
-
-    Creature(Point newPoint,
-             Bitmap newBitmap,
-             int HPMax,
-             CellType Type,
-             int DefMax,
-             int Attack,
-             int Level,
-             DirectionType DIRECTIONTYPE) {
+    Creature(Point newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax, int Attack, int Level, DirectionType DIRECTIONTYPE) {
         super(newPoint, newBitmap, HPMax, Type);
         defense = defenseMax = DefMax;
         setCellType(Type);
@@ -63,161 +72,31 @@ public class Creature extends ObjectDestructible {
         directionType = DIRECTIONTYPE;
     }
 
-    int getAttack() {
-        if (attack < 0) {
-            return 0;
-        }
-        return attack;
-    }
+    //Mutators
 
-    public void setAttack(int newAttack) {
+    void setAttack(int newAttack) {
         attack = attackMax = newAttack;
     }
-
-    public int getAttackMax() {
-        return attackMax;
-    }
-
-    //getters
-
-    int getMining() {
-        return mine;
-    }
-
-    public void setMining(int newMiningPower) {
+    private void setMining(int newMiningPower) {
         mine = mineMax = newMiningPower;
     }
-
-    public int getMiningMax() {
-        return mineMax;
-    }
-
-    int getDefense() {
-        return defense;
-    }
-
-    public void setDefense(int newDef) {
+    void setDefense(int newDef) {
         if (newDef > defenseMax) {
             defense = defenseMax;
         } else {
             defense = newDef;
         }
     }
-
-    public int getDefenseMax() {
-        return defenseMax;
-    }
-
-    int getCurrentDepth() {
-        return currentDepth;
-    }
-
     void setCurrentDepth(int newDepth) {
         currentDepth = newDepth;
     }
-
-    Weapon getWeapon() {
-        return weapon;
-    }
-
-    MiningTool getMiningTool() {
-        return miningTool;
-    }
-
-    LightSource getLightSource() {
-        return lightSource;
-    }
-
-    Wearable getRing() {
-        return ring;
-    }
-
-    Wearable getShield() {
-        return shield;
-    }
-
-    Food getFood() {
-        return food;
-    }
-
-    Food getPotion() {
-        return potion;
-    }
-
-    Clutter getScroll() {
-        return scroll;
-    }
-
-    MovementLimit getMovementLimit() {
-        return movementLimit;
-    }
-
-    DirectionType getDirectionType() {
-        return directionType;
-    }
-
-    ArrayList<Point3d> getPath() {
-        return Path;
-    }
-
-    public String getName() {
-        return name;
-    }
-
     public void setName(String newName) {
         name = newName;
     }
-
-    int getScore() {
-        return score;
-    }
-
-    int getTotalValue() {
-        int totalValue = score;
-        if (weapon != null) {
-            totalValue += weapon.getValue();
-        }
-        if (miningTool != null) {
-            totalValue += miningTool.getValue();
-        }
-        if (lightSource != null) {
-            totalValue += lightSource.getValue();
-        }
-        if (ring != null) {
-            totalValue += ring.getValue();
-        }
-        if (shield != null) {
-            totalValue += shield.getValue();
-        }
-        if (food != null) {
-            totalValue += food.getValue();
-        }
-        if (potion != null) {
-            totalValue += potion.getValue();
-        }
-        if (scroll != null) {
-            totalValue += scroll.getValue();
-        }
-        return totalValue;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public boolean isFollowing() {
-        return following;
-    }
-
-    /*
-    * hurt: parameters:
-    * int damage = how much to hurt the creature.
-     */
     public void setFollowing(boolean follow) {
         following = follow;
     }
-
-    Food setPotion(@Nullable  Food newPotion) {
+    Food setPotion(@Nullable Food newPotion) {
         Food ret = potion;
         if (ret != null) {
             ret.setOwner(null);
@@ -228,10 +107,9 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
     Clutter setScroll(@Nullable Clutter newScroll) {
         Clutter ret = scroll;
-        if (ret != null){
+        if (ret != null) {
             ret.setOwner(null);
         }
         scroll = newScroll;
@@ -240,19 +118,17 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
     Food setFood(Food newFood) {
         Food ret = food;
-        if (ret != null){
+        if (ret != null) {
             ret.setOwner(null);
         }
         food = newFood;
-        if (food != null){
+        if (food != null) {
             food.setOwner(this);
         }
         return ret;
     }
-
     Wearable setWearable(Wearable newWearable) {
         Wearable ret = null;
         if (newWearable.getBitmap() == imageWearables[0] || newWearable.getBitmap() == imageWearables[1]) {
@@ -262,7 +138,6 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
     private Wearable setShield(Wearable newShield) {
         Wearable ret = shield;
         if (ret != null) {
@@ -276,7 +151,6 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
     private Wearable setRing(Wearable newRing) {
         Wearable ret = ring;
         if (ret != null) {
@@ -310,7 +184,6 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
     Weapon setWeapon(Weapon newWeapon) {
         Weapon ret = weapon;
         if (ret != null) {
@@ -328,8 +201,7 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
-    public MiningTool setMiningTool(MiningTool newMiningTool) {
+    MiningTool setMiningTool(MiningTool newMiningTool) {
         MiningTool ret = miningTool;
         if (ret != null) {
             int tempMine = mineMax - (miningTool.getMinePower() + miningTool.getEnchantModifier());
@@ -346,8 +218,7 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
-    public LightSource setLightSource(LightSource newLightSource) {
+    LightSource setLightSource(LightSource newLightSource) {
         LightSource ret = lightSource;
         if (ret != null) {
             int tempLightRadius = lightRadius - lightSource.getLightRadius();
@@ -362,36 +233,139 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-
-    public void incrementScore(int points) {
-        score += points;
+    void setLight(int newLightRadius) {
+        lightRadius = newLightRadius;
+    }
+    void setTarget(Point Target) {
+        target = Target;
     }
 
-    public void levelUP() {
+    //Accessors
+
+    int getAttack() {
+        if (attack < 0) {
+            return 0;
+        }
+        return attack;
+    }
+    int getAttackMax() {
+        return attackMax;
+    }
+    int getMining() {
+        return mine;
+    }
+    int getMiningMax() {
+        return mineMax;
+    }
+    int getDefense() {
+        return defense;
+    }
+    int getDefenseMax() {
+        return defenseMax;
+    }
+    int getCurrentDepth() {
+        return currentDepth;
+    }
+    Weapon getWeapon() {
+        return weapon;
+    }
+    MiningTool getMiningTool() {
+        return miningTool;
+    }
+    LightSource getLightSource() {
+        return lightSource;
+    }
+    Wearable getRing() {
+        return ring;
+    }
+    Wearable getShield() {
+        return shield;
+    }
+    Food getFood() {
+        return food;
+    }
+    Food getPotion() {
+        return potion;
+    }
+    Clutter getScroll() {
+        return scroll;
+    }
+    MovementLimit getMovementLimit() {
+        return movementLimit;
+    }
+    DirectionType getDirectionType() {
+        return directionType;
+    }
+    ArrayList<Point3d> getPath() {
+        return Path;
+    }
+    public String getName() {
+        return name;
+    }
+    int getScore() {
+        return score;
+    }
+    int getTotalValue() {
+        int totalValue = score;
+        if (weapon != null) {
+            totalValue += weapon.getValue();
+        }
+        if (miningTool != null) {
+            totalValue += miningTool.getValue();
+        }
+        if (lightSource != null) {
+            totalValue += lightSource.getValue();
+        }
+        if (ring != null) {
+            totalValue += ring.getValue();
+        }
+        if (shield != null) {
+            totalValue += shield.getValue();
+        }
+        if (food != null) {
+            totalValue += food.getValue();
+        }
+        if (potion != null) {
+            totalValue += potion.getValue();
+        }
+        if (scroll != null) {
+            totalValue += scroll.getValue();
+        }
+        return totalValue;
+    }
+    int getLevel() {
+        return level;
+    }
+    boolean isFollowing() {
+        return following;
+    }
+    Point getTarget() {
+        return target;
+    }
+
+    //Helper Functions
+
+    void incrementScore(int points) {
+        score += points;
+    }
+    void levelUP() {
         level++;
         setMaxHP((int) (getMaxpHP() * 1.2));
     }
-
-    public void setLight(int newLightRadius) {
-        lightRadius = newLightRadius;
-    }
-
-    public void increaseAttack(int increaseToAttack) {
+    void increaseAttack(int increaseToAttack) {
         if (increaseToAttack + attack >= attackMax) {
             attack = attackMax;
         } else {
             attack += increaseToAttack;
         }
     }
-
-    public void useFood() {
+    void useFood() {
         heal(getFood().getHealing());
         setFood(null);
     }
-
-    public void useScroll(Dungeon dungeon) {
+    void useScroll(Dungeon dungeon) {
         Dungeon.DirectionToGo direction;
-        if (scroll.getValue() >= currentDepth){
+        if (scroll.getValue() >= currentDepth) {
             direction = Dungeon.DirectionToGo.DOWN;
         } else {
             direction = Dungeon.DirectionToGo.UP;
@@ -399,37 +373,8 @@ public class Creature extends ObjectDestructible {
         dungeon.goToLevel(this, scroll.getValue(), direction, false);
         setScroll(null);
     }
-
-    public void usePotion(Level currentLevel) {
+    void usePotion(Level currentLevel) {
         getPotion().PotionEffect(this, currentLevel);
         setPotion(null);
     }
-
-    public Point getTarget() {
-        return target;
-    }
-
-    public void setTarget(Point Target) {
-        target = Target;
-    }
-
-    public enum DirectionType {
-        Still,
-        LeftandRight,
-        UpandDown,
-        Random,
-        TowardsTargetDirectional,
-        TowardsTargetDodgeObstacles,
-        TowardsTargetEfficient
-    }
-
-    public enum MovementLimit {
-        inCamera,
-        inLevel,
-        inDungeon,
-        inWorld
-    }
-
-    public enum state {Chase, Wander, Dead, Gather}
-
 }

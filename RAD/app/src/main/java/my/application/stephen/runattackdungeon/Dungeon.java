@@ -5,6 +5,7 @@ import android.graphics.Point;
 
 import java.util.ArrayList;
 
+import static my.application.stephen.runattackdungeon.GameView.Noises;
 import static my.application.stephen.runattackdungeon.GameView.camHeight;
 import static my.application.stephen.runattackdungeon.GameView.camOffsetX;
 import static my.application.stephen.runattackdungeon.GameView.camOffsetY;
@@ -12,14 +13,16 @@ import static my.application.stephen.runattackdungeon.GameView.camWidth;
 import static my.application.stephen.runattackdungeon.GameView.changeLighting;
 import static my.application.stephen.runattackdungeon.GameView.changeMap;
 import static my.application.stephen.runattackdungeon.GameView.friendlyFire;
+import static my.application.stephen.runattackdungeon.GameView.idMiningFail;
+import static my.application.stephen.runattackdungeon.GameView.idMiningSucceed;
+import static my.application.stephen.runattackdungeon.GameView.idMinotaurRoar;
+import static my.application.stephen.runattackdungeon.GameView.idWalk;
 import static my.application.stephen.runattackdungeon.GameView.imageClutter;
 import static my.application.stephen.runattackdungeon.GameView.imageWeapon;
 import static my.application.stephen.runattackdungeon.GameView.mBitMapWidth;
-import static my.application.stephen.runattackdungeon.GameView.miningNoises;
 import static my.application.stephen.runattackdungeon.GameView.screenHeight;
 import static my.application.stephen.runattackdungeon.GameView.screenWidth;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
-import static my.application.stephen.runattackdungeon.GameView.walkingNoises;
 import static my.application.stephen.runattackdungeon.Level.roomHeightMin;
 import static my.application.stephen.runattackdungeon.Level.roomWidthMin;
 import static my.application.stephen.runattackdungeon.Map.rand;
@@ -553,7 +556,10 @@ public class Dungeon {
                 creature)) {
             dungeonLevels.get(creature.getZ()).removeObjectFromMap(creature.get2dPoint(), creature);
             creature.setX(X);
-            walkingNoises[0].start();
+            if (creature.getZ() == player.getZ()) {
+                Noises.play(idWalk, 1, 1, 0, 0, 1);
+//              walkingNoises[0].start();
+            }
             dungeonLevels.get(creature.getZ()).addObjectToMap(creature.get2dPoint(), creature, false);
             if (creature.getLightSource() != null &&
                     currentLevel == dungeonLevels.get(creature.getZ() )
@@ -571,7 +577,10 @@ public class Dungeon {
                 creature)) {
             dungeonLevels.get(creature.getZ()).removeObjectFromMap(creature.get2dPoint(), creature);
             creature.setY(Y);
-            walkingNoises[0].start();
+            if (creature.getZ() == player.getZ()) {
+                Noises.play(idWalk, 1, 1, 0, 0, 1);
+//            walkingNoises[0].start();
+            }
             dungeonLevels.get(creature.getZ()).addObjectToMap(creature.get2dPoint(), creature, false);
             if (creature.getLightSource() != null &&
                     currentLevel == dungeonLevels.get(creature.getZ() )
@@ -589,7 +598,8 @@ public class Dungeon {
         switch (harmeeType) {
             default:
             case Border:
-                miningNoises[0].start();
+                Noises.play(idMiningFail, 1, 1, 0, 0, 1);
+//                miningNoises[0].start();
                 break;
             case Wall:
             case SturdyWall:
@@ -620,9 +630,11 @@ public class Dungeon {
                 break;
             case Rock:
                 if (actor.getMining() > 0) {
-                    miningNoises[1].start();
+                    Noises.play(idMiningSucceed, 1, 1, 0, 0, 1);
+//                    miningNoises[1].start();
                 } else {
-                    miningNoises[0].start();
+                    Noises.play(idMiningFail, 1, 1, 0, 0, 1);
+//                    miningNoises[0].start();
                 }
             case Clutter:
             case Barrel:
@@ -886,6 +898,13 @@ public class Dungeon {
         }
         if (creature == player) {
             currentLevelIndex = creature.getZ();
+            ArrayList<Creature> levelCreatures = dungeonLevels.get(levelToGoTo).getLevelCreatures();
+            for (int i = 0; i < levelCreatures.size(); i++){
+                if (levelCreatures.get(i).getCellType() == ObjectDestructible.CellType.Minotaur){
+                    Noises.play(idMinotaurRoar, 1, 1, 0, 0, 1);
+                    levelCreatures.get(i).setCreatureState(Creature.state.Chase);
+                }
+            }
         }
     }
 

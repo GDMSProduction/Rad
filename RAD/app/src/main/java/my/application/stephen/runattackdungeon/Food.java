@@ -126,6 +126,9 @@ public class Food extends Clutter {
                             break;
                     }
                 }
+                if (destroyed == false){
+                    creature.hurt(healing);
+                }
                 break;
             case Green:
                 //if it's a green potion, it restores your health.

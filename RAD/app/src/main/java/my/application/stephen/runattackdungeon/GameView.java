@@ -11,7 +11,9 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.renderscript.ScriptGroup;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -52,10 +54,15 @@ public class GameView extends SurfaceView implements Runnable {
     public static Bitmap[] imageNPCRight;
     public static Bitmap[] imageNPCUp;
     public static Bitmap[] imageNPCDown;
-    public static MediaPlayer[] miningNoises;
-    public static MediaPlayer[] minotaurNoises;
-    public static MediaPlayer[] playerNoises;
-    public static MediaPlayer[] walkingNoises;
+    public static MediaPlayer[] something;
+    public static SoundPool Noises;
+    private SoundPool Death;
+    public static int idBottleBreak;
+    public static int idWilhelmScream;
+    public static int idMinotaurRoar;
+    public static int idWalk;
+    public static int idMiningFail;
+    public static int idMiningSucceed;
 
     public static boolean friendlyFire = true;
     public static int mBitMapHeight;
@@ -309,15 +316,23 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void createAudio(Context context) {
-        minotaurNoises = new MediaPlayer[1];
-        minotaurNoises[0] = MediaPlayer.create(context, R.raw.dinosaur_dragon_roar__253473__groadr);
-        playerNoises = new MediaPlayer[1];
-        playerNoises[0] = MediaPlayer.create(context, R.raw.wilhelm__13797__sweetneo85);
-        walkingNoises = new MediaPlayer[1];
-        walkingNoises[0] = MediaPlayer.create(context, R.raw.left_foot__21692__ice9ine);
-        miningNoises = new MediaPlayer[2];
-        miningNoises[0] = MediaPlayer.create(context, R.raw.metal_02__56252__q_k);
-        miningNoises[1] = MediaPlayer.create(context, R.raw.metal_03__56253__q_k);
+        Noises = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
+        Death = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        idBottleBreak = Noises.load(context, R.raw.bottle_break__407431__deezsoundztho, 1);
+        idWilhelmScream = Noises.load(context, R.raw.wilhelm__13797__sweetneo85, 1);
+        idMinotaurRoar = Noises.load(context, R.raw.dinosaur_dragon_roar__253473__groadr, 1);
+        idWalk = Noises.load(context, R.raw.left_foot__21692__ice9ine, 1);
+        idMiningFail = Noises.load(context, R.raw.metal_02__56252__q_k, 1);
+        idMiningSucceed = Noises.load(context, R.raw.metal_03__56253__q_k, 1);
+//        minotaurNoises = new MediaPlayer[1];
+//        minotaurNoises[0] = MediaPlayer.create(context, R.raw.dinosaur_dragon_roar__253473__groadr);
+//        playerNoises = new MediaPlayer[1];
+//        playerNoises[0] = MediaPlayer.create(context, R.raw.wilhelm__13797__sweetneo85);
+//        walkingNoises = new MediaPlayer[1];
+//        walkingNoises[0] = MediaPlayer.create(context, R.raw.left_foot__21692__ice9ine);
+//        miningNoises = new MediaPlayer[2];
+//        miningNoises[0] = MediaPlayer.create(context, R.raw.metal_02__56252__q_k);
+//        miningNoises[1] = MediaPlayer.create(context, R.raw.metal_03__56253__q_k);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -434,7 +449,8 @@ public class GameView extends SurfaceView implements Runnable {
         if (player.getHP() <= 0) {
             win = false;
             playing = false;
-            playerNoises[0].start();
+            Death.play(idWilhelmScream, 1, 1, 0, 0, 1);
+//            playerNoises[0].start();
             return;
         }
         if (minotaurSlain) {
@@ -760,7 +776,21 @@ public class GameView extends SurfaceView implements Runnable {
         canvas.drawRect(
                 (int) tempWidth,
                 (int) tempHeight - (mBitMapHeight * 2),
-                mBitMapWidth + (int) tempWidth,
+                (int) tempWidth + mBitMapWidth,
+                (int) tempHeight - mBitMapHeight,
+                paint
+        );
+        canvas.drawRect(
+                (int) tempWidth,
+                (int) tempHeight - mBitMapHeight,
+                (int) tempWidth + mBitMapWidth,
+                (int) tempHeight,
+                paint
+        );
+        canvas.drawRect(
+                (int) tempWidth,
+                (int) tempHeight,
+                (int) tempWidth + mBitMapWidth,
                 (int) tempHeight + mBitMapHeight,
                 paint
         );

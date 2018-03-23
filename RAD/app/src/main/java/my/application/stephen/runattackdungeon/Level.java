@@ -8,9 +8,12 @@ import java.util.ArrayList;
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Horizontal;
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Still;
 import static my.application.stephen.runattackdungeon.Creature.DirectionType.Vertical;
+import static my.application.stephen.runattackdungeon.GameView.Noises;
 import static my.application.stephen.runattackdungeon.GameView.camHeight;
 import static my.application.stephen.runattackdungeon.GameView.camWidth;
-import static my.application.stephen.runattackdungeon.GameView.changeLighting;
+import static my.application.stephen.runattackdungeon.GameView.idBottleBreak;
+import static my.application.stephen.runattackdungeon.GameView.idMiningFail;
+import static my.application.stephen.runattackdungeon.GameView.idMiningSucceed;
 import static my.application.stephen.runattackdungeon.GameView.imageClutter;
 import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
 import static my.application.stephen.runattackdungeon.GameView.imageFood;
@@ -22,8 +25,6 @@ import static my.application.stephen.runattackdungeon.GameView.imageScroll;
 import static my.application.stephen.runattackdungeon.GameView.imageStairs;
 import static my.application.stephen.runattackdungeon.GameView.imageWeapon;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
-import static my.application.stephen.runattackdungeon.GameView.miningNoises;
-import static my.application.stephen.runattackdungeon.GameView.minotaurNoises;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
 import static my.application.stephen.runattackdungeon.GameView.walls;
 
@@ -744,7 +745,6 @@ public class Level extends Map {
         giveNewPointToObject(room, minotaur, currentLevel);
         setLighting(minotaur);
         levelCreatures.add(minotaur);
-        minotaurNoises[0].start();
     }
 
     private void createHumanoid(@Nullable Room room, int currentLevel) {
@@ -1200,6 +1200,7 @@ public class Level extends Map {
             if (tempPoint.x == cellx && tempPoint.y == celly) {
                 if (harmer.getPotion() != null){
                     tempCreature.usePotion(harmer.getPotion(), dungeonSize, this);
+                    Noises.play(idBottleBreak, 1, 1, 0, 0, 1);
                     harmer.setPotion(null);
                 }else {
                     tempCreature.hurt(
@@ -1229,12 +1230,14 @@ public class Level extends Map {
     public void harmWall(int cellx, int celly, int currentDepth, int mining, MiningTool miningTool, ObjectDestructible.CellType wallType) {
         super.getCurrentMap()[celly][cellx].get(0).hurt(mining);
         if (mining > 0) {
-            miningNoises[1].start();
+            Noises.play(idMiningSucceed, 1, 1, 0, 0, 1);
+//            miningNoises[1].start();
             if (wallType == ObjectDestructible.CellType.SturdyWall) {
                 super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
             }
         } else {
-            miningNoises[0].start();
+            Noises.play(idMiningFail, 1, 1, 0, 0, 1);
+//            miningNoises[0].start();
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {
             int wallHealth = super.getCurrentMap()[celly][cellx].get(0).getMaxHP();

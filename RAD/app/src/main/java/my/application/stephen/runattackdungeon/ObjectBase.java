@@ -10,7 +10,7 @@ import android.graphics.Rect;
  * Created by Stephen on 2018-01-18.
  */
 
-public class ObjectBase {
+public class ObjectBase{
     public enum AlignmentHorizontal {Left, Center, Right}
     public enum AlignmentVertical {Top, Middle, Bottom}
     private AlignmentHorizontal alignmentHorizontal = AlignmentHorizontal.Center;

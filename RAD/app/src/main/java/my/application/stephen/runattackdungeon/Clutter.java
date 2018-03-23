@@ -15,18 +15,18 @@ public class Clutter extends ObjectDestructible {
     private int enchantModifier = 0;
     private Creature owner = null;
 
-    Clutter(int newValue, Point mPoint, Bitmap newImage, int HPMax) {
+    Clutter(int newValue, Point3d mPoint, Bitmap newImage, int HPMax) {
         super(mPoint, newImage, HPMax);
         value = newValue;
         setCellType(CellType.Clutter);
     }
-    Clutter(int newValue, int enchantPower, Point mPoint, Bitmap newImage, int HPMax) {
+    Clutter(int newValue, int enchantPower, Point3d mPoint, Bitmap newImage, int HPMax) {
         super(mPoint, newImage, HPMax);
         value = newValue;
         enchantModifier = enchantPower;
         setCellType(CellType.Clutter);
     }
-    Clutter(int newValue, int enchantPower, Point mPoint, Bitmap newImage, int HPMax, CellType Type) {
+    Clutter(int newValue, int enchantPower, Point3d mPoint, Bitmap newImage, int HPMax, CellType Type) {
         super(mPoint, newImage, HPMax);
         value = newValue;
         enchantModifier = enchantPower;

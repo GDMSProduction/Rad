@@ -83,4 +83,10 @@ public class GameActivity extends AppCompatActivity {
         hideSystemUI();
         gameView.resume();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+    }
 }

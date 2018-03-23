@@ -19,8 +19,8 @@ class Room extends Map {
     private Point connectorEAST = null;
     private Point connectorWEST = null;
 
-    Room(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, Level.ROOMType ROOMType) {
-        super(Width, Height, spacePercent, natural, borderThickness, borderType);
+    Room(int Width, int Height, int Depth, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, Level.ROOMType ROOMType) {
+        super(Width, Height, Depth, spacePercent, natural, borderThickness, borderType);
         this.roomType = ROOMType;
         switch (roomType){
             case EMPTY:

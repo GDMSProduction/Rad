@@ -22,11 +22,11 @@ public class ObjectDestructible extends ObjectBase {
     private int hitPoints = 15;
     private int hitPointsMax = 15;
 
-    ObjectDestructible(Point newPoint, Bitmap newBitmap, int HPMax) {
+    ObjectDestructible(Point3d newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap);
         hitPoints = hitPointsMax = HPMax;
     }
-    ObjectDestructible(Point newPoint, Bitmap newBitmap, int HPMax, CellType CELLTYPE) {
+    ObjectDestructible(Point3d newPoint, Bitmap newBitmap, int HPMax, CellType CELLTYPE) {
         super(newPoint, newBitmap);
         hitPoints = hitPointsMax = HPMax;
         cellType = CELLTYPE;
@@ -37,7 +37,7 @@ public class ObjectDestructible extends ObjectBase {
         return hitPoints;
     }
 
-    public int getMaxpHP() {
+    public int getMaxHP() {
         return hitPointsMax;
     }
 
@@ -60,8 +60,8 @@ public class ObjectDestructible extends ObjectBase {
         }
     }
 
-    public void heal(int healing) {
-        if(hitPoints == hitPointsMax) {
+    public void heal(int dungeonSize, int healing) {
+        if(hitPoints == hitPointsMax && hitPointsMax < dungeonSize * 3) {
             hitPoints++;
             hitPointsMax++;
         } else if (healing + hitPoints >= hitPointsMax) {

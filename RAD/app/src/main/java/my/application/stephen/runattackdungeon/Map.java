@@ -3,11 +3,13 @@ package my.application.stephen.runattackdungeon;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Random;
 
 import static java.lang.Integer.MAX_VALUE;
+import static my.application.stephen.runattackdungeon.GameView.changeLighting;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
 import static my.application.stephen.runattackdungeon.GameView.walls;
 
@@ -20,11 +22,12 @@ public class Map {
     //the number of floor tiles
     protected int numEmptyCells = 0;
     //random number, used for random number generation
-    protected Random rand = new Random();
+    static Random rand = new Random();
     //The points of every floor tile.
     protected ArrayList<Point> FloorTiles;
     private int sturdywallHealth = 15;
     private int breakingwallHealth = 5;
+    private int borderThickness = 1;
     //the percent of tiles that we want to be walls in the finalized map.
     private int SpacePercent = 40;
     // the type of cells the Border will be made up of.
@@ -41,15 +44,16 @@ public class Map {
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-    public Map(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType BorderType) {
+    public Map(int Width, int Height, int Depth, int spacePercent, boolean natural, int BORDER_Thickness, ObjectDestructible.CellType BorderType) {
         mWidth = Width;
         mHeight = Height;
         borderType = BorderType;
         SpacePercent = spacePercent;
         mCellsCurr = new ArrayList[mHeight][mWidth];
         mCellsNext = new ArrayList[mHeight][mWidth];
+        setBorderThickness(BORDER_Thickness);
 
-        generateNewMap(natural, borderThickness);
+        generateNewMap(natural, Depth);
     }
 
     //Given a group of tiles,
@@ -63,15 +67,26 @@ public class Map {
         }
         return false;
     }
+    //Given a group of tiles,
+    //if a pic is in the group, return true.
+    //if not, return false.
+    private boolean FindInList(ArrayList<Point> PointList, Point point) {
+        for (Point aPoint : PointList) {
+            if (point == aPoint) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     //fills the current map with randomized tiles
-    private void InitializeMap() {
+    private void InitializeMap(int depth) {
         for (int row = 0; row < mHeight; row++) {
             for (int col = 0; col < mWidth; col++) {
                 mCellsCurr[row][col] = new ArrayList<>();
                 mCellsCurr[row][col].add(
                         new ObjectDestructible(
-                                new Point(col, row),
+                                new Point3d(col, row, depth),
                                 walls[0],
                                 5));
                 mCellsNext[row][col] = new ArrayList<>();
@@ -92,7 +107,7 @@ public class Map {
         }
     }
 
-    private double distance(Point start, Point end) {
+    public static double distance(Point start, Point end) {
         return Math.sqrt(Math.pow((start.x - end.x), 2) + Math.pow((start.y - end.y), 2));
     }
 
@@ -157,6 +172,8 @@ public class Map {
         return mWidth;
     }
 
+    public int getBorderThickness() {return borderThickness;}
+
     public ArrayList<Point> getSomeFloorPoints(Point start, int width, int height) {
         ArrayList<Point> someFloorTiles = new ArrayList<>();
         for (int row = start.y; row < start.y + height; row++) {
@@ -174,6 +191,8 @@ public class Map {
     }
 
     //Mutators
+
+    public void setBorderThickness(int newBorderThickness){borderThickness = newBorderThickness;}
     public void setSpace(ArrayList<ObjectDestructible>[][] array, int row, int col, int agedness) {
         switch (rand.nextInt(agedness)) {
             default:
@@ -244,12 +263,12 @@ public class Map {
     //Creates a new map through random generation and two refinement process.
     //Refinement one is to prevent large open areas.
     //refinement two is to create paths between areas.
-    public void generateNewMap(boolean natural, int borderThickness) {
+    public void generateNewMap(boolean natural, int depth) {
         // randomly initialize the map
-        InitializeMap();
-        RandomizeMap();
+        InitializeMap(depth);
 
         if (natural) {
+            RandomizeMap();
             int refine = /*rand.nextInt(3) + 1*/ 3;
             //refine the map for some number of generations
             for (int i = 0; i < refine; i++) {
@@ -268,6 +287,14 @@ public class Map {
         );
     }
 
+    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
+        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
+            return ObjectDestructible.CellType.Border;
+        }
+        return getCurrentMap()[celly][cellx].get(
+                getCurrentMap()[celly][cellx].size() - 1
+        ).getCellType();
+    }
 
     public boolean isCellOpen(int cellx, int celly) {
         if (cellx >= mWidth || cellx < 0 || celly >= mHeight || celly < 0) {
@@ -302,9 +329,131 @@ public class Map {
         numEmptyCells++;
     }
 
+    public void distributeObjectInMap(Point point, ObjectDestructible object){
+        int displacement = 0;
+        boolean placed = false;
+        int direction = rand.nextInt(8);
+        ArrayList<Point> displacedPoints = new ArrayList<>();
+        ArrayList<Point> FloorTilesLeft = FloorTiles;
+        if (FindInList(FloorTiles, point)) {
+            displacedPoints.add(point);
+        }
+        while(!placed && FloorTilesLeft.size() > 0) {
+            displacement++;
+            switch (direction) {
+                default:
+                case 0:
+                    for (int col = point.x - displacement; col <= point.x + displacement; col++) {
+                        for (int row = point.y - displacement; row <= point.y + displacement; row++) {
+                            Point temp = new Point(col, row);
+                            if (FindInList(FloorTilesLeft, temp)) {
+                                if (!FindInList(displacedPoints, temp)) {
+                                    getCurrentMap()[temp.y][temp.x].add(object);
+                                    placed = true;
+                                }
+                                FloorTilesLeft.remove(temp);
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 1:
+                    for (int row = point.y - displacement; row <= point.y + displacement; row++) {
+                        for (int col = point.x - displacement; col <= point.x + displacement; col++) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 2:
+                    for (int col = point.x - displacement; col <= point.x + displacement; col++) {
+                        for (int row = point.y + displacement; row >= point.y - displacement; row--) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 3:
+                    for (int row = point.y + displacement; row >= point.y - displacement; row--) {
+                        for (int col = point.x - displacement; col <= point.x + displacement; col++) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 4:
+                    for (int col = point.x + displacement; col >= point.x - displacement; col--) {
+                        for (int row = point.y + displacement; row >= point.y - displacement; row--) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 5:
+                    for (int row = point.y + displacement; row >= point.y - displacement; row--) {
+                        for (int col = point.x + displacement; col >= point.x - displacement; col--) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 6:
+                    for (int col = point.x + displacement; col >= point.x - displacement; col--) {
+                        for (int row = point.y - displacement; row <= point.y + displacement; row++) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+                case 7:
+                    for (int row = point.y - displacement; row <= point.y + displacement; row++) {
+                        for (int col = point.x + displacement; col >= point.x - displacement; col--) {
+                            Point temp = new Point(col, row);
+                            if (!FindInList(displacedPoints, temp) && FindInList(FloorTiles, temp)) {
+                                getCurrentMap()[temp.y][temp.x].add(object);
+                                placed = true;
+                                break;
+                            }
+                            displacedPoints.add(temp);
+                        }
+                    }
+                    break;
+            }
+        }}
+
     public void addObjectToMap(Point point, ObjectDestructible object, boolean Distribute) {
 //        if (Distribute == true){
-//            getCurrentMap()[point.y][point.x].add(object);
+//            distributeObjectInMap(point, object);
 //        } else {
         getCurrentMap()[point.y][point.x].add(object);
 //        }
@@ -319,30 +468,36 @@ public class Map {
         }
     }
 
-    public void giveNewPointToObject(@Nullable Room room, ObjectDestructible object) {
+    public void giveNewPointToObject(@Nullable Room room, ObjectDestructible object, int depth) {
         if (room != null) {
-            giveNewPointToObjectInRoom(object, room.getStartPoint(), room.getMapWidth(), room.getMapHeight());
+            giveNewPointToObjectInRoom(object, room.getStartPoint(), room.getMapWidth(), room.getMapHeight(), depth);
         } else {
             int floorTilesIndex = rand.nextInt(FloorTiles.size());
             Point newPoint = FloorTiles.get(floorTilesIndex);
 
-            removeObjectFromMap(object.getPoint(), object);
-            object.setPoint(newPoint);
-            addObjectToMap(object.getPoint(), object, true);
+            removeObjectFromMap(object.get2dPoint(), object);
+            object.setPoint(newPoint.x, newPoint.y, depth);
+            addObjectToMap(object.get2dPoint(), object, true);
 
             removeEmptyFloorTiles(floorTilesIndex);
         }
+        if(object instanceof Creature){
+            if (((Creature)object).getLightSource() != null){
+                ((Creature)object).getLightSource().setPoint(object.getPoint());
+                changeLighting = true;
+            }
+        }
     }
 
-    public void giveNewPointToObjectInRoom(ObjectDestructible object, Point start, int width, int height) {
+    public void giveNewPointToObjectInRoom(ObjectDestructible object, Point start, int width, int height, int depth) {
         ArrayList<Point> someFloorTiles = getSomeFloorPoints(start, width, height);
         if (someFloorTiles.size() > 0) {
             int floorTilesIndex = rand.nextInt(someFloorTiles.size());
             Point newPoint = someFloorTiles.get(floorTilesIndex);
 
-            removeObjectFromMap(object.getPoint(), object);
-            object.setPoint(newPoint);
-            addObjectToMap(object.getPoint(), object, true);
+            removeObjectFromMap(object.get2dPoint(), object);
+            object.setPoint(newPoint.x, newPoint.y, depth);
+            addObjectToMap(object.get2dPoint(), object, true);
 
             findAndRemoveEmptyFloorTiles(newPoint);
         }

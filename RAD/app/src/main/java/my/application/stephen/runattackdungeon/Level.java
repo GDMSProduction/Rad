@@ -1,17 +1,16 @@
 package my.application.stephen.runattackdungeon;
 
-import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
-import static my.application.stephen.runattackdungeon.Dungeon.minotaurSlain;
+import static my.application.stephen.runattackdungeon.Creature.DirectionType.Horizontal;
+import static my.application.stephen.runattackdungeon.Creature.DirectionType.Still;
+import static my.application.stephen.runattackdungeon.Creature.DirectionType.Vertical;
 import static my.application.stephen.runattackdungeon.GameView.camHeight;
-import static my.application.stephen.runattackdungeon.GameView.camOffsetX;
-import static my.application.stephen.runattackdungeon.GameView.camOffsetY;
 import static my.application.stephen.runattackdungeon.GameView.camWidth;
-import static my.application.stephen.runattackdungeon.GameView.friendlyFire;
+import static my.application.stephen.runattackdungeon.GameView.changeLighting;
 import static my.application.stephen.runattackdungeon.GameView.imageClutter;
 import static my.application.stephen.runattackdungeon.GameView.imageEnemy;
 import static my.application.stephen.runattackdungeon.GameView.imageFood;
@@ -26,7 +25,6 @@ import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 import static my.application.stephen.runattackdungeon.GameView.miningNoises;
 import static my.application.stephen.runattackdungeon.GameView.minotaurNoises;
 import static my.application.stephen.runattackdungeon.GameView.spaces;
-import static my.application.stephen.runattackdungeon.GameView.walkingNoises;
 import static my.application.stephen.runattackdungeon.GameView.walls;
 
 /**
@@ -36,6 +34,7 @@ import static my.application.stephen.runattackdungeon.GameView.walls;
 public class Level extends Map {
 
     public enum ROOMType {EMPTY, LOOT, ENEMY, LOOTandENEMY, BOSS}
+
     public static final int roomHeightMin = 4;
     public static final int roomWidthMin = 4;
     private int roomNums = 2;
@@ -71,11 +70,11 @@ public class Level extends Map {
     private int maxEnemies = 5;
     private ArrayList<Creature> levelCreatures = new ArrayList<>(maxEnemies);
 
-    Level(int Width, int Height, int SpacesPercent, boolean natural, boolean MakeRooms, int currentLevel, int borderThickness) {
-        super(Width, Height, SpacesPercent, natural, borderThickness, ObjectDestructible.CellType.Border);
+    Level(int Width, int Height, int currentLevel, int SpacesPercent, boolean natural, boolean MakeRooms, int borderThickness) {
+        super(Width, Height, currentLevel, SpacesPercent, natural, borderThickness, ObjectDestructible.CellType.Border);
         makeRooms = MakeRooms;
 
-        createRooms(Width, Height, borderThickness);
+        createRooms(Width, Height, currentLevel, borderThickness);
 //            ConnectRooms();
         makeAvailablePoints(getMapHeight(), getMapWidth());
         if (numEmptyCells < minimumEmptyCells) {
@@ -98,12 +97,12 @@ public class Level extends Map {
         createStairsDown(null, currentLevel);
         createStairsUp(null, currentLevel);
         if (getStairsUp() != null && getStairsDown() != null) {
-            MakeCorridor(getStairsUp().getPoint(), getStairsDown().getPoint());
+            MakeCorridor(getStairsUp().get2dPoint(), getStairsDown().get2dPoint());
         }
 
         createEnemies(null, currentLevel);
         if (natural) {
-            createClutter(null);
+            createClutter(null, currentLevel);
         }
         if (currentLevel < 1) {
 //            CreateHeartDiamond();
@@ -201,9 +200,10 @@ public class Level extends Map {
             }
         }
     }
-    private ObjectDestructible.CellType createBorderType(){
+
+    private ObjectDestructible.CellType createBorderType() {
         ObjectDestructible.CellType type;
-        switch (rand.nextInt(4) + 1){
+        switch (rand.nextInt(4) + 1) {
             case 0: //Treasure Islands.
                 type = ObjectDestructible.CellType.Border;
                 break;
@@ -226,9 +226,10 @@ public class Level extends Map {
         }
         return type;
     }
-    private ROOMType createRoomType(){
+
+    private ROOMType createRoomType() {
         ROOMType type;
-        switch(rand.nextInt(4)){
+        switch (rand.nextInt(4)) {
             case 0:
                 type = ROOMType.EMPTY;
                 break;
@@ -246,7 +247,7 @@ public class Level extends Map {
         return type;
     }
 
-    private void createRooms(int Width, int Height, int borderThickness) {
+    private void createRooms(int Width, int Height, int Depth, int borderThickness) {
         setRoomDimensionsMax(Width - (borderThickness * 2), Height - (borderThickness * 2));
         setRoomAmount(Width - (borderThickness * 2), Height - (borderThickness * 2));
         LevelRooms = new ArrayList<>(roomNums);
@@ -260,6 +261,7 @@ public class Level extends Map {
             if (createRoom(
                     roomWidth,
                     roomHeight,
+                    Depth,
                     100,
                     natural,
                     roomBorderThickness,
@@ -270,13 +272,14 @@ public class Level extends Map {
         //this is where the for loop ends.
     }
 
-    private boolean createRoom(int Width, int Height, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, ROOMType roomType) {
+    private boolean createRoom(int Width, int Height, int Depth, int spacePercent, boolean natural, int borderThickness, ObjectDestructible.CellType borderType, ROOMType roomType) {
         if (RoomStartPoints.size() <= 0) {
             return true;
         }
         Room newRoom = new Room(
                 Width,
                 Height,
+                Depth,
                 spacePercent,
                 natural,
                 borderThickness,
@@ -437,7 +440,7 @@ public class Level extends Map {
 
     }
 
-    protected void createClutter(Room room) {
+    protected void createClutter(@Nullable Room room, int currentLevel) {
         int newSize;
         if (room != null) {
             newSize = rand.nextInt(room.getMaxClutter());
@@ -450,42 +453,48 @@ public class Level extends Map {
                     default:
                     case 0:
                         //rock
-                        createRock(room, null);
+                        createRock(room, null, currentLevel);
                         break;
                     case 1:
                         //barrel
-                        createBarrel(room);
+                        createBarrel(room, currentLevel);
                         break;
                     case 2:
                         //chest
-                        createChest(room);
+                        createChest(room, currentLevel);
                         break;
                 }
             }
         }
     }
+    private void setLighting(ObjectDestructible object){
+        object.setPaintAlpha(getCurrentMap()[object.getPoint().y][object.getPoint().x].get(0).getPaintAlpha());
+    }
 
-    void createRock(@Nullable Room room, @Nullable Point newPoint) {
+    void createRock(@Nullable Room room, @Nullable Point3d newPoint, int currentLevel) {
         Clutter rock;
         if (newPoint == null) {
-            rock = new Clutter(0, 0, new Point(0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Rock);
-            giveNewPointToObject(room, rock);
+            rock = new Clutter(0, 0, new Point3d(0, 0, 0), imageClutter[0], 1, ObjectDestructible.CellType.Rock);
+            giveNewPointToObject(room, rock, currentLevel);
         } else {
             rock = new Clutter(0, 0, newPoint, imageClutter[0], 1, ObjectDestructible.CellType.Rock);
-            addObjectToMap(newPoint, rock, false);
+            addObjectToMap(new Point(newPoint.x, newPoint.y), rock, false);
         }
+        setLighting(rock);
         clutter.add(rock);
     }
 
-    private void createBarrel(@Nullable Room room) {
-        Clutter barrel = new Clutter(10, 0, new Point(0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
-        giveNewPointToObject(room, barrel);
+    private void createBarrel(@Nullable Room room, int currentLevel) {
+        Clutter barrel = new Clutter(10, 0, new Point3d(0, 0, 0), imageClutter[1], 1, ObjectDestructible.CellType.Barrel);
+        giveNewPointToObject(room, barrel, currentLevel);
+        setLighting(barrel);
         clutter.add(barrel);
     }
 
-    private void createChest(@Nullable Room room) {
-        Clutter chest = new Clutter(30, 0, new Point(0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
-        giveNewPointToObject(room, chest);
+    private void createChest(@Nullable Room room, int currentLevel) {
+        Clutter chest = new Clutter(30, 0, new Point3d(0, 0, 0), imageClutter[2], 1, ObjectDestructible.CellType.Chest);
+        giveNewPointToObject(room, chest, currentLevel);
+        setLighting(chest);
         clutter.add(chest);
     }
 
@@ -511,99 +520,289 @@ public class Level extends Map {
         }
     }
 
+    private Creature.PatrolType createPatrolType() {
+        Creature.PatrolType patrolType;
+        switch (rand.nextInt(2)) {
+            case 0:
+                patrolType = Creature.PatrolType.Points;
+                break;
+            default:
+            case 1:
+                patrolType = Creature.PatrolType.Line;
+                break;
+        }
+        return patrolType;
+    }
+
+    private void giveSlimePatrolType(Creature slime, Creature.PatrolType patrolType) {
+        slime.setPatrolType(patrolType);
+        if (patrolType == Creature.PatrolType.Points) {
+            slime.setMiningTool(new MiningTool(15, 0, slime.getPoint(), imageWeapon[0], 10));
+            switch (slime.getDirectionType()) {
+                case Still:
+                    break;
+                case Vertical:
+                    Point3d possibleTargetVertical = new Point3d(slime.getX(), slime.getY(), slime.getZ());
+                    ObjectDestructible.CellType cellTypeVertical = getOtherCellType(slime.getX(), slime.getY() + 1);
+                    if (cellTypeVertical != ObjectDestructible.CellType.Border &&
+                            cellTypeVertical != ObjectDestructible.CellType.Void) {
+                        possibleTargetVertical = new Point3d(slime.getX(), slime.getY() + 1, slime.getZ());
+                    }
+                    super.setSpace(getCurrentMap(), possibleTargetVertical.y, possibleTargetVertical.x, 5);
+                    super.setSpace(getCurrentMap(), possibleTargetVertical.y - 1, possibleTargetVertical.x, 5);
+                    slime.getPatrolPoints().add(possibleTargetVertical);
+                    slime.getPatrolPoints().add(new Point3d(possibleTargetVertical.x, possibleTargetVertical.y - 1, slime.getZ()));
+                    break;
+                case Horizontal:
+                    Point3d possibleTargetHorizontal = new Point3d(slime.getX(), slime.getY(), slime.getZ());
+                    ObjectDestructible.CellType cellTypeHorizontal = getOtherCellType(slime.getX() + 1, slime.getY());
+                    if (cellTypeHorizontal != ObjectDestructible.CellType.Border &&
+                            cellTypeHorizontal != ObjectDestructible.CellType.Void) {
+                        possibleTargetHorizontal = new Point3d(slime.getX() + 1, slime.getY(), slime.getZ());
+                    }
+                    super.setSpace(getCurrentMap(), possibleTargetHorizontal.y, possibleTargetHorizontal.x, 5);
+                    super.setSpace(getCurrentMap(), possibleTargetHorizontal.y, possibleTargetHorizontal.x - 1, 5);
+                    slime.getPatrolPoints().add(possibleTargetHorizontal);
+                    slime.getPatrolPoints().add(new Point3d(possibleTargetHorizontal.x - 1, possibleTargetHorizontal.y, slime.getZ()));
+                    break;
+                case HorizontalAndVertical:
+                    Point3d possibleTarget = new Point3d(slime.getX(), slime.getY(), slime.getZ());
+                    ObjectDestructible.CellType cellType = getOtherCellType(slime.getX() + 1, slime.getY());
+                    if (cellType != ObjectDestructible.CellType.Border &&
+                            cellType != ObjectDestructible.CellType.Void) {
+                        possibleTarget = new Point3d(slime.getX() + 1, slime.getY(), slime.getZ());
+                    }
+                    cellType = getOtherCellType(possibleTarget.x, possibleTarget.y + 1);
+                    if (cellType != ObjectDestructible.CellType.Border &&
+                            cellType != ObjectDestructible.CellType.Void) {
+                        possibleTarget = new Point3d(possibleTarget.x, possibleTarget.y + 1, slime.getZ());
+                    }
+                    super.setSpace(getCurrentMap(), possibleTarget.y, possibleTarget.x, 5);
+                    super.setSpace(getCurrentMap(), possibleTarget.y, possibleTarget.x - 1, 5);
+                    super.setSpace(getCurrentMap(), possibleTarget.y + 1, possibleTarget.x - 1, 5);
+                    super.setSpace(getCurrentMap(), possibleTarget.y + 1, possibleTarget.x, 5);
+                    slime.getPatrolPoints().add(possibleTarget);
+                    slime.getPatrolPoints().add(new Point3d(possibleTarget.x - 1, possibleTarget.y, slime.getZ()));
+                    slime.getPatrolPoints().add(new Point3d(possibleTarget.x - 1, possibleTarget.y + 1, slime.getZ()));
+                    slime.getPatrolPoints().add(new Point3d(possibleTarget.x, possibleTarget.y + 1, slime.getZ()));
+                    break;
+            }
+        }
+    }
+
+    /*
+    If override is negative, it is not used.
+    If override is positive, the function will not be random.
+    override values:
+    0: OneWaitTwo
+    1: OneWaitOne
+    2: TwoWaitTwo
+    3: TwoWaitOne
+    4: Full
+     */
+    private Creature.Handicap createCreatureHandicap(int creatureCapability, int override) {
+        int switcher = rand.nextInt(creatureCapability);
+        if (override > (-1)) {
+            switcher = override;
+        }
+        Creature.Handicap handicap;
+        switch (switcher) {
+            case 0:
+                handicap = Creature.Handicap.OneWaitTwo;
+                break;
+            case 1:
+                handicap = Creature.Handicap.OneWaitOne;
+                break;
+            case 2:
+                handicap = Creature.Handicap.TwoWaitTwo;
+                break;
+            case 3:
+                handicap = Creature.Handicap.TwoWaitOne;
+                break;
+            default:
+            case 4:
+                handicap = Creature.Handicap.Full;
+                break;
+        }
+        return handicap;
+    }
+
     private void createSlime(@Nullable Room room, int currentLevel) {
+        int attack = 1000;
+        Creature.DirectionType directionType;
+        Creature.PatrolType patrolType = Creature.PatrolType.Line;
+        switch (rand.nextInt(5)) {
+            default:
+            case 0:
+                directionType = Still;
+                break;
+            case 1:
+                directionType = Vertical;
+                patrolType = createPatrolType();
+                attack = 1;
+                break;
+            case 2:
+                directionType = Horizontal;
+                patrolType = createPatrolType();
+                attack = 1;
+                break;
+            case 3:
+                directionType = Creature.DirectionType.HorizontalAndVertical;
+                patrolType = createPatrolType();
+                attack = 2;
+                break;
+        }
         Creature slime = new Creature(
-                new Point(0, 0),
+                new Point3d(0, 0, 0),
                 imageEnemy[0],
                 3,
                 ObjectDestructible.CellType.Slime,
                 0,
-                1000,
+                attack,
                 currentLevel,
-                Creature.DirectionType.Still);
-        giveNewPointToObject(room, slime);
+                directionType);
+        giveNewPointToObject(room, slime, currentLevel);
+        giveSlimePatrolType(slime, patrolType);
+        slime.setHandicap(createCreatureHandicap(5, -1));
+        setLighting(slime);
         levelCreatures.add(slime);
     }
 
     private void createGoblin(@Nullable Room room, int currentLevel) {
         Creature goblin = new Creature(
-                new Point(0, 0),
+                new Point3d(0, 0, 0),
                 imageEnemy[1],
                 5,
                 ObjectDestructible.CellType.Goblin,
                 50,
                 1,
                 currentLevel,
-                Creature.DirectionType.Random);
-        giveNewPointToObject(room, goblin);
+                Creature.DirectionType.HorizontalAndVertical);
+        giveNewPointToObject(room, goblin, currentLevel);
+        Creature.PatrolType patrolType = createPatrolType();
+        if (patrolType == Creature.PatrolType.Points) {
+            if (room != null) {
+                goblin.getPatrolPoints().add(
+                        new Point3d(
+                                room.getStartPoint().x + room.getBorderThickness(),
+                                room.getStartPoint().y + room.getBorderThickness(),
+                                currentLevel
+                        )
+                );
+                goblin.getPatrolPoints().add(
+                        new Point3d(
+                                room.getStartPoint().x + room.getMapWidth() - room.getBorderThickness(),
+                                room.getStartPoint().y + room.getMapHeight() - room.getBorderThickness(),
+                                currentLevel
+                        )
+                );
+            } else {
+                if (stairsDown != null) {
+                    goblin.getPatrolPoints().add(
+                            new Point3d(
+                                    getStairsDown().getX() - 1,
+                                    getStairsDown().getY(),
+                                    currentLevel
+                            )
+                    );
+                }
+                if (stairsUp != null) {
+                    goblin.getPatrolPoints().add(
+                            new Point3d(
+                                    getStairsUp().getX() - 1,
+                                    getStairsUp().getY(),
+                                    currentLevel
+                            )
+                    );
+                }
+                if (FloorTiles.size() > 0) {
+                    Point temp = FloorTiles.get(rand.nextInt(FloorTiles.size()));
+                    goblin.getPatrolPoints().add(
+                            new Point3d(temp.x, temp.y, currentLevel)
+                    );
+                }
+                if (goblin.getPatrolPoints().size() < 2) {
+                    goblin.setDirectionType(Creature.DirectionType.Still);
+                }
+            }
+        }
+        setLighting(goblin);
         levelCreatures.add(goblin);
     }
 
     private void createMinotaur(@Nullable Room room, int currentLevel) {
         Creature minotaur = new Creature(
-                new Point(0, 0),
+                new Point3d(0, 0, 0),
                 imageEnemy[2],
                 2 * currentLevel, //HPMmax
                 ObjectDestructible.CellType.Minotaur,
                 50,
                 5,
                 currentLevel,
-                Creature.DirectionType.TowardsTargetDirectional);
-        giveNewPointToObject(room, minotaur);
+                Creature.DirectionType.HorizontalAndVertical);
+        minotaur.setMovementType(Creature.MovementType.TowardsTargetDirectional);
+        giveNewPointToObject(room, minotaur, currentLevel);
+        setLighting(minotaur);
         levelCreatures.add(minotaur);
         minotaurNoises[0].start();
     }
 
     private void createHumanoid(@Nullable Room room, int currentLevel) {
         Creature humanoid = new Creature(
-                new Point(0, 0),
+                new Point3d(0, 0, 0),
                 imageNPCDown[0],
                 5,
                 ObjectDestructible.CellType.Humanoid,
                 50,
                 5,
                 currentLevel,
-                Creature.DirectionType.Still);
-        giveNewPointToObject(room, humanoid);
+                Still);
+        giveNewPointToObject(room, humanoid, currentLevel);
+        setLighting(humanoid);
         levelCreatures.add(humanoid);
     }
 
     private void createStairsDown(@Nullable Room room, int currentLevel) {
         if (getNumEmptyCells() > 0 && currentLevel <= 100) {
-            stairsDown = new ObjectDestructible(new Point(0, 0), imageStairs[0], 1000, ObjectDestructible.CellType.StairDown);
-            giveNewPointToObject(room, stairsDown);
+            stairsDown = new ObjectDestructible(new Point3d(0, 0, 0), imageStairs[0], 1000, ObjectDestructible.CellType.StairDown);
+            giveNewPointToObject(room, stairsDown, currentLevel);
+            setLighting(stairsDown);
         }
     }
 
     private void createStairsUp(@Nullable Room room, int currentLevel) {
         if (getNumEmptyCells() > 0 && currentLevel > 0) {
-            stairsUp = new ObjectDestructible(new Point(0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
-            giveNewPointToObject(room, stairsUp);
+            stairsUp = new ObjectDestructible(new Point3d(0, 0, 0), imageStairs[1], 1000, ObjectDestructible.CellType.StairUp);
+            giveNewPointToObject(room, stairsUp, currentLevel);
+            setLighting(stairsUp);
         }
     }
 
-    private void CreateCoins(Point point, int value) {
+    private void CreateCoins(Point3d point, int value) {
         Clutter coins = new Clutter(value, point, imageClutter[3], 0);
         coins.setCellType(ObjectDestructible.CellType.Clutter);
+        setLighting(coins);
         clutter.add(coins);
-        addObjectToMap(point, coins, true);
+        addObjectToMap(new Point(point.x, point.y), coins, true);
     }
 
-    private void CreateHeartDiamond(Point point, int value) {
+    private void CreateHeartDiamond(Point3d point, int value) {
         Clutter diamondRed = new Clutter(200 + value, point, imageClutter[5], 0);
         diamondRed.setCellType(ObjectDestructible.CellType.Clutter);
+        setLighting(diamondRed);
         clutter.add(diamondRed);
-        addObjectToMap(point, diamondRed, true);
+        addObjectToMap(new Point(point.x, point.y), diamondRed, true);
     }
 
-    private void CreateWhiteDiamond(Point point, int value) {
+    private void CreateWhiteDiamond(Point3d point, int value) {
         Clutter diamond = new Clutter(200 + value, point, imageClutter[4], 0);
         diamond.setCellType(ObjectDestructible.CellType.Clutter);
+        setLighting(diamond);
         clutter.add(diamond);
-        addObjectToMap(point, diamond, true);
+        addObjectToMap(new Point(point.x, point.y), diamond, true);
     }
 
-    private void CreateRandomDiamond(Point point, int value) {
+    private void CreateRandomDiamond(Point3d point, int value) {
         switch (rand.nextInt(2)) {
             default:
             case 0:
@@ -615,7 +814,7 @@ public class Level extends Map {
         }
     }
 
-    private void CreateRandomTreasure(Point point, int value) {
+    private void CreateRandomTreasure(Point3d point, int value) {
         switch (rand.nextInt(3)) {
             default:
             case 0:
@@ -627,7 +826,7 @@ public class Level extends Map {
         }
     }
 
-    private void CreateFood(Point point) {
+    private void CreateFood(Point3d point) {
         //Food
         //apple
         Food fud = new Food(1, 2, point, imageFood[0], 2);
@@ -641,16 +840,17 @@ public class Level extends Map {
                 break;
         }
         fud.setCellType(ObjectDestructible.CellType.Food);
+        setLighting(fud);
         food.add(fud);
-        addObjectToMap(point, fud, true);
+        addObjectToMap(new Point(point.x, point.y), fud, true);
     }
 
-    private void CreatePotion(Point point, int currentLevel) {
+    private void CreatePotion(Point3d point, int depth) {
         //if it's a green potion, it restores your health.
-        Food potion = new Food(Food.PotionColor.Green, currentLevel, point, imagePotion[1], 0);
+        Food potion = new Food(Food.PotionColor.Green, depth, point, imagePotion[1], 0);
         switch (rand.nextInt(6)) {
             default:
-                potion.setHealing(currentLevel);
+                potion.setHealing(depth);
                 break;
             case 1:
                 //if it's a light blue potion, it randomly teleports you to an open space within 10 feet.
@@ -658,139 +858,150 @@ public class Level extends Map {
                 potion.setBitMap(imagePotion[2]);
                 break;
             case 2:
-                //if it's a black potion, it kills your light source.
+                //if it's a black potion, it acidifies and destroys your belongings.
                 potion.setPotionColor(Food.PotionColor.Black);
                 potion.setBitMap(imagePotion[3]);
+                potion.setHealing(depth / 2);
                 break;
             case 3:
                 //if it's a red potion, it increases your attack + maxAttack.
                 potion.setBitMap(imagePotion[4]);
                 potion.setPotionColor(Food.PotionColor.Red);
-                potion.setHealing(currentLevel / 2);
+                potion.setHealing(depth / 2);
                 break;
             case 4:
                 //if it's a purple potion, it poisons you.
                 potion.setPotionColor(Food.PotionColor.Purple);
                 potion.setBitMap(imagePotion[5]);
-                potion.setHealing(currentLevel);
+                potion.setHealing(depth);
                 break;
             case 5:
                 //if it's a dark blue potion, it increases your defense.
                 potion.setPotionColor(Food.PotionColor.DarkBlue);
                 potion.setBitMap(imagePotion[6]);
-                potion.setHealing(currentLevel / 5);
+                potion.setHealing(depth / 5);
                 break;
         }
         potion.setCellType(ObjectDestructible.CellType.Potion);
+        setLighting(potion);
         potions.add(potion);
-        addObjectToMap(point, potion, true);
+        addObjectToMap(new Point(point.x, point.y), potion, true);
     }
 
-    private void CreateScroll(Point point, int currentLevel) {
-        Clutter scroll = new Clutter(currentLevel, point, imageScroll[0], 2);
+    private void CreateScroll(Point3d point, int depth) {
+        Clutter scroll = new Clutter(depth, point, imageScroll[0], 2);
         scroll.setCellType(ObjectDestructible.CellType.Scroll);
+        setLighting(scroll);
         scrolls.add(scroll);
-        addObjectToMap(point, scroll, true);
+        addObjectToMap(new Point(point.x, point.y), scroll, true);
     }
 
-    private void CreateRandomConsumable(Point point, int currentLevel) {
+    private void CreateRandomConsumable(Point3d point, int depth) {
         switch (rand.nextInt(3)) {
             case 0:
-                CreatePotion(point, currentLevel);
+                CreatePotion(point, depth);
                 break;
             default:
             case 1:
                 CreateFood(point);
                 break;
             case 2:
-                CreateScroll(point, currentLevel);
+                CreateScroll(point, depth);
         }
     }
 
-    private void CreateWeapon(Point point, int currentLevel) {
+    private void CreateWeapon(Point3d point, int depth) {
         int Attack;
         switch (rand.nextInt(4)) {
             default:
             case 0:
                 Attack = 2;
-                Weapon dagger = new Weapon(Attack, currentLevel, Attack * currentLevel, point, imageWeapon[1], 10);
+                Weapon dagger = new Weapon(Attack, depth, Attack * depth, point, imageWeapon[1], 10);
                 dagger.setCellType(ObjectDestructible.CellType.Weapon);
+                setLighting(dagger);
                 weapons.add(dagger);
-                addObjectToMap(point, dagger, true);
+                addObjectToMap(new Point(point.x, point.y), dagger, true);
                 break;
             case 1:
                 Attack = 4;
-                Weapon sword = new Weapon(Attack, (int) (currentLevel / 2.0f), Attack * currentLevel, point, imageWeapon[2], 15);
+                Weapon sword = new Weapon(Attack, (int) (depth / 2.0f), Attack * depth, point, imageWeapon[2], 15);
                 sword.setCellType(ObjectDestructible.CellType.Weapon);
+                setLighting(sword);
                 weapons.add(sword);
-                addObjectToMap(point, sword, true);
+                addObjectToMap(new Point(point.x, point.y), sword, true);
                 break;
             case 2:
                 Attack = 6;
-                Weapon axe = new Weapon(Attack, (int) (currentLevel / 4.0f), Attack * currentLevel, point, imageWeapon[3], 10);
+                Weapon axe = new Weapon(Attack, (int) (depth / 4.0f), Attack * depth, point, imageWeapon[3], 10);
                 axe.setCellType(ObjectDestructible.CellType.Weapon);
+                setLighting(axe);
                 weapons.add(axe);
-                addObjectToMap(point, axe, true);
+                addObjectToMap(new Point(point.x, point.y), axe, true);
                 break;
             case 3:
                 Attack = 12;
-                Weapon bow = new Weapon(Attack, 0, (int) (50 - currentLevel / 2.0f), point, imageWeapon[4], 8);
+                Weapon bow = new Weapon(Attack, 0, (int) (50 - depth / 2.0f), point, imageWeapon[4], 8);
                 bow.setCellType(ObjectDestructible.CellType.Weapon);
+                setLighting(bow);
                 weapons.add(bow);
-                addObjectToMap(point, bow, true);
+                addObjectToMap(new Point(point.x, point.y), bow, true);
                 break;
         }
     }
 
-    private void CreateWearable(Point point, int currentLevel) {
+    private void CreateWearable(Point3d point, int depth) {
         switch (rand.nextInt(3)) {
             default:
             case 0:
                 Wearable shield = new Wearable(
                         Wearable.EnchantType.Defense,
-                        5 * (currentLevel + 1),
+                        5 * (depth + 1),
                         5,
-                        currentLevel,
+                        depth,
                         point,
                         imageWearables[2],
-                        12 + currentLevel);
+                        12 + depth);
                 shield.setCellType(ObjectDestructible.CellType.Wearable);
+                setLighting(shield);
                 wearables.add(shield);
-                addObjectToMap(point, shield, true);
+                addObjectToMap(new Point(point.x, point.y), shield, true);
                 break;
             case 1:
                 Wearable silverRing;
                 silverRing = new Wearable(
                         createWearableEnchantType(),
-                        50 * (currentLevel / 2 + 1),
+                        50 * (depth / 2 + 1),
                         2,
-                        currentLevel,
+                        depth,
                         point,
                         imageWearables[1],
                         500);
                 silverRing.setCellType(ObjectDestructible.CellType.Wearable);
+                setLighting(silverRing);
                 wearables.add(silverRing);
-                addObjectToMap(point, silverRing, true);
+                addObjectToMap(new Point(point.x, point.y), silverRing, true);
                 break;
             case 2:
                 Wearable goldRing;
                 goldRing = new Wearable(
                         createWearableEnchantType(),
-                        50 * (currentLevel + 1),
+                        50 * (depth + 1),
                         5,
-                        currentLevel,
+                        depth,
                         point,
                         imageWearables[0],
                         1000);
                 goldRing.setCellType(ObjectDestructible.CellType.Wearable);
+                setLighting(goldRing);
                 wearables.add(goldRing);
-                addObjectToMap(point, goldRing, true);
+                addObjectToMap(new Point(point.x, point.y), goldRing, true);
                 break;
         }
     }
-    private Wearable.EnchantType createWearableEnchantType(){
+
+    private Wearable.EnchantType createWearableEnchantType() {
         Wearable.EnchantType type;
-        switch (rand.nextInt(4)){
+        switch (rand.nextInt(4)) {
             case 0:
                 type = Wearable.EnchantType.Defense;
                 break;
@@ -808,43 +1019,47 @@ public class Level extends Map {
         return type;
     }
 
-    private void CreateMiningTool(Point point, int currentLevel) {
+    private void CreateMiningTool(Point3d point, int depth) {
         switch (rand.nextInt(2)) {
             default:
             case 0:
-                MiningTool shovel = new MiningTool(1, currentLevel, point, imageMining[0], 10);
+                MiningTool shovel = new MiningTool(1, depth, point, imageMining[0], 10);
                 shovel.setCellType(ObjectDestructible.CellType.MiningTool);
+                setLighting(shovel);
                 miningTools.add(shovel);
-                addObjectToMap(point, shovel, true);
+                addObjectToMap(new Point(point.x, point.y), shovel, true);
                 break;
             case 1:
-                MiningTool pickaxe = new MiningTool(3, 2 * (currentLevel + 1), point, imageMining[1], 100);
+                MiningTool pickaxe = new MiningTool(3, 2 * (depth + 1), point, imageMining[1], 100);
                 pickaxe.setCellType(ObjectDestructible.CellType.MiningTool);
+                setLighting(pickaxe);
                 miningTools.add(pickaxe);
-                addObjectToMap(point, pickaxe, true);
+                addObjectToMap(new Point(point.x, point.y), pickaxe, true);
                 break;
         }
     }
 
-    private void CreateLightSource(Point point, int currentLevel) {
+    private void CreateLightSource(Point3d point, int depth) {
         switch (rand.nextInt(2)) {
             default:
             case 0:
-                LightSource torch = new LightSource(5, 2, 0, point, imageLight[0], 500 + currentLevel);
+                LightSource torch = new LightSource(5, 2, 0, point, imageLight[0], 500 + depth);
                 torch.setCellType(ObjectDestructible.CellType.LightSource);
+                setLighting(torch);
                 lights.add(torch);
-                addObjectToMap(point, torch, true);
+                addObjectToMap(new Point(point.x, point.y), torch, true);
                 break;
             case 1:
-                LightSource lantern = new LightSource(5, 4, currentLevel + 10, point, imageLight[1], 50 * currentLevel);
+                LightSource lantern = new LightSource(5, 4, depth + 10, point, imageLight[1], 50 * depth);
                 lantern.setCellType(ObjectDestructible.CellType.LightSource);
+                setLighting(lantern);
                 lights.add(lantern);
-                addObjectToMap(point, lantern, true);
+                addObjectToMap(new Point(point.x, point.y), lantern, true);
                 break;
         }
     }
 
-    private void CreateRandomDrop(int i, ObjectDestructible.CellType type, int currentLevel) {
+    public void CreateRandomDrop(int i, ObjectDestructible.CellType type, int depth) {
         switch (type) {
             case Barrel:
                 switch (rand.nextInt(4)) {
@@ -856,32 +1071,32 @@ public class Level extends Map {
                         CreateFood(clutter.get(i).getPoint());
                         break;
                     case 2:
-                        CreatePotion(clutter.get(i).getPoint(), currentLevel);
+                        CreatePotion(clutter.get(i).getPoint(), depth);
                         break;
                     case 3:
-                        CreateLightSource(clutter.get(i).getPoint(), currentLevel);
+                        CreateLightSource(clutter.get(i).getPoint(), depth);
                 }
                 break;
             case Chest:
                 switch (rand.nextInt(4)) {
                     default:
                     case 0:
-                        CreateCoins(clutter.get(i).getPoint(), 30 + currentLevel);
+                        CreateCoins(clutter.get(i).getPoint(), 30 + depth);
                         break;
                     case 1:
-                        CreateRandomDiamond(clutter.get(i).getPoint(), currentLevel);
+                        CreateRandomDiamond(clutter.get(i).getPoint(), depth);
                         break;
                     case 2:
-                        CreateWearable(clutter.get(i).getPoint(), currentLevel);
+                        CreateWearable(clutter.get(i).getPoint(), depth);
                         break;
                     case 3:
-                        CreateRandomConsumable(clutter.get(i).getPoint(), currentLevel);
+                        CreateRandomConsumable(clutter.get(i).getPoint(), depth);
                         break;
                 }
                 break;
             case Slime:
                 Creature temp = levelCreatures.get(i);
-                int value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                int value = rand.nextInt(temp.getMaxHP() * 3) + 1;
                 value += temp.getTotalValue();
                 switch (rand.nextInt(3)) {
                     default:
@@ -892,13 +1107,13 @@ public class Level extends Map {
                         CreateFood(levelCreatures.get(i).getPoint());
                         break;
                     case 2:
-                        CreatePotion(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreatePotion(levelCreatures.get(i).getPoint(), depth);
                         break;
                 }
                 break;
             case Goblin:
                 temp = levelCreatures.get(i);
-                value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                value = rand.nextInt(temp.getMaxHP() * 3) + 1;
                 value += temp.getTotalValue();
                 switch (rand.nextInt(6)) {
                     default:
@@ -906,45 +1121,45 @@ public class Level extends Map {
                         CreateCoins(temp.getPoint(), value);
                         break;
                     case 1:
-                        CreateWeapon(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateWeapon(levelCreatures.get(i).getPoint(), depth);
                         break;
                     case 2:
-                        CreateWearable(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateWearable(levelCreatures.get(i).getPoint(), depth);
                         break;
                     case 3:
-                        CreateMiningTool(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateMiningTool(levelCreatures.get(i).getPoint(), depth);
                         break;
                     case 4:
-                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), depth);
                         break;
                     case 5:
-                        CreateLightSource(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateLightSource(levelCreatures.get(i).getPoint(), depth);
 //                            lights
                 }
                 break;
             case Minotaur:
                 temp = levelCreatures.get(i);
-                value = rand.nextInt(temp.getMaxpHP() * 3) + 1;
+                value = rand.nextInt(temp.getMaxHP() * 3) + 1;
                 value += temp.getTotalValue();
                 switch (rand.nextInt(7)) {
                     default:
                     case 0:
-                        CreateRandomTreasure(levelCreatures.get(i).getPoint(), 100 + (currentLevel * 2) + value);
+                        CreateRandomTreasure(levelCreatures.get(i).getPoint(), 100 + (depth * 2) + value);
                         break;
                     case 1:
-                        CreateWeapon(levelCreatures.get(i).getPoint(), currentLevel + 5);
+                        CreateWeapon(levelCreatures.get(i).getPoint(), depth + 5);
                         break;
                     case 2:
-                        CreateWearable(levelCreatures.get(i).getPoint(), currentLevel + 5);
+                        CreateWearable(levelCreatures.get(i).getPoint(), depth + 5);
                         break;
                     case 3:
-                        CreateMiningTool(levelCreatures.get(i).getPoint(), currentLevel + 5);
+                        CreateMiningTool(levelCreatures.get(i).getPoint(), depth + 5);
                         break;
                     case 4:
-                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), currentLevel);
+                        CreateRandomConsumable(levelCreatures.get(i).getPoint(), depth);
                         break;
                     case 5:
-                        CreateLightSource(levelCreatures.get(i).getPoint(), currentLevel + 5);
+                        CreateLightSource(levelCreatures.get(i).getPoint(), depth + 5);
                         break;
                 }
                 break;
@@ -953,531 +1168,10 @@ public class Level extends Map {
         }
     }
 
-    public boolean findInPath(ArrayList<Point3d> path, Point target) {
-        boolean isFound = false;
-        for (int i = 0; i < path.size(); i++) {
-            if (target.x == path.get(i).x && target.y == path.get(i).y) {
-                isFound = true;
-                break;
-            }
-        }
-        return isFound;
-    }
-
-    public void UpdateEnemies(Dungeon dungeon) {
-        for (int i = 0; i < levelCreatures.size() - 1; i++) {
-            switch (levelCreatures.get(i).getMovementLimit()) {
-                default:
-                case inCamera:
-                    if (levelCreatures.get(i).getX() > camOffsetX &&
-                            levelCreatures.get(i).getY() > camOffsetY &&
-                            levelCreatures.get(i).getX() < camOffsetX + camWidth &&
-                            levelCreatures.get(i).getY() < camOffsetY + camHeight) {
-                        Creature temp = levelCreatures.get(i);
-                        moveCreature(dungeon, temp);
-                    }
-                    break;
-                case inLevel:
-                    Creature temp = levelCreatures.get(i);
-                    moveCreature(dungeon, temp);
-                    break;
-                case inDungeon:
-                    break;
-                case inWorld:
-                    break;
-            }
-        }
-    }
-
-    private void moveCreature(Dungeon dungeon, Creature temp) {
-        switch (temp.getCellType()) {
-            default:
-            case Slime:
-                break;
-            case Goblin:
-                moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
-                break;
-            case Minotaur:
-                temp.setTarget(dungeon.getPlayer().getPoint());
-                moveCreatureDirectionType(dungeon, temp.getTarget(), temp);
-                break;
-            case Humanoid:
-                break;
-        }
-    }
-
-    private void moveCreatureDirectionType(Dungeon dungeon, Point target, Creature temp) {
-        switch (temp.getDirectionType()) {
-            case Still:
-                break;
-            case UpandDown:
-                //get points above OR below current point.
-                //if (point.y > otherpoint.y) {point.y = otherpoint.y} else if
-                // (point.y = otherpoint.y) {point.y = point.y}
-                break;
-            case LeftandRight:
-                //get points left OR right of current point.
-                //if (point.y > otherpoint.y) {point.y = otherpoint.y} else if
-                // (point.y = otherpoint.y) {point.y = point.y}
-                break;
-            case Random:
-                MoveRandomly(dungeon, temp);
-                break;
-            case TowardsTargetDirectional:
-                Point start = temp.getPoint();
-                int distanceWidth = (start.x - target.x);
-                int distanceHeight = (start.y - target.y);
-
-                int direction = rand.nextInt(2);
-                if (distanceWidth == 0) {
-                    direction = 1;
-                } else if (distanceHeight == 0) {
-                    direction = 0;
-                }
-                switch (direction) {
-                    case 0: //Horizontal
-                        if (distanceWidth > 0) { //West
-                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1);
-                        } else if (distanceWidth < 0) { //East
-                            MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
-                        }
-                        break;
-                    case 1: //Vertical
-                        if (distanceHeight > 0) { //South
-                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1);
-                        } else if (distanceHeight < 0) { //North
-                            MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
-                        }
-                        break;
-                }
-
-                break;
-            case TowardsTargetEfficient:
-                int distance = 0;
-                Point3d targetDest = new Point3d(target.x, target.y, distance);
-                temp.getPath().add(targetDest);
-                //Find all points next to target that can be walked on.
-                //  append distance to point on creation of target.
-                //  append this 3d point to Path.
-                while (!findInPath(temp.getPath(), temp.getPoint())) {
-                    distance++;
-                    Point pointLeft = new Point(target.x - 1, target.y);
-                    if (AddPossiblePathPoints(pointLeft, temp, distance, targetDest)) {
-                        break;
-                    }
-                    Point pointRight = new Point(target.x + 1, target.y);
-                    if (AddPossiblePathPoints(pointRight, temp, distance, targetDest)) {
-                        break;
-                    }
-                    Point pointUp = new Point(target.x, target.y - 1);
-                    if (AddPossiblePathPoints(pointUp, temp, distance, targetDest)) {
-                        break;
-                    }
-                    Point pointDown = new Point(target.x, target.y + 1);
-                    if (AddPossiblePathPoints(pointDown, temp, distance, targetDest)) {
-                        break;
-                    }
-                }
-                //int debug = 0;
-                //Iteratively find all points that can be walked on that are
-                //  next to previous points,
-                //  not already in Path,
-                //  until getPoint() is reached.
-                break;
-        }
-    }
-
-    private void MoveRandomly(Dungeon dungeon, Creature temp) {
-        switch (rand.nextInt(4)) {
-            //South
-            case 0:
-                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() + 1);
-                break;
-            //North
-            case 1:
-                MoveCreatureVertical(dungeon, temp, temp.getCurrentDepth(), temp.getY() - 1);
-                break;
-            //West
-            case 2:
-                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() + 1);
-                break;
-            //East
-            case 3:
-                MoveCreatureHorizontal(dungeon, temp, temp.getCurrentDepth(), temp.getX() - 1);
-                break;
-            //Stay
-            default:
-            case 4:
-                break;
-        }
-    }
-
-    public boolean MoveCreatureHorizontal(Dungeon dungeon, Creature creature, int currentLevel, int X) {
-        if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
-                dungeon,
-                new Point(X, creature.getPoint().y),
-                creature)) {
-            removeObjectFromMap(creature.getPoint(), creature);
-            creature.setX(X);
-            addObjectToMap(creature.getPoint(), creature, false);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean MoveCreatureVertical(Dungeon dungeon, Creature creature, int currentLevel, int Y) {
-        if (dungeon.getDungeonLevels().get(currentLevel).interactWithObject(
-                dungeon,
-                new Point(creature.getPoint().x, Y),
-                creature)) {
-            removeObjectFromMap(creature.getPoint(), creature);
-            creature.setY(Y);
-            addObjectToMap(creature.getPoint(), creature, false);
-            return true;
-        }
-        return false;
-    }
-
-    private boolean AddPossiblePathPoints(Point point, Creature temp, int distance, Point3d targetDest) {
-        if (super.isCellOpen(point.x, point.y) && !findInPath(temp.getPath(), point)) {
-            Point3d possiblePathLeft = new Point3d(point.x, point.y, distance);
-            temp.getPath().add(possiblePathLeft);
-            if (possiblePathLeft == targetDest) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-//    public ObjectDestructible.CellType getCellType(int cellx, int celly) {
-//        ObjectDestructible.CellType returnType = ObjectDestructible.CellType.SturdyWall;
-//        if (super.isCellWall(cellx, celly)) {
-//            return ObjectDestructible.CellType.SturdyWall;
-//        }
-//        if (super.isCellOpen(cellx, celly)) {
-//            returnType = ObjectDestructible.CellType.Space;
-//        }
-//        if (getStairsDown() != null) {
-//            if (getStairsDown().getPoint().x == cellx &&
-//                    getStairsDown().getPoint().y == celly) {
-//                return ObjectDestructible.CellType.StairDown;
-//            }
-//        }
-//        if (getStairsUp() != null) {
-//            if (getStairsUp().getPoint().x == cellx &&
-//                    getStairsUp().getPoint().y == celly) {
-//                return ObjectDestructible.CellType.StairUp;
-//            }
-//        }
-//        if (clutter != null) {
-//            for (int i = 0; i < clutter.size(); i++) {
-//                if (clutter.get(i).getPoint().x == cellx && clutter.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Clutter;
-//                }
-//            }
-//        }
-//        if (levelCreatures != null) {
-//            for (int i = 0; i < levelCreatures.size(); i++) {
-//                if (levelCreatures.get(i).getPoint().x == cellx && levelCreatures.get(i).getPoint().y == celly) {
-//                    return levelCreatures.get(i).getCellType();
-//                }
-//            }
-//        }
-//        if (food != null) {
-//            for (int i = 0; i < food.size(); i++) {
-//                if (food.get(i).getPoint().x == cellx && food.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Food;
-//                }
-//            }
-//        }
-//        if (potions != null) {
-//            for (int i = 0; i < potions.size(); i++) {
-//                if (potions.get(i).getPoint().x == cellx && potions.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Potion;
-//                }
-//            }
-//        }
-//        if (lights != null) {
-//            for (int i = 0; i < lights.size(); i++) {
-//                if (lights.get(i).getPoint().x == cellx && lights.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.LightSource;
-//                }
-//            }
-//        }
-//        if (miningTools != null) {
-//            for (int i = 0; i < miningTools.size(); i++) {
-//                if (miningTools.get(i).getPoint().x == cellx && miningTools.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.MiningTool;
-//                }
-//            }
-//        }
-//        if (scrolls != null) {
-//            for (int i = 0; i < scrolls.size(); i++) {
-//                if (scrolls.get(i).getPoint().x == cellx && scrolls.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Scroll;
-//                }
-//            }
-//        }
-//        if (wearables != null) {
-//            for (int i = 0; i < wearables.size(); i++) {
-//                if (wearables.get(i).getPoint().x == cellx && wearables.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Wearable;
-//                }
-//            }
-//        }
-//        if (weapons != null) {
-//            for (int i = 0; i < weapons.size(); i++) {
-//                if (weapons.get(i).getPoint().x == cellx && weapons.get(i).getPoint().y == celly) {
-//                    return ObjectDestructible.CellType.Weapon;
-//                }
-//            }
-//        }
-//        return returnType;
-//    }
-
-    public ObjectDestructible.CellType getOtherCellType(int cellx, int celly) {
-        if (cellx >= getMapWidth() || cellx < 0 || celly >= getMapHeight() || celly < 0) {
-            return ObjectDestructible.CellType.SturdyWall;
-        }
-        return getCurrentMap()[celly][cellx].get(
-                getCurrentMap()[celly][cellx].size() - 1
-        ).getCellType();
-    }
-
-    public boolean interactWithObject(Dungeon dungeon, Point actee, Creature actor) {
-        boolean ifCreatureGetsMoved = false;
-        ObjectDestructible.CellType harmeeType = getOtherCellType(actee.x, actee.y);
-        switch (harmeeType) {
-            default:
-            case Border:
-                miningNoises[0].start();
-                break;
-            case Wall:
-            case SturdyWall:
-            case BreakingWall:
-                if (actee.x >= getMapWidth() || actee.x < 0 || actee.y >= getMapHeight() || actee.y < 0) {
-                    break;
-                }
-                harmWall(actee.x, actee.y, actor.getMining(), actor.getCurrentDepth(), harmeeType);
-                break;
-            case Space:
-                ifCreatureGetsMoved = true;
-                walkingNoises[0].start();
-                break;
-            case Void:
-                int fallDamage = 2;
-                Wearable ring = actor.getRing();
-                if (ring != null){
-                    if (ring.getEnchantType() == Wearable.EnchantType.FeatherFall){
-                        fallDamage = 0;
-                    }
-                }
-                actor.hurt(fallDamage);
-                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, true);
-            case StairDown:
-                dungeon.goToLevel(actor, actor.getCurrentDepth() + 1, Dungeon.DirectionToGo.DOWN, false);
-                break;
-            case StairUp:
-                dungeon.goToLevel(actor, actor.getCurrentDepth() - 1, Dungeon.DirectionToGo.UP, false);
-                break;
-            case Rock:
-                if (actor.getMining() > 0){
-                    miningNoises[1].start();
-                } else {
-                    miningNoises[0].start();
-                }
-            case Clutter:
-            case Barrel:
-            case Chest:
-                for (int i = 0; i < clutter.size(); i++) {
-                    Clutter temp = clutter.get(i);
-                    Bitmap tempImage = temp.getBitmap();
-                    if (temp.getPoint().x == actee.x && temp.getPoint().y == actee.y) {
-                        if (tempImage == imageClutter[0]) {
-                            temp.hurt(actor.getMining());
-                        } else {
-                            temp.hurt(actor.getAttack());
-                        }
-                        if (tempImage == imageClutter[3] || // coins
-                                tempImage == imageClutter[4] || // white diamond
-                                tempImage == imageClutter[5]) { // red diamond
-                            ifCreatureGetsMoved = true;
-                            if (tempImage != imageClutter[5]) {
-                                actor.incrementScore(temp.getValue());
-                            } else {
-                                actor.setMaxHP(actor.getMaxpHP() + 1);
-                            }
-                            removeObjectFromMap(temp.getPoint(), temp);
-                            clutter.remove(i);
-                        } else if (temp.getHP() <= 0) {
-                            if (tempImage != imageClutter[0]) {
-                                if (tempImage == imageClutter[1]) {
-                                    CreateRandomDrop(i, ObjectDestructible.CellType.Barrel, actor.getCurrentDepth());
-                                } else if (tempImage == imageClutter[2]) {
-                                    CreateRandomDrop(i, ObjectDestructible.CellType.Chest, actor.getCurrentDepth());
-                                }
-                            }
-                            removeObjectFromMap(temp.getPoint(), temp);
-                            clutter.remove(i);
-                            break;
-                        }
-                    }
-                }
-                break;
-            case Slime:
-                if (actor.getCellType() == ObjectDestructible.CellType.Slime && !friendlyFire) {
-                    break;
-                }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
-                break;
-            case Goblin:
-                if (actor.getCellType() == ObjectDestructible.CellType.Goblin && !friendlyFire) {
-                    break;
-                }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
-                break;
-            case Minotaur:
-                if (actor.getCellType() == ObjectDestructible.CellType.Minotaur && !friendlyFire) {
-                    break;
-                }
-                if (HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType)) {
-                    if (actor == dungeon.getPlayer()) {
-                        minotaurSlain = true;
-                    }
-                }
-                break;
-            case Humanoid:
-                if (actor.getCellType() == ObjectDestructible.CellType.Humanoid && !friendlyFire) {
-                    break;
-                }
-                HarmCreature(actee.x, actee.y, actor, actor.getCurrentDepth(), harmeeType);
-                break;
-
-            case Weapon:
-                for (int i = 0; i < weapons.size(); i++) {
-                    if (weapons.get(i).getPoint().x == actee.x && weapons.get(i).getPoint().y == actee.y) {
-                        Weapon possibleDrop = actor.setWeapon(weapons.get(i));
-                        removeObjectFromMap(weapons.get(i).getPoint(), weapons.get(i));
-                        weapons.remove(i);
-                        if (possibleDrop != null && possibleDrop.getBitmap() != imageWeapon[0]) {
-                            //if it exists, we want to
-                            //  give the weapon on the ground to the harmer (should have happened in setWeapon)
-                            //  delete the weapon on the ground from weapons.
-                            //  drop the swapped harmer weapon (possibleDrop)
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            weapons.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        //either way, we want to move the harmer to the new point.
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-            case MiningTool:
-                for (int i = 0; i < miningTools.size(); i++) {
-                    if (miningTools.get(i).getPoint().x == actee.x && miningTools.get(i).getPoint().y == actee.y) {
-                        MiningTool possibleDrop = actor.setMiningTool(miningTools.get(i));
-                        removeObjectFromMap(miningTools.get(i).getPoint(), miningTools.get(i));
-                        miningTools.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            miningTools.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-            case LightSource:
-                for (int i = 0; i < lights.size(); i++) {
-                    if (lights.get(i).getPoint().x == actee.x && lights.get(i).getPoint().y == actee.y) {
-                        LightSource possibleDrop = actor.setLightSource(lights.get(i));
-                        removeObjectFromMap(lights.get(i).getPoint(), lights.get(i));
-                        lights.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            lights.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-            case Wearable:
-                for (int i = 0; i < wearables.size(); i++) {
-                    if (wearables.get(i).getPoint().x == actee.x &&
-                            wearables.get(i).getPoint().y == actee.y) {
-                        Wearable possibleDrop = actor.setWearable(wearables.get(i));
-                        removeObjectFromMap(wearables.get(i).getPoint(), wearables.get(i));
-                        wearables.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            wearables.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-
-            case Food:
-                for (int i = 0; i < food.size(); i++) {
-                    if (food.get(i).getPoint().x == actee.x && food.get(i).getPoint().y == actee.y) {
-                        Food possibleDrop = actor.setFood(food.get(i));
-                        removeObjectFromMap(food.get(i).getPoint(), food.get(i));
-                        food.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            food.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-            case Scroll:
-                for (int i = 0; i < scrolls.size(); i++) {
-                    if (scrolls.get(i).getPoint().x == actee.x && scrolls.get(i).getPoint().y == actee.y) {
-                        Clutter possibleDrop = actor.setScroll(scrolls.get(i));
-                        removeObjectFromMap(scrolls.get(i).getPoint(), scrolls.get(i));
-                        scrolls.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            scrolls.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-            case Potion:
-                for (int i = 0; i < potions.size(); i++) {
-                    if (potions.get(i).getPoint().x == actee.x && potions.get(i).getPoint().y == actee.y) {
-                        Food possibleDrop = actor.setPotion(potions.get(i));
-                        removeObjectFromMap(potions.get(i).getPoint(), potions.get(i));
-                        potions.remove(i);
-                        if (possibleDrop != null) {
-                            possibleDrop.setPoint(actee.x, actee.y);
-                            potions.add(possibleDrop);
-                            addObjectToMap(possibleDrop.getPoint(), possibleDrop, true);
-                        }
-                        ifCreatureGetsMoved = true;
-                        break;
-                    }
-                }
-                break;
-        }
-        return ifCreatureGetsMoved;
-    }
+    //Creature updates.
 
     //returns true only if harmee is killed.
-    private boolean HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, ObjectDestructible.CellType harmeeType) {
+    public boolean HarmCreature(int cellx, int celly, Creature harmer, int currentLevel, int dungeonSize, ObjectDestructible.CellType harmeeType) {
 //        for (int j = 0; j < getCurrentMap()[celly][cellx].size(); j++){
 //            ObjectDestructible object = (getCurrentMap()[celly][cellx].get(j));
 //            if (object.getCellType() == harmeeType){
@@ -1485,7 +1179,14 @@ public class Level extends Map {
 //                int damagetotal = (int) (harmer.getAttack() * ((100 - creature.getDefense()) / 100.0f));
 //                creature.hurt(damagetotal);
 //                if (creature.getHP() <= 0) {
-//                    CreateRandomDrop(creature, harmeeType, currentLevel);
+//        LightSource possibleDrop = creature.setLightSource(null);
+//        if (possibleDrop != null) {
+//            possibleDrop.setPoint(cellx, celly, creature.getZ());
+//            lights.add(possibleDrop);
+//            addObjectToMap(possibleDrop.get2dPoint(), possibleDrop, true);
+//        } else {
+//            CreateRandomDrop(i, harmeeType, currentLevel);
+//        }
 //                    removeObjectFromMap(new Point(celly, cellx), creature);
 //                    levelCreatures.remove(creature);
 //                    return true;
@@ -1494,15 +1195,30 @@ public class Level extends Map {
 //        }
         for (int i = 0; i < levelCreatures.size(); i++) {
             Creature tempCreature = levelCreatures.get(i);
-            Point tempPoint = tempCreature.getPoint();
+            Point tempPoint = tempCreature.get2dPoint();
 
             if (tempPoint.x == cellx && tempPoint.y == celly) {
-                int damagetotal = (int) (harmer.getAttack() * ((100 - tempCreature.getDefense()) / 100.0f));
-                tempCreature.hurt(damagetotal);
+                if (harmer.getPotion() != null){
+                    tempCreature.usePotion(harmer.getPotion(), dungeonSize, this);
+                    harmer.setPotion(null);
+                }else {
+                    tempCreature.hurt(
+                            (int) (harmer.getAttack() * ((100 - tempCreature.getDefense()) / 100.0f))
+                    );
+                }
+                tempCreature.setCreatureState(Creature.state.Chase);
                 if (tempCreature.getHP() <= 0) {
-                    CreateRandomDrop(i, harmeeType, currentLevel);
+                    LightSource possibleDrop = tempCreature.setLightSource(null);
+                    if (possibleDrop != null) {
+                        possibleDrop.setPoint(cellx, celly, tempCreature.getZ());
+                        lights.add(possibleDrop);
+                        addObjectToMap(possibleDrop.get2dPoint(), possibleDrop, true);
+                    } else {
+                        CreateRandomDrop(i, harmeeType, currentLevel);
+                    }
                     removeObjectFromMap(tempPoint, tempCreature);
                     levelCreatures.remove(i);
+
                     return true;
                 }
             }
@@ -1510,14 +1226,10 @@ public class Level extends Map {
         return false;
     }
 
-    public void harmWall(int cellx, int celly, int mining, int currentDepth, ObjectDestructible.CellType wallType) {
+    public void harmWall(int cellx, int celly, int currentDepth, int mining, MiningTool miningTool, ObjectDestructible.CellType wallType) {
         super.getCurrentMap()[celly][cellx].get(0).hurt(mining);
         if (mining > 0) {
-            if (miningNoises[1].isPlaying()){
-            miningNoises[1].pause();
-            }
             miningNoises[1].start();
-//            miningNoises[1].pause();
             if (wallType == ObjectDestructible.CellType.SturdyWall) {
                 super.getCurrentMap()[celly][cellx].get(0).setBitMap(walls[0]);
             }
@@ -1525,19 +1237,31 @@ public class Level extends Map {
             miningNoises[0].start();
         }
         if (super.getCurrentMap()[celly][cellx].get(0).getHP() <= 0) {
+            int wallHealth = super.getCurrentMap()[celly][cellx].get(0).getMaxHP();
             super.setSpace(super.getCurrentMap(), celly, cellx, spaces.length - 2);
             super.addEmptyFloorTile(cellx, celly);
             switch (rand.nextInt(getMapHeight() * getMapWidth())) {
                 default:
                 case 0:
-                    createRock(null, new Point(cellx, celly));
-                    break;
+                    if (miningTool.getBitmap() != imageMining[1]) {
+                        createRock(null, new Point3d(cellx, celly, currentDepth), currentDepth);
+                        break;
+                    }
                 case 1:
-                    super.setVoid(getCurrentMap(), celly, cellx);
-                    break;
-                case 2:
-                    CreateRandomDiamond(new Point(cellx, celly), currentDepth);
-                    break;
+                    if (miningTool.getBitmap() == imageMining[1]) {
+                        if (wallHealth > 10 && rand.nextInt(getMapWidth()) < 5) {
+                            CreateRandomDiamond(new Point3d(cellx, celly, currentDepth), currentDepth);
+                            break;
+                        } else {
+                            createRock(null, new Point3d(cellx, celly, currentDepth), currentDepth);
+                            break;
+                        }
+                    }
+                case 2:case 3:case 4:
+                    if (wallHealth < 10) {
+                        super.setVoid(getCurrentMap(), celly, cellx);
+                        break;
+                    }
             }
         }
     }

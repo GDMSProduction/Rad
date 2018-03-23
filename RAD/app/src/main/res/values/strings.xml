@@ -10,17 +10,24 @@
     <string name="button_Settings">Settings</string>
     <string name="button_HighScores">View High Scores</string>
     <string name="string_EnemiesAmount">Number of Enemies</string>
+    <string name="string_UserInput">Input Method</string>
     <string name="Text_MasterVolume">Master Volume</string>
     <string name="Text_SFX">Sound Effects Volume</string>
     <string name="Text_Music">Music</string>
-    <string name="Text_VersionNumber">RAD_20180315_P2</string>
+    <string name="Text_VersionNumber">RAD_20180322_P3</string>
     <string name="Text_ButtonUP">Up Button</string>
     <string name="Text_ButtonDOWN">Down Button</string>
     <string name="Text_ButtonLEFT">Left Button</string>
     <string name="Text_ButtonRIGHT">Right Button</string>
+    <string name="User_Input_Method">Input Method</string>
     <string-array name="Enemies_array">
         <item>Normal</item>
         <item>More</item>
         <item>Most</item>
+    </string-array>
+    <string-array name="UserInputMethodChoice">
+        <item>Direction Pad</item>
+        <item>Side Bars</item>
+        <item>Centered Buttons</item>
     </string-array>
 </resources>

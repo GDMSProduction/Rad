@@ -10,7 +10,7 @@ import android.graphics.Point;
 public class MiningTool extends Clutter {
     private int minePower = 0;
 
-    MiningTool(int newDigPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
+    MiningTool(int newDigPower, int newValue, Point3d mPoint, Bitmap newImage, int HPMax) {
         super(newValue, mPoint, newImage, HPMax);
         minePower = newDigPower;
         setCellType(CellType.MiningTool);

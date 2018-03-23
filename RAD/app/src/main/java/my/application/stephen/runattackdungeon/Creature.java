@@ -6,8 +6,9 @@ import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
-import static my.application.stephen.runattackdungeon.Creature.DirectionType.Random;
-import static my.application.stephen.runattackdungeon.Creature.MovementLimit.inCamera;
+import my.application.stephen.runattackdungeon.Dungeon.DirectionToGo;
+
+import static my.application.stephen.runattackdungeon.GameView.changeLighting;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
 /**
@@ -19,12 +20,22 @@ public class Creature extends ObjectDestructible {
 
     public enum DirectionType {
         Still,
-        LeftandRight,
-        UpandDown,
+        Horizontal,
+        Vertical,
+        HorizontalAndVertical,
+    }
+    public enum MovementType{
         Random,
         TowardsTargetDirectional,
         TowardsTargetDodgeObstacles,
         TowardsTargetEfficient
+    }
+    public enum Handicap{
+        OneWaitTwo,
+        OneWaitOne,
+        TwoWaitTwo,
+        TwoWaitOne,
+        Full
     }
     public enum MovementLimit {
         inCamera,
@@ -32,11 +43,28 @@ public class Creature extends ObjectDestructible {
         inDungeon,
         inWorld
     }
-    public enum state {Chase, Wander, Dead, Gather}
+    public enum state {
+        Chase,
+        Patrol,
+        Wander,
+        Gather,
+        Rest
+    }
+    public enum PatrolType{
+        Points,
+        Line
+    }
 
-    private DirectionType directionType = Random;
-    private MovementLimit movementLimit = inCamera;
-    private Point target = new Point(0, 0);
+    private PatrolType patrolType = PatrolType.Line;
+    private state creatureState = state.Patrol;
+    private DirectionToGo creatureDirection = DirectionToGo.UP;
+    private DirectionType directionType = DirectionType.HorizontalAndVertical;
+    private MovementType movementType = MovementType.TowardsTargetDirectional;
+    private Handicap handicap = Handicap.Full;
+    private MovementLimit movementLimit = MovementLimit.inCamera;
+    private Point3d target = new Point3d(0, 0, 0);
+    private int patrolState = 0;
+    private int handicapWait = 0;
     private int defense = 0;
     private int defenseMax = 80;//out of 100
     private int attack = 0;
@@ -44,7 +72,7 @@ public class Creature extends ObjectDestructible {
     private int mine = 0;
     private int mineMax = 2;
     private int lightRadius = 0;
-    private int currentDepth = 0;
+//    private int currentDepth = 0;
     private boolean following = false;
     private String name = "";
     private int score = 0;
@@ -57,18 +85,19 @@ public class Creature extends ObjectDestructible {
     private Food food = null;
     private Food potion = null;
     private Clutter scroll = null;
-    private ArrayList<Point3d> Path = new ArrayList<>(0);
+    private ArrayList<Point3d> Path = new ArrayList<>();
+    private ArrayList<Point3d> PatrolPoints = new ArrayList<>();
 
-    Creature(Point newPoint, Bitmap newBitmap, int HPMax) {
+    Creature(Point3d newPoint, Bitmap newBitmap, int HPMax) {
         super(newPoint, newBitmap, HPMax);
         setCellType(CellType.Slime);
     }
-    Creature(Point newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax, int Attack, int Level, DirectionType DIRECTIONTYPE) {
+    Creature(Point3d newPoint, Bitmap newBitmap, int HPMax, CellType Type, int DefMax, int Attack, int Level, DirectionType DIRECTIONTYPE) {
         super(newPoint, newBitmap, HPMax, Type);
         defense = defenseMax = DefMax;
         setCellType(Type);
         setAttack(Attack);
-        setCurrentDepth(Level);
+        setZ(Level);
         directionType = DIRECTIONTYPE;
     }
 
@@ -86,9 +115,6 @@ public class Creature extends ObjectDestructible {
         } else {
             defense = newDef;
         }
-    }
-    void setCurrentDepth(int newDepth) {
-        currentDepth = newDepth;
     }
     public void setName(String newName) {
         name = newName;
@@ -138,7 +164,7 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-    private Wearable setShield(Wearable newShield) {
+    Wearable setShield(Wearable newShield) {
         Wearable ret = shield;
         if (ret != null) {
             setDefense(defenseMax - shield.getTotalPower());
@@ -151,7 +177,7 @@ public class Creature extends ObjectDestructible {
         }
         return ret;
     }
-    private Wearable setRing(Wearable newRing) {
+    Wearable setRing(Wearable newRing) {
         Wearable ret = ring;
         if (ret != null) {
             switch (ring.getEnchantType()) {
@@ -159,7 +185,7 @@ public class Creature extends ObjectDestructible {
                     setAttack(attackMax - ring.getTotalPower());
                     break;
                 case Health:
-                    setMaxHP(getMaxpHP() - ring.getTotalPower());
+                    setMaxHP(getMaxHP() - ring.getTotalPower());
                     break;
                 case Defense:
                     setDefense(defenseMax - ring.getTotalPower());
@@ -174,7 +200,7 @@ public class Creature extends ObjectDestructible {
                     setAttack(attackMax + ring.getTotalPower());
                     break;
                 case Health:
-                    setMaxHP(getMaxpHP() + ring.getTotalPower());
+                    setMaxHP(getMaxHP() + ring.getTotalPower());
                     break;
                 case Defense:
                     setDefense(defenseMax + ring.getTotalPower());
@@ -221,24 +247,46 @@ public class Creature extends ObjectDestructible {
     LightSource setLightSource(LightSource newLightSource) {
         LightSource ret = lightSource;
         if (ret != null) {
-            int tempLightRadius = lightRadius - lightSource.getLightRadius();
             ret.setOwner(null);
         }
         lightSource = newLightSource;
         if (lightSource != null) {
-            setLight(lightSource.getLightRadius());
             lightSource.setOwner(this);
+            lightSource.setPoint(getPoint());
         } else {
             setLight(0);
         }
+        changeLighting = true;
         return ret;
     }
     void setLight(int newLightRadius) {
         lightRadius = newLightRadius;
     }
-    void setTarget(Point Target) {
+    void setTarget(Point3d Target) {
         target = Target;
     }
+    void setMovementType(MovementType movementType) {
+        this.movementType = movementType;
+    }
+    void setHandicap(Handicap handicap) {
+        this.handicap = handicap;
+    }
+    public void setHandicapWait(int handicapWait) {
+        this.handicapWait = handicapWait;
+    }
+    public void setCreatureState(state creatureState) {
+        this.creatureState = creatureState;
+    }
+    public void setPatrolState(int patrolState) {
+        this.patrolState = patrolState;
+    }
+    public void setPatrolType(PatrolType patrolType) {
+        this.patrolType = patrolType;
+    }
+    public void setPatrolPoints(ArrayList<Point3d> patrolPoints) {
+        PatrolPoints = patrolPoints;
+    }
+    public void setDirectionType(DirectionType newDirectionType){directionType = newDirectionType;}
 
     //Accessors
 
@@ -262,9 +310,6 @@ public class Creature extends ObjectDestructible {
     }
     int getDefenseMax() {
         return defenseMax;
-    }
-    int getCurrentDepth() {
-        return currentDepth;
     }
     Weapon getWeapon() {
         return weapon;
@@ -339,8 +384,32 @@ public class Creature extends ObjectDestructible {
     boolean isFollowing() {
         return following;
     }
-    Point getTarget() {
+    Point3d getTarget() {
         return target;
+    }
+    Point get2dTarget(){
+        return new Point(target.x, target.y);
+    }
+    public MovementType getMovementType() {
+        return movementType;
+    }
+    public Handicap getHandicap() {
+        return handicap;
+    }
+    public int getHandicapWait() {
+        return handicapWait;
+    }
+    public state getCreatureState() {
+        return creatureState;
+    }
+    public int getPatrolState() {
+        return patrolState;
+    }
+    public PatrolType getPatrolType() {
+        return patrolType;
+    }
+    public ArrayList<Point3d> getPatrolPoints() {
+        return PatrolPoints;
     }
 
     //Helper Functions
@@ -350,7 +419,7 @@ public class Creature extends ObjectDestructible {
     }
     void levelUP() {
         level++;
-        setMaxHP((int) (getMaxpHP() * 1.2));
+        setMaxHP((int) (getMaxHP() * 1.2));
     }
     void increaseAttack(int increaseToAttack) {
         if (increaseToAttack + attack >= attackMax) {
@@ -359,22 +428,24 @@ public class Creature extends ObjectDestructible {
             attack += increaseToAttack;
         }
     }
-    void useFood() {
-        heal(getFood().getHealing());
+    void useFood(int dungeonSize) {
+        heal(dungeonSize, getFood().getHealing());
         setFood(null);
     }
     void useScroll(Dungeon dungeon) {
-        Dungeon.DirectionToGo direction;
-        if (scroll.getValue() >= currentDepth) {
-            direction = Dungeon.DirectionToGo.DOWN;
+        DirectionToGo direction;
+        if (scroll.getValue() >= getZ()) {
+            direction = DirectionToGo.DOWN;
         } else {
-            direction = Dungeon.DirectionToGo.UP;
+            direction = DirectionToGo.UP;
         }
         dungeon.goToLevel(this, scroll.getValue(), direction, false);
         setScroll(null);
     }
-    void usePotion(Level currentLevel) {
-        getPotion().PotionEffect(this, currentLevel);
-        setPotion(null);
+    void usePotion(Food POTION, int dungeonSize, Level currentLevel) {
+        POTION.PotionEffect(dungeonSize, this, currentLevel);
+        if (potion == POTION) {
+            setPotion(null);
+        }
     }
 }

@@ -8,19 +8,48 @@
     tools:context="my.application.stephen.runattackdungeon.SettingsActivity">
 
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/constraintLayout"
-        android:layout_width="wrap_content"
+        android:id="@+id/constraintLayout_InputMethods"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout_NumEnemies">
+
+        <Spinner
+            android:id="@+id/spinner_InputMethod"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            android:entries="@array/UserInputMethodChoice"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView_InputMethod"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/User_Input_Method"
+            android:textColor="@android:color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </android.support.constraint.ConstraintLayout>
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/constraintLayout_NumEnemies"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout_InputMethods"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="wrap_content"
+            android:id="@+id/spinner_NumEnemies"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:background="@android:color/white"
             android:entries="@array/Enemies_array"
             app:layout_constraintEnd_toEndOf="parent"
@@ -29,25 +58,27 @@
         <TextView
             android:id="@+id/textView_NumEnemies"
             android:layout_width="wrap_content"
-            android:layout_height="19dp"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
+            android:layout_marginTop="8dp"
             android:text="@string/string_EnemiesAmount"
             android:textColor="@android:color/white"
-            app:layout_constraintBaseline_toBaselineOf="@+id/spinner"
-            app:layout_constraintEnd_toStartOf="@+id/spinner"
+            app:layout_constraintBaseline_toBaselineOf="@+id/spinner_NumEnemies"
+            app:layout_constraintEnd_toStartOf="@+id/spinner_NumEnemies"
             app:layout_constraintStart_toStartOf="parent" />
+
     </android.support.constraint.ConstraintLayout>
 
     <TextView
         android:id="@+id/textView_MasterVolume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:text="@string/Text_MasterVolume"
         android:textColor="@android:color/white"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout_InputMethods" />
 
     <TextView
         android:id="@+id/textView_SFX"
@@ -56,7 +87,7 @@
         android:layout_marginTop="8dp"
         android:text="@string/Text_SFX"
         android:textColor="@android:color/white"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
         app:layout_constraintTop_toBottomOf="@+id/seekBar_MasterVolume" />
 
     <TextView
@@ -66,7 +97,7 @@
         android:layout_marginTop="8dp"
         android:text="@string/Text_Music"
         android:textColor="@android:color/white"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
         app:layout_constraintTop_toBottomOf="@+id/seekBar_SFX" />
 
     <SeekBar
@@ -75,8 +106,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
         app:layout_constraintTop_toBottomOf="@+id/textView_Music" />
 
     <SeekBar
@@ -85,8 +116,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
         app:layout_constraintTop_toBottomOf="@+id/textView_SFX" />
 
     <SeekBar
@@ -94,12 +125,13 @@
         style="@android:style/Widget.SeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:focusedByDefault="true"
-        app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="@+id/constraintLayout_NumEnemies"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@+id/constraintLayout_NumEnemies"
         app:layout_constraintTop_toBottomOf="@+id/textView_MasterVolume"
         tools:targetApi="o" />
 

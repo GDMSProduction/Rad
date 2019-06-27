@@ -1,6 +1,8 @@
 package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 
@@ -8,13 +10,20 @@ import android.graphics.Rect;
  * Created by Stephen on 2018-01-18.
  */
 
-public class ObjectBase {
-    private Point mPoint = new Point(0, 0);
-    private int centerOffset = 0;
+public class ObjectBase{
+    public enum AlignmentHorizontal {Left, Center, Right}
+    public enum AlignmentVertical {Top, Middle, Bottom}
+    private AlignmentHorizontal alignmentHorizontal = AlignmentHorizontal.Center;
+    private AlignmentVertical alignmentVertical = AlignmentVertical.Middle;
+    private Point3d mPoint = new Point3d(0, 0, 0);
     private Bitmap image;
     private Rect detectCollision;
+    private Paint paint;
 
-    ObjectBase(Point newPoint, Bitmap newBitmap) {
+    ObjectBase(Point3d newPoint, Bitmap newBitmap) {
+        paint = new Paint();
+        paint.setColor(Color.BLACK);
+        paint.setAlpha(255);
         mPoint = newPoint;
         image = newBitmap;
         //initializing rect object
@@ -22,24 +31,25 @@ public class ObjectBase {
     }
 
     //Getters
-    public Point getPoint() {
+    public Point3d getPoint() {
         return mPoint;
     }
+    public Point get2dPoint(){return new Point(mPoint.x, mPoint.y);}
+    public Paint getPaint() {return paint;}
+    public int getPaintAlpha() {return paint.getAlpha();}
+    public AlignmentVertical getAlignmentVertical() {return alignmentVertical;}
+    public AlignmentHorizontal getAlignmentHorizontal() {return alignmentHorizontal;}
 
     public int getX() {
         return mPoint.x;
     }
-
     public int getY() {
         return mPoint.y;
     }
-
-    public int getCenterOffset() {return centerOffset;}
-
+    public int getZ() {return mPoint.z;}
     public Bitmap getBitmap() {
         return image;
     }
-
     public Rect getCollideRect() {
         return detectCollision;
     }
@@ -48,28 +58,39 @@ public class ObjectBase {
     public void setBitMap(Bitmap newBitMap) {
         image = newBitMap;
     }
-
-    public void setCenterOffset(int newCenterOffset) {centerOffset = newCenterOffset;}
-    public void setPoint(Point newPoint) {
-        mPoint = newPoint;
-    }
-    public void setPoint(int x, int y) {
-        Point temp = new Point (x, y);
-        mPoint = temp;
-    }
-
-    public void setX(int newX) {
-        mPoint.x = newX;
-    }
-
-    public void setY(int newY) {
-        mPoint.y = newY;
-    }
-
+    public void setPaintAlpha(int newAlpha){paint.setAlpha(newAlpha);}
     public void setDetectCollision(Rect newRect) {
         detectCollision = newRect;
     }
 
     //Helper Functions
+    public void checkImage(Bitmap image) {
+        if (getBitmap() != image) {
+            setBitMap(image);
+        }
+    }
+    public void setPoint(Point3d newPoint) {
+        mPoint = newPoint;
+        detectCollision.left = mPoint.x;
+        detectCollision.top = mPoint.y;
+    }
+    public void setPoint(int x, int y, int z) {
+        mPoint = new Point3d (x, y, z);
+        detectCollision.left = mPoint.x;
+        detectCollision.top = mPoint.y;
+    }
+
+    public void setX(int newX) {
+        mPoint.x = newX;
+        detectCollision.left = mPoint.x;
+    }
+
+    public void setY(int newY) {
+        mPoint.y = newY;
+        detectCollision.top = mPoint.y;
+    }
+    public void setZ(int newZ){
+        mPoint.z = newZ;
+    }
 
 }

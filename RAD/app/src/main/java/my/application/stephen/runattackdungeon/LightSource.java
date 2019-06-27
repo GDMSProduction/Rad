@@ -9,9 +9,10 @@ import android.graphics.Point;
 
 public class LightSource extends Weapon {
     private int lightRadius = 0;
-    LightSource(int newLightRadius, int atkPower, int newValue, Point mPoint, Bitmap newImage, int HPMax) {
+    LightSource(int newLightRadius, int atkPower, int newValue, Point3d mPoint, Bitmap newImage, int HPMax) {
         super(atkPower, newValue, mPoint, newImage, HPMax);
         lightRadius = newLightRadius;
+        setCellType(CellType.LightSource);
     }
     public int getLightRadius(){return lightRadius;}
 }

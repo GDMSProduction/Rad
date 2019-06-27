@@ -2,13 +2,19 @@ package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
 import my.application.stephen.runattackdungeon.Dungeon.DirectionToGo;
 
+import static my.application.stephen.runattackdungeon.GameView.Noises;
 import static my.application.stephen.runattackdungeon.GameView.changeLighting;
+import static my.application.stephen.runattackdungeon.GameView.idAppleCrunch;
+import static my.application.stephen.runattackdungeon.GameView.idMeatEating;
+import static my.application.stephen.runattackdungeon.GameView.idPotionDrink;
+import static my.application.stephen.runattackdungeon.GameView.imageFood;
 import static my.application.stephen.runattackdungeon.GameView.imageWearables;
 
 /**
@@ -430,6 +436,11 @@ public class Creature extends ObjectDestructible {
     }
     void useFood(int dungeonSize) {
         heal(dungeonSize, getFood().getHealing());
+        if (food.getBitmap() == imageFood[0]){ //apple
+            Noises.play(idAppleCrunch, 1, 1, 0, 0, 1);
+        } else if (food.getBitmap() == imageFood[1]){ // Turkey Leg
+            Noises.play(idMeatEating, 1, 1, 0, 0, 1);
+        }
         setFood(null);
     }
     void useScroll(Dungeon dungeon) {
@@ -445,6 +456,7 @@ public class Creature extends ObjectDestructible {
     void usePotion(Food POTION, int dungeonSize, Level currentLevel) {
         POTION.PotionEffect(dungeonSize, this, currentLevel);
         if (potion == POTION) {
+            Noises.play(idPotionDrink, 1, 1, 0, 0, 1);
             setPotion(null);
         }
     }

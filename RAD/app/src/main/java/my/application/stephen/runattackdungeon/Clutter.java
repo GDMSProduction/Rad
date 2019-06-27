@@ -1,8 +1,8 @@
 package my.application.stephen.runattackdungeon;
 
 import android.graphics.Bitmap;
-import android.graphics.Point;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 
 /**
  * Created by Stephen on 2018-01-18.

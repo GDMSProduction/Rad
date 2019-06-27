@@ -14,7 +14,6 @@ import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
-import android.renderscript.ScriptGroup;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -25,7 +24,7 @@ import android.widget.Spinner;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static android.support.v4.content.ContextCompat.startActivity;
+import static androidx.core.content.ContextCompat.startActivity;
 import static my.application.stephen.runattackdungeon.Dungeon.minotaurSlain;
 
 /**
@@ -58,6 +57,9 @@ public class GameView extends SurfaceView implements Runnable {
     public static SoundPool Noises;
     private SoundPool Death;
     public static int idBottleBreak;
+    public static int idPotionDrink;
+    public static int idAppleCrunch;
+    public static int idMeatEating;
     public static int idWilhelmScream;
     public static int idMinotaurRoar;
     public static int idWalk;
@@ -318,12 +320,15 @@ public class GameView extends SurfaceView implements Runnable {
     private void createAudio(Context context) {
         Noises = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
         Death = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        idAppleCrunch = Noises.load(context, R.raw.apple_crunch_02__20265__koops, 1);
+        idMeatEating = Noises.load(context, R.raw.monster_eat3__160978__vinrax, 1);
         idBottleBreak = Noises.load(context, R.raw.bottle_break__407431__deezsoundztho, 1);
         idWilhelmScream = Noises.load(context, R.raw.wilhelm__13797__sweetneo85, 1);
         idMinotaurRoar = Noises.load(context, R.raw.dinosaur_dragon_roar__253473__groadr, 1);
         idWalk = Noises.load(context, R.raw.left_foot__21692__ice9ine, 1);
         idMiningFail = Noises.load(context, R.raw.metal_02__56252__q_k, 1);
         idMiningSucceed = Noises.load(context, R.raw.metal_03__56253__q_k, 1);
+        idPotionDrink = Noises.load(context, R.raw.potiondrinklong__41529__jamius, 1);
 //        minotaurNoises = new MediaPlayer[1];
 //        minotaurNoises[0] = MediaPlayer.create(context, R.raw.dinosaur_dragon_roar__253473__groadr);
 //        playerNoises = new MediaPlayer[1];

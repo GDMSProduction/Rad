@@ -1,7 +1,6 @@
 package my.application.stephen.runattackdungeon;
 
-import android.renderscript.ScriptGroup;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Spinner;
 

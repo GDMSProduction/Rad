@@ -3,6 +3,8 @@ package my.application.stephen.runattackdungeon;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 
 import static my.application.stephen.runattackdungeon.GameView.Noises;
@@ -41,7 +43,8 @@ public class Dungeon {
     private ArrayList<Level> dungeonLevels = new ArrayList<>(numLevels);
     private Level currentLevel;
     private int currentLevelIndex = 0;
-    private Creature player = null;
+    private static Creature player = null;
+    static Point3d playerPoint;
 
     Dungeon(){
         minotaurSlain = false;
@@ -54,8 +57,64 @@ public class Dungeon {
     public Level getCurrentLevel() {return currentLevel;}
     Creature getPlayer() {return player;}
     //Mutators
-    public void setPlayer(Creature newPlayer){player = newPlayer;}
+    public void setPlayer(Creature newPlayer){
+        player = newPlayer;
+        playerPoint = player.getPoint();
+    }
     //Helper Functions
+    static DirectionToGo turnDirection(@NonNull DirectionToGo direction, boolean turnLeft){
+        DirectionToGo newDirection;
+        switch(direction){
+            default:
+            case NORTH:
+                if (turnLeft){
+                    newDirection = DirectionToGo.WEST;
+                    break;
+                }
+                newDirection = DirectionToGo.EAST;
+                break;
+            case EAST:
+                if (turnLeft){
+                    newDirection = DirectionToGo.NORTH;
+                    break;
+                }
+                newDirection = DirectionToGo.SOUTH;
+                break;
+            case SOUTH:
+                if (turnLeft){
+                    newDirection = DirectionToGo.EAST;
+                    break;
+                }
+                newDirection = DirectionToGo.WEST;
+                break;
+            case WEST:
+                if (turnLeft){
+                    newDirection = DirectionToGo.SOUTH;
+                    break;
+                }
+                newDirection = DirectionToGo.NORTH;
+                break;
+        }
+        return newDirection;
+    }
+    static DirectionToGo getRandomDirection(int max, int min){
+        switch(rand.nextInt(max - min) + min){
+            default:
+            case 0:
+                return Dungeon.DirectionToGo.NORTH;
+            case 1:
+                return Dungeon.DirectionToGo.SOUTH;
+            case 2:
+                return Dungeon.DirectionToGo.EAST;
+            case 3:
+                return Dungeon.DirectionToGo.WEST;
+            case 4:
+                return Dungeon.DirectionToGo.UP;
+            case 5:
+                return Dungeon.DirectionToGo.DOWN;
+        }
+    }
+
     public void UpdateCreatures() {
         for (int dungeonIndex = 0; dungeonIndex < dungeonLevels.size(); dungeonIndex++) {
             ArrayList<Creature> dungeonLevelCreatures = dungeonLevels.get(dungeonIndex).getLevelCreatures();
@@ -843,14 +902,16 @@ public class Dungeon {
     }
 
     public void goToLevel(Creature creature, int levelToGoTo, DirectionToGo direction, boolean fallen) {
-        if (levelToGoTo >= dungeonLevels.size()){
-            levelToGoTo = dungeonLevels.size() - 1;
-        }
+//        if (levelToGoTo >= dungeonLevels.size()){
+//            levelToGoTo = dungeonLevels.size() - 1;
+//        }
         switch (direction) {
             case DOWN:
                 dungeonLevels.get(creature.getZ()).removeObjectFromMap(new Point(creature.getPoint().x, creature.getPoint().y), creature);
                 if (currentLevel == dungeonLevels.get(dungeonLevels.size() - 1)) {
-                    AddNewLevel();
+                    for (int i = 0; i < (levelToGoTo - (dungeonLevels.size() - 1)); i++) {
+                        AddNewLevel();
+                    }
                 }
                 RemoveCreatureFromCurrentLevel(creature);
                 if (creature == player) {
@@ -951,23 +1012,4 @@ public class Dungeon {
 //        }
         dungeonLevels.add(temp);
     }
-
-//    public DirectionToGo getRandomDirection(int max, int min){
-//        Random rand = new Random();
-//        switch(rand.nextInt(max - min) + min){
-//            default:
-//            case 0:
-//                return Dungeon.DirectionToGo.NORTH;
-//            case 1:
-//                return Dungeon.DirectionToGo.SOUTH;
-//            case 2:
-//                return Dungeon.DirectionToGo.EAST;
-//            case 3:
-//                return Dungeon.DirectionToGo.WEST;
-//            case 4:
-//                return Dungeon.DirectionToGo.UP;
-//            case 5:
-//                return Dungeon.DirectionToGo.DOWN;
-//        }
-//    }
 }
